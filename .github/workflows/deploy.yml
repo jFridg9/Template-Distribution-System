@@ -9,28 +9,108 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      CREATE_VERSION: ${{ secrets.CREATE_VERSION }}
+      UPDATE_DEPLOYMENT: ${{ secrets.UPDATE_DEPLOYMENT }}
+      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+    # Use the Production environment to gate access to sensitive secrets.
+    # Create an environment named `Production` in repo Settings -> Environments and
+    # put CLASPRC_JSON, CREATE_VERSION, UPDATE_DEPLOYMENT, DEPLOYMENT_ID there as environment secrets.
+    environment:
+      name: Production
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "20"
+          cache: 'npm'
       
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Configure clasp
+      - name: Install dev dependencies
         run: |
-          echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
-          echo '${{ secrets.CLASP_PROJECT }}' > .clasp.json
+          if [ -f package.json ]; then
+            echo "Installing dependencies..."
+            npm ci || npm install --no-audit --prefer-offline
+          else
+            echo "No package.json found; skipping npm install"
+          fi
       
-      - name: Push to Apps Script
-        run: npm run push
-      
-      - name: Deploy new version
+      - name: Validate required secrets
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
-          npm run deploy -- --description "Auto-deployed from GitHub: ${{ github.sha }}"
-        continue-on-error: true
+          set -euo pipefail
+          if [ -z "${CLASPRC_JSON:-}" ]; then 
+            echo "ERROR: CLASPRC_JSON secret is not set"
+            exit 1
+          fi
+      
+      - name: Authenticate clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          set -euo pipefail
+          # Write the user's clasp auth JSON to the expected location
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+          echo "Created ~/.clasprc.json (length: $(wc -c < ~/.clasprc.json) bytes)"
+          npx -y @google/clasp --version || clasp --version || true
+      
+      - name: Deploy Apps Script (Push)
+        run: |
+          set -euo pipefail
+          echo "Preparing workspace for clasp push..."
+          # Remove artifacts that might interfere
+          rm -rf node_modules || true
+          rm -rf .husky || true
+          
+          echo "Pushing to Apps Script..."
+          # Use --force to ensure local files replace remote
+          npx -y @google/clasp push --force || clasp push --force
+          echo "Script update complete"
+      
+      - name: Create Apps Script version (optional)
+        id: create_version
+        if: ${{ env.CREATE_VERSION == 'true' }}
+        run: |
+          set -euo pipefail
+          echo "Creating a new Apps Script version..."
+          VER_MSG="CI: $GITHUB_RUN_NUMBER $GITHUB_SHA"
+          OUT=$(npx -y @google/clasp version "$VER_MSG" 2>&1) || { echo "clasp version failed: $OUT"; exit 1; }
+          echo "clasp version output: $OUT"
+          VERSION_ID=$(echo "$OUT" | grep -o -m1 -E '[0-9]+' || true)
+          if [ -z "$VERSION_ID" ]; then
+            echo "Warning: could not parse version number"
+            echo "VERSION_ID=" >> $GITHUB_OUTPUT
+          else
+            echo "Created version: $VERSION_ID"
+            echo "VERSION_ID=$VERSION_ID" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update deployment (optional)
+        if: ${{ env.UPDATE_DEPLOYMENT == 'true' && env.DEPLOYMENT_ID != '' }}
+        env:
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+        run: |
+          set -euo pipefail
+          DEPLOY_ID="$DEPLOYMENT_ID"
+          VERSION_TO_SET="${{ steps.create_version.outputs.VERSION_ID }}"
+          if [ -z "$VERSION_TO_SET" ]; then 
+            echo "No VERSION_ID available; aborting deployment update"
+            exit 1
+          fi
+          echo "Updating deployment $DEPLOY_ID to version $VERSION_TO_SET"
+          npx -y @google/clasp deploy --deploymentId "$DEPLOY_ID" --versionNumber "$VERSION_TO_SET" || clasp deploy --deploymentId "$DEPLOY_ID" --versionNumber "$VERSION_TO_SET"
+      
+      - name: Cleanup credentials
+        if: always()
+        run: |
+          rm -f ~/.clasprc.json || true
