@@ -1,0 +1,39 @@
+name: Deploy to Apps Script
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Configure clasp
+        run: |
+          echo "$CLASP_CREDENTIALS" > ~/.clasprc.json
+          echo "$CLASP_PROJECT" > .clasp.json
+        env:
+          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
+          CLASP_PROJECT: ${{ secrets.CLASP_PROJECT }}
+      
+      - name: Push to Apps Script
+        run: npm run push
+      
+      - name: Deploy new version
+        run: |
+          npm run deploy -- --description "Auto-deployed from GitHub: ${{ github.sha }}"
+        continue-on-error: true

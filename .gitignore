@@ -1,0 +1,38 @@
+# Template Distribution System
+# Git configuration
+
+# Node modules
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# clasp local files (DO NOT COMMIT - contains your script ID)
+.clasp.json
+.clasprc.json
+
+# GitHub secrets setup (contains credentials - for local reference only)
+GITHUB_SECRETS_SETUP.md
+
+# Environment files
+.env
+.env.local
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
