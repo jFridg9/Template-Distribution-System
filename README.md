@@ -402,3 +402,5 @@ This isn't just a utility script—it's a demonstration of:
 
 **Built with ❤️ by [Your Name]**  
 *Part of the LOIS Core portfolio - transforming coursework into career assets*
+
+<!-- CI/CD test -->
