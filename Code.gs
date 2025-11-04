@@ -99,10 +99,16 @@ function doGet(e) {
   try {
     const params = e.parameter || {};
     
+    // DEBUG: Log all parameters
+    Logger.log('DEBUG: doGet called with params: ' + JSON.stringify(params));
+    Logger.log('DEBUG: admin param value: ' + params.admin);
+    Logger.log('DEBUG: admin param type: ' + typeof params.admin);
+    
     // ========================================================================
     // ROUTE: Admin panel
     // ========================================================================
     if (params.admin === 'true' || params.admin === '1') {
+      Logger.log('DEBUG: Admin panel route matched!');
       return renderAdminPanel();
     }
     
