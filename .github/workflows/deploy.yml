@@ -24,11 +24,8 @@ jobs:
       
       - name: Configure clasp
         run: |
-          echo "$CLASP_CREDENTIALS" > ~/.clasprc.json
-          echo "$CLASP_PROJECT" > .clasp.json
-        env:
-          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
-          CLASP_PROJECT: ${{ secrets.CLASP_PROJECT }}
+          echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
+          echo '${{ secrets.CLASP_PROJECT }}' > .clasp.json
       
       - name: Push to Apps Script
         run: npm run push
