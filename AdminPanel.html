@@ -358,6 +358,9 @@
             <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
               📁 Browse Drive
             </button>
+            <button type="button" class="btn btn-secondary" onclick="openFallbackPicker()" title="Browse folders using server-side Drive access">
+              📂 Browse Drive (fallback)
+            </button>
           </div>
           <div id="folderInfo" class="folder-info"></div>
         </div>
@@ -383,6 +386,20 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+  </div>
+
+  <!-- Fallback Picker Modal -->
+  <div id="fallbackModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header"><h2>Browse Drive</h2></div>
+      <div style="padding:12px;">
+        <div id="fallbackList">Loading folders…</div>
+        <div style="margin-top:12px;text-align:right;">
+          <button type="button" class="btn btn-secondary" onclick="closeFallbackModal()">Close</button>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -644,6 +661,39 @@
         document.getElementById('folderId').value = folder.id;
         validateFolder(folder.id);
       }
+    }
+
+    // Fallback folder browser (server-driven)
+    function openFallbackPicker() {
+      document.getElementById('fallbackModal').style.display = 'flex';
+      document.body.classList.add('modal-open');
+      const list = document.getElementById('fallbackList');
+      list.innerHTML = 'Loading...';
+      google.script.run.withSuccessHandler(function(res) {
+        if (!res.success) {
+          list.innerHTML = `<div class="alert alert-error">${res.error}</div>`;
+          return;
+        }
+        if (!res.folders || res.folders.length === 0) {
+          list.innerHTML = '<div>(No folders found)</div>';
+          return;
+        }
+        list.innerHTML = '<ul style="list-style:none;padding-left:0;max-height:360px;overflow:auto;">' + res.folders.map(function(f) {
+          return `<li style="padding:6px;border-bottom:1px solid #eee;"><a href="#" onclick="selectFallbackFolder('${f.id}', '${f.name.replace(/'/g, "\\'") }');return false;">${f.name.replace(/</g,'&lt;')}</a></li>`;
+        }).join('') + '</ul>';
+      }).listRootFolders();
+    }
+
+    function closeFallbackModal() {
+      document.getElementById('fallbackModal').style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+
+    function selectFallbackFolder(id, name) {
+      document.getElementById('folderId').value = id;
+      validateFolder(id);
+      closeFallbackModal();
+      showAlert('Selected folder: ' + name, 'success');
     }
     
     // Alert helper
