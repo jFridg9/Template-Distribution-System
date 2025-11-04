@@ -53,43 +53,57 @@ git push
 
 ## 📝 Next Steps to Deploy
 
-### 1. Create Configuration Sheet
+### Option A: Automated Setup (Recommended) ⭐
 
-In Apps Script editor:
-1. Select function: `createConfigurationSheet`
-2. Click Run ▶️
-3. Copy the Spreadsheet ID from logs
+**Fully automated - no manual configuration needed!**
 
-### 2. Update CONFIG
+1. **Deploy as Web App** (one-time):
+   - In Apps Script editor: Deploy → New deployment
+   - Type: Web app
+   - Execute as: Me (pittsburgh@usbg.org)
+   - Who has access: Anyone (or as needed)
+   - Click Deploy
+   - Copy the /exec URL
 
-In `Code.gs`, update:
-```javascript
-const CONFIG = {
-  mode: 'simple',  // or 'full'
-  configSheetId: 'PASTE_SPREADSHEET_ID_HERE',
-  branding: {
-    organizationName: 'USBG Pittsburgh',
-    tagline: 'Member Resources',
-    supportEmail: 'pittsburgh@usbg.org'
-  }
-};
-```
+2. **Access Admin Panel**: Visit `/exec?admin=true`
 
-### 3. Configure Products
+3. **Setup Wizard Runs Automatically**:
+   - Detects no configuration exists
+   - Click to create configuration sheet → **Automatically linked!**
+   - Add first product using Drive Picker → **No ID copying!**
+   - Complete setup → Access admin panel
 
-In the configuration sheet:
-- Fill in product names, folder IDs, descriptions
-- Set enabled = TRUE for active products
+**That's it!** No code changes, no manual ID copying, no sheet editing.
 
-### 4. Deploy as Web App
+---
 
-In Apps Script editor:
-- Deploy → New deployment
-- Type: Web app
-- Execute as: Me (pittsburgh@usbg.org)
-- Who has access: Anyone (or as needed)
-- Click Deploy
-- Copy the /exec URL
+### Option B: Manual Setup (Advanced)
+
+If you prefer full control or want to understand the internals:
+
+1. **Create Configuration Sheet**:
+   - In Apps Script editor, run function: `createConfigurationSheet`
+   - Copy the Spreadsheet ID from logs
+
+2. **Update CONFIG** (Code.gs):
+   ```javascript
+   const CONFIG = {
+     mode: 'simple',  // or 'full'
+     configSheetId: 'PASTE_SPREADSHEET_ID_HERE',
+     branding: {
+       organizationName: 'USBG Pittsburgh',
+       tagline: 'Member Resources',
+       supportEmail: 'pittsburgh@usbg.org'
+     }
+   };
+   ```
+
+3. **Configure Products**:
+   - Open configuration sheet
+   - Fill in product names, folder IDs, descriptions
+   - Set enabled = TRUE for active products
+
+4. **Deploy as Web App** (same as Option A step 1)
 
 ---
 

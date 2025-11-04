@@ -104,18 +104,23 @@ This system provides **one permanent URL** that always points to the latest vers
 
 ### Option A: Setup Wizard (Recommended) ⭐
 
-The easiest way to get started—**no manual configuration needed**:
+The easiest way to get started—**fully automated, zero manual configuration**:
 
-1. **Push to GitHub** (CI/CD deploys automatically via GitHub Actions)
-2. **Open Apps Script** editor and deploy as web app
-3. **Run Setup Wizard**: Visit your web app URL with `?setup=true`
-4. **Follow 4 steps**:
-   - Welcome & overview
-   - Create configuration sheet (automatic)
-   - Add first product with Drive Picker (visual folder selection)
-   - Complete & access admin panel
+1. **Deploy the Web App**:
+   - Push to GitHub (CI/CD deploys automatically via GitHub Actions), OR
+   - Use `clasp push` to deploy manually
+2. **Deploy as Web App** in Apps Script editor:
+   - Deploy → New deployment → Web app
+   - Execute as: Me
+   - Who has access: Anyone (or Anyone with Google account)
+3. **Access Admin Panel**: Visit your web app URL with `?admin=true`
+4. **Setup Wizard Runs Automatically** (first time only):
+   - **Step 1:** Welcome & overview of automated features
+   - **Step 2:** Click to create configuration sheet (automatically linked - no ID copying!)
+   - **Step 3:** Add first product using Drive Picker (visual folder selection - no ID copying!)
+   - **Step 4:** Complete & access admin panel
 
-**That's it!** Your system is configured and ready to use.
+**That's it!** Your system is configured and ready. The configuration sheet ID is automatically saved to Script Properties, so no code changes are needed.
 
 ### Option B: Manual Configuration
 
@@ -146,12 +151,12 @@ Replace `abc123...` with your actual Google Drive folder IDs.
 
 ### 3. **Configure the Script**
 
-In `Code.gs`, update the `CONFIG` object:
+In `Code.gs`, update the `CONFIG` object (optional if using Setup Wizard):
 
 ```javascript
 const CONFIG = {
   mode: 'full',  // or 'simple' for client deployments
-  configSheetId: 'YOUR_CONFIG_SHEET_ID_HERE',  // Paste from step 1
+  configSheetId: 'YOUR_CONFIG_SHEET_ID_HERE',  // Optional - Setup Wizard uses Script Properties
   branding: {
     organizationName: 'Your Organization',
     tagline: 'Professional Templates',
@@ -159,6 +164,8 @@ const CONFIG = {
   }
 };
 ```
+
+**Note:** If you use the Setup Wizard (Option A), the configuration sheet ID is stored in Script Properties and takes precedence over the hardcoded value. Manual configuration in `CONFIG` is only needed if you want to bypass the Setup Wizard.
 
 ### 4. **Deploy as Web App**
 
@@ -187,17 +194,18 @@ Visit your URLs:
 https://your-webapp/exec?admin=true
 ```
 Access the admin panel to:
-- Add, edit, delete products
-- Enable/disable products
-- Use Drive Picker to select folders visually
+- Add, edit, delete products via web UI
+- Enable/disable products with toggle
+- Use Drive Picker to select folders visually (no ID copying!)
 - View folder contents and file counts
+- Validate folder accessibility
 - Clear configuration cache
 - Navigate to landing page
 
-**Setup Wizard:**
-```
-https://your-webapp/exec?setup=true
-```
+**Setup Wizard** (runs automatically on first `?admin=true` visit):
+- Automatically shown if no configuration exists
+- Creates and links configuration sheet automatically
+- No manual ID copying or code changes needed
 First-time setup wizard (automatic redirect if not configured):
 - Creates configuration sheet automatically
 - Guides through first product setup
