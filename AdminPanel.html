@@ -580,6 +580,10 @@
           if (!developerKey) {
             console.warn('Google Picker API key not set. Add PICKER_API_KEY in Script Properties.');
           }
+          console.log('Picker diagnostics after key fetch:', {
+            keyPrefix: developerKey ? developerKey.substring(0, 6) : null,
+            keyLength: developerKey ? developerKey.length : 0
+          });
         })
         .getPickerApiKey();
     }
@@ -598,6 +602,12 @@
       const origin = (google && google.script && google.script.host && google.script.host.origin)
         ? google.script.host.origin
         : window.location.origin;
+
+      console.log('Picker diagnostics on open:', {
+        pickerApiLoaded,
+        hasToken: !!oauthToken,
+        origin
+      });
 
       const picker = new google.picker.PickerBuilder()
         .setOAuthToken(oauthToken)
