@@ -327,12 +327,13 @@
       <!-- Step 1: Welcome -->
       <div class="step active" data-step="1">
         <h2>Welcome to Template Distribution System</h2>
-        <p>This wizard will help you set up your system in just a few steps. Here's what we'll do:</p>
+        <p>This wizard will help you set up your system in just a few steps. <strong>Everything is automated</strong> - no manual configuration needed!</p>
         
         <ul class="feature-list">
-          <li><strong>Create Configuration Sheet:</strong> Automatically set up your product database in Google Sheets</li>
-          <li><strong>Add Your First Product:</strong> Configure your first template with Drive Picker</li>
-          <li><strong>Test the System:</strong> Verify everything works correctly</li>
+          <li><strong>Auto-Create Configuration:</strong> We'll create and link your configuration sheet automatically</li>
+          <li><strong>Visual Folder Selection:</strong> Use Drive Picker to select folders - no copying IDs</li>
+          <li><strong>Add Your First Product:</strong> Configure your first template through a user-friendly interface</li>
+          <li><strong>Zero Code Changes:</strong> All configuration is managed through the web interface</li>
         </ul>
         
         <p>You'll need:</p>
@@ -345,7 +346,7 @@
       <!-- Step 2: Create Config Sheet -->
       <div class="step" data-step="2">
         <h2>Create Configuration Sheet</h2>
-        <p>We'll create a Google Sheet to store your product configurations. This sheet will be created in your Google Drive.</p>
+        <p>We'll create a Google Sheet to store your product configurations and automatically link it to the system. No manual ID copying needed!</p>
         
         <div id="configStatus">
           <p>Click "Create Configuration Sheet" to get started.</p>
@@ -520,11 +521,12 @@
               <div style="padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
                 <h3 style="color: #2e7d32; margin-bottom: 10px;">✅ Configuration Sheet Created</h3>
                 <p style="margin-bottom: 10px;">Sheet ID: <code style="background: white; padding: 2px 6px; border-radius: 3px;">${result.sheetId}</code></p>
+                <p style="margin-bottom: 10px;"><strong>✓ Configuration automatically saved</strong> - No code changes needed!</p>
                 <p><a href="https://docs.google.com/spreadsheets/d/${result.sheetId}/edit" target="_blank" style="color: #2e7d32;">Open Configuration Sheet →</a></p>
               </div>
             `;
             updateButtons();
-            showAlert('Configuration sheet created successfully!', 'success');
+            showAlert('Configuration sheet created and linked automatically!', 'success');
           } else {
             statusDiv.innerHTML = `<div class="alert alert-error">${result.error}</div>`;
           }

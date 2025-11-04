@@ -71,12 +71,13 @@ function renderAdminPanel() {
  * @returns {boolean} True if setup is needed
  */
 function checkIfNeedsSetup() {
-  // Check if config sheet ID is set
-  if (!CONFIG.configSheetId || CONFIG.configSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
+  // Check if config sheet ID is set (either in Script Properties or CONFIG)
+  const configSheetId = getConfigSheetId();
+  if (!configSheetId || configSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
     return true;
   }
   
-  // Check if config sheet is accessible
+  // Check if config sheet is accessible and has products
   try {
     const config = loadConfiguration();
     return config.products.length === 0;
@@ -111,6 +112,9 @@ function renderSetupWizard() {
  * Creates configuration sheet during setup wizard
  * Called from setup wizard UI
  * 
+ * Automatically saves the sheet ID to Script Properties so the system
+ * uses it immediately without code changes.
+ * 
  * @returns {Object} Result with sheet ID and URL
  */
 function setupCreateConfigSheet() {
@@ -138,7 +142,15 @@ function setupCreateConfigSheet() {
     const sheetId = ss.getId();
     const sheetUrl = ss.getUrl();
     
-    Logger.log(`Setup: Created config sheet ${sheetId}`);
+    // CRITICAL: Save the sheet ID to Script Properties
+    // This makes it available immediately without code changes
+    const saveResult = setConfigSheetId(sheetId);
+    if (!saveResult.success) {
+      Logger.log(`Warning: Failed to save config sheet ID: ${saveResult.error}`);
+      // Continue anyway - sheet was created successfully
+    }
+    
+    Logger.log(`Setup: Created config sheet ${sheetId} and saved to Script Properties`);
     
     return {
       success: true,
@@ -170,7 +182,8 @@ function setupCreateConfigSheet() {
  */
 function addProduct(productData) {
   try {
-    const ss = SpreadsheetApp.openById(CONFIG.configSheetId);
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
     const sheet = ss.getSheetByName('Products');
     
     // Validate product data
@@ -232,7 +245,8 @@ function addProduct(productData) {
  */
 function updateProduct(productName, productData) {
   try {
-    const ss = SpreadsheetApp.openById(CONFIG.configSheetId);
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
     const sheet = ss.getSheetByName('Products');
     const data = sheet.getDataRange().getValues();
     
@@ -296,7 +310,8 @@ function updateProduct(productName, productData) {
  */
 function deleteProduct(productName) {
   try {
-    const ss = SpreadsheetApp.openById(CONFIG.configSheetId);
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
     const sheet = ss.getSheetByName('Products');
     const data = sheet.getDataRange().getValues();
     
@@ -343,7 +358,8 @@ function deleteProduct(productName) {
  */
 function toggleProductEnabled(productName) {
   try {
-    const ss = SpreadsheetApp.openById(CONFIG.configSheetId);
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
     const sheet = ss.getSheetByName('Products');
     const data = sheet.getDataRange().getValues();
     

@@ -27,6 +27,11 @@
  * Uses CacheService to avoid repeated sheet reads (5-minute cache).
  * This improves performance and reduces API quota usage.
  * 
+ * CONFIGURATION PRIORITY:
+ * 1. Script Properties (set via admin panel/setup wizard)
+ * 2. CONFIG.configSheetId (hardcoded in Code.gs)
+ * 3. CONFIG.fallbackFolderId (for single-folder deployments)
+ * 
  * @returns {Object} - Configuration object with products array
  */
 function loadConfiguration() {
@@ -44,9 +49,10 @@ function loadConfiguration() {
   
   // Load from sheet
   let config;
+  const configSheetId = getConfigSheetId();
   
-  if (CONFIG.configSheetId && CONFIG.configSheetId !== 'YOUR_CONFIG_SHEET_ID_HERE') {
-    config = loadConfigFromSheet();
+  if (configSheetId && configSheetId !== 'YOUR_CONFIG_SHEET_ID_HERE') {
+    config = loadConfigFromSheet(configSheetId);
   } else if (CONFIG.fallbackFolderId) {
     config = createFallbackConfig();
   } else {
@@ -77,11 +83,13 @@ function loadConfiguration() {
  * | EventPlanning | abc123...     | Event Planning Tool | TRUE    | Organize events effortlessly   |
  * | MailMerge     | def456...     | Mail Merge Pro      | TRUE    | Send personalized emails       |
  * 
+ * @param {string} sheetId - Configuration sheet ID (optional, uses getConfigSheetId if not provided)
  * @returns {Object} - Configuration object
  */
-function loadConfigFromSheet() {
+function loadConfigFromSheet(sheetId) {
   try {
-    const spreadsheet = SpreadsheetApp.openById(CONFIG.configSheetId);
+    const configId = sheetId || getConfigSheetId();
+    const spreadsheet = SpreadsheetApp.openById(configId);
     const sheet = spreadsheet.getSheetByName('Products');
     
     if (!sheet) {
@@ -224,6 +232,92 @@ function clearConfigCache() {
   cache.remove('product_config');
   Logger.log('Configuration cache cleared');
   return 'Cache cleared successfully';
+}
+
+
+/**
+ * ============================================================================
+ * RUNTIME CONFIGURATION (Script Properties)
+ * ============================================================================
+ * 
+ * These functions allow the admin panel and setup wizard to dynamically
+ * update the configuration sheet ID without modifying code.
+ * 
+ * Script Properties take precedence over hardcoded CONFIG values.
+ */
+
+/**
+ * Gets the configuration sheet ID from Script Properties or CONFIG
+ * 
+ * Priority:
+ * 1. Script Properties (set by admin panel/setup wizard)
+ * 2. CONFIG.configSheetId (hardcoded in Code.gs)
+ * 
+ * @returns {string} Configuration sheet ID
+ */
+function getConfigSheetId() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  const runtimeSheetId = scriptProps.getProperty('CONFIG_SHEET_ID');
+  
+  if (runtimeSheetId) {
+    Logger.log('Using runtime config sheet ID from Script Properties');
+    return runtimeSheetId;
+  }
+  
+  Logger.log('Using hardcoded config sheet ID from CONFIG');
+  return CONFIG.configSheetId;
+}
+
+/**
+ * Sets the configuration sheet ID in Script Properties
+ * Called by setup wizard and admin panel
+ * 
+ * @param {string} sheetId - Configuration sheet ID
+ * @returns {Object} Result object
+ */
+function setConfigSheetId(sheetId) {
+  try {
+    if (!sheetId || typeof sheetId !== 'string') {
+      throw new Error('Invalid sheet ID');
+    }
+    
+    // Test that sheet is accessible
+    try {
+      SpreadsheetApp.openById(sheetId);
+    } catch (err) {
+      throw new Error('Cannot access sheet with ID: ' + sheetId);
+    }
+    
+    const scriptProps = PropertiesService.getScriptProperties();
+    scriptProps.setProperty('CONFIG_SHEET_ID', sheetId);
+    
+    // Clear cache so new config is loaded immediately
+    clearConfigCache();
+    
+    Logger.log(`Configuration sheet ID updated to: ${sheetId}`);
+    
+    return {
+      success: true,
+      message: 'Configuration sheet ID updated successfully'
+    };
+  } catch (err) {
+    Logger.log('ERROR in setConfigSheetId: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+/**
+ * Gets all runtime configuration from Script Properties
+ * Useful for debugging
+ * 
+ * @returns {Object} All script properties
+ */
+function getRuntimeConfig() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  return scriptProps.getProperties();
 }
 
 
