@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setup Wizard</title>
+  
+  <!-- Google Drive Picker API -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .wizard-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 700px;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .wizard-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .wizard-header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 30px 40px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .progress-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    
+    .progress-step::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: #e0e0e0;
+      z-index: 0;
+    }
+    
+    .progress-step:last-child::after {
+      display: none;
+    }
+    
+    .progress-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #999;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .progress-step.active .progress-circle {
+      background: #667eea;
+      color: white;
+    }
+    
+    .progress-step.completed .progress-circle {
+      background: #4caf50;
+      color: white;
+    }
+    
+    .progress-label {
+      font-size: 0.85em;
+      color: #999;
+      margin-top: 8px;
+    }
+    
+    .progress-step.active .progress-label {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .wizard-content {
+      padding: 40px;
+      min-height: 400px;
+    }
+    
+    .step {
+      display: none;
+    }
+    
+    .step.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .step h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+    
+    .step p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
+      font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .folder-picker {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .folder-info {
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .folder-info.active {
+      display: block;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+    
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 30px 40px;
+      background: #f9f9f9;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .success-icon {
+      text-align: center;
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-error {
+      background: #ffebee;
+      color: #c62828;
+      border-left: 4px solid #c62828;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .feature-list {
+      list-style: none;
+      margin: 20px 0;
+    }
+    
+    .feature-list li {
+      padding: 12px 0;
+      padding-left: 35px;
+      position: relative;
+    }
+    
+    .feature-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <h1>🚀 Setup Wizard</h1>
+      <p>Let's get your Template Distribution System configured</p>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress-step active" data-step="1">
+        <div class="progress-circle">1</div>
+        <div class="progress-label">Welcome</div>
+      </div>
+      <div class="progress-step" data-step="2">
+        <div class="progress-circle">2</div>
+        <div class="progress-label">Configuration</div>
+      </div>
+      <div class="progress-step" data-step="3">
+        <div class="progress-circle">3</div>
+        <div class="progress-label">First Product</div>
+      </div>
+      <div class="progress-step" data-step="4">
+        <div class="progress-circle">4</div>
+        <div class="progress-label">Complete</div>
+      </div>
+    </div>
+    
+    <div class="wizard-content">
+      <div id="alertContainer"></div>
+      
+      <!-- Step 1: Welcome -->
+      <div class="step active" data-step="1">
+        <h2>Welcome to Template Distribution System</h2>
+        <p>This wizard will help you set up your system in just a few steps. Here's what we'll do:</p>
+        
+        <ul class="feature-list">
+          <li><strong>Create Configuration Sheet:</strong> Automatically set up your product database in Google Sheets</li>
+          <li><strong>Add Your First Product:</strong> Configure your first template with Drive Picker</li>
+          <li><strong>Test the System:</strong> Verify everything works correctly</li>
+        </ul>
+        
+        <p>You'll need:</p>
+        <ul class="feature-list">
+          <li>A Google Drive folder containing your template files (Google Sheets)</li>
+          <li>About 5 minutes to complete the setup</li>
+        </ul>
+      </div>
+      
+      <!-- Step 2: Create Config Sheet -->
+      <div class="step" data-step="2">
+        <h2>Create Configuration Sheet</h2>
+        <p>We'll create a Google Sheet to store your product configurations. This sheet will be created in your Google Drive.</p>
+        
+        <div id="configStatus">
+          <p>Click "Create Configuration Sheet" to get started.</p>
+        </div>
+      </div>
+      
+      <!-- Step 3: Add First Product -->
+      <div class="step" data-step="3">
+        <h2>Add Your First Product</h2>
+        <p>Let's add your first template product. This will appear on your landing page.</p>
+        
+        <form id="productForm">
+          <div class="form-group">
+            <label for="productName">Product Name (Internal ID)*</label>
+            <input type="text" id="productName" required 
+                   pattern="[A-Za-z0-9_-]+" 
+                   title="Only letters, numbers, hyphens and underscores"
+                   placeholder="e.g., EventPlanning">
+            <small>Used in URLs. No spaces allowed.</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="displayName">Display Name*</label>
+            <input type="text" id="displayName" required
+                   placeholder="e.g., Event Planning Tool">
+            <small>User-facing name shown on landing page</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="folderId">Google Drive Folder*</label>
+            <div class="folder-picker">
+              <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
+              <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
+                📁 Browse Drive
+              </button>
+            </div>
+            <div id="folderInfo" class="folder-info"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Brief description for landing page (optional)"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="enabled" checked>
+              <label for="enabled">Enable this product immediately</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Step 4: Complete -->
+      <div class="step" data-step="4">
+        <div class="success-icon">🎉</div>
+        <h2>Setup Complete!</h2>
+        <p>Your Template Distribution System is now configured and ready to use.</p>
+        
+        <ul class="feature-list">
+          <li>Configuration sheet created and linked</li>
+          <li>First product added successfully</li>
+          <li>System is live and accessible</li>
+        </ul>
+        
+        <p><strong>Next steps:</strong></p>
+        <ul class="feature-list">
+          <li>Visit the admin panel to manage products</li>
+          <li>View the landing page to see your product</li>
+          <li>Share your product URLs with users</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="wizard-actions">
+      <button id="backBtn" class="btn btn-secondary" onclick="previousStep()" disabled>
+        ← Back
+      </button>
+      <button id="nextBtn" class="btn btn-primary" onclick="nextStep()">
+        Next →
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+    let pickerApiLoaded = false;
+    let oauthToken = null;
+    let configCreated = false;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      loadGooglePicker();
+      updateButtons();
+    });
+    
+    // Navigation
+    function nextStep() {
+      if (currentStep === 2 && !configCreated) {
+        createConfigSheet();
+        return;
+      }
+      
+      if (currentStep === 3) {
+        saveFirstProduct();
+        return;
+      }
+      
+      if (currentStep < totalSteps) {
+        currentStep++;
+        showStep(currentStep);
+      } else {
+        // Go to admin panel
+        window.location.href = '?admin=true';
+      }
+    }
+    
+    function previousStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    }
+    
+    function showStep(step) {
+      // Update steps
+      document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+      
+      // Update progress
+      document.querySelectorAll('.progress-step').forEach(el => {
+        const stepNum = parseInt(el.dataset.step);
+        el.classList.remove('active', 'completed');
+        if (stepNum === step) {
+          el.classList.add('active');
+        } else if (stepNum < step) {
+          el.classList.add('completed');
+        }
+      });
+      
+      updateButtons();
+    }
+    
+    function updateButtons() {
+      const backBtn = document.getElementById('backBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      backBtn.disabled = currentStep === 1;
+      
+      if (currentStep === 2) {
+        nextBtn.textContent = configCreated ? 'Next →' : 'Create Configuration Sheet';
+      } else if (currentStep === 3) {
+        nextBtn.textContent = 'Add Product';
+      } else if (currentStep === 4) {
+        nextBtn.textContent = 'Go to Admin Panel →';
+      } else {
+        nextBtn.textContent = 'Next →';
+      }
+    }
+    
+    // Create config sheet
+    function createConfigSheet() {
+      const statusDiv = document.getElementById('configStatus');
+      statusDiv.innerHTML = '<p>Creating configuration sheet... <span class="loading"></span></p>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            configCreated = true;
+            statusDiv.innerHTML = `
+              <div style="padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                <h3 style="color: #2e7d32; margin-bottom: 10px;">✅ Configuration Sheet Created</h3>
+                <p style="margin-bottom: 10px;">Sheet ID: <code style="background: white; padding: 2px 6px; border-radius: 3px;">${result.sheetId}</code></p>
+                <p><a href="https://docs.google.com/spreadsheets/d/${result.sheetId}/edit" target="_blank" style="color: #2e7d32;">Open Configuration Sheet →</a></p>
+              </div>
+            `;
+            updateButtons();
+            showAlert('Configuration sheet created successfully!', 'success');
+          } else {
+            statusDiv.innerHTML = `<div class="alert alert-error">${result.error}</div>`;
+          }
+        })
+        .withFailureHandler(function(error) {
+          statusDiv.innerHTML = `<div class="alert alert-error">Error: ${error.message}</div>`;
+        })
+        .setupCreateConfigSheet();
+    }
+    
+    // Save first product
+    function saveFirstProduct() {
+      const form = document.getElementById('productForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const productData = {
+        name: document.getElementById('productName').value,
+        displayName: document.getElementById('displayName').value,
+        folderId: document.getElementById('folderId').value,
+        description: document.getElementById('description').value,
+        enabled: document.getElementById('enabled').checked
+      };
+      
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = true;
+      nextBtn.innerHTML = 'Adding Product... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = 'Add Product';
+          
+          if (result.success) {
+            showAlert('Product added successfully!', 'success');
+            currentStep++;
+            showStep(currentStep);
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = 'Add Product';
+          showAlert('Error: ' + error.message, 'error');
+        })
+        .addProduct(productData);
+    }
+    
+    // Validate folder
+    function validateFolder(folderId) {
+      const folderInfo = document.getElementById('folderInfo');
+      folderInfo.innerHTML = '<div class="loading"></div> Checking folder...';
+      folderInfo.classList.add('active');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            folderInfo.innerHTML = `
+              ✅ <strong>${result.name}</strong><br>
+              📊 Contains ${result.fileCount} Google Sheets file(s)
+            `;
+          } else {
+            folderInfo.innerHTML = `❌ ${result.error}`;
+          }
+        })
+        .getFolderDetails(folderId);
+    }
+    
+    // Google Drive Picker
+    function loadGooglePicker() {
+      gapi.load('picker', function() {
+        pickerApiLoaded = true;
+      });
+      
+      google.script.run
+        .withSuccessHandler(function(token) {
+          oauthToken = token;
+        })
+        .getOAuthToken();
+    }
+    
+    function openDrivePicker() {
+      if (!pickerApiLoaded || !oauthToken) {
+        alert('Drive Picker is loading... please try again in a moment.');
+        return;
+      }
+      
+      const picker = new google.picker.PickerBuilder()
+        .setOAuthToken(oauthToken)
+        .addView(google.picker.ViewId.FOLDERS)
+        .setCallback(pickerCallback)
+        .build();
+      
+      picker.setVisible(true);
+    }
+    
+    function pickerCallback(data) {
+      if (data.action === google.picker.Action.PICKED) {
+        const folder = data.docs[0];
+        document.getElementById('folderId').value = folder.id;
+        validateFolder(folder.id);
+      }
+    }
+    
+    // Alert helper
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `
+        <div class="alert alert-${type === 'error' ? 'error' : 'success'}">
+          ${message}
+        </div>
+      `;
+      
+      setTimeout(function() {
+        container.innerHTML = '';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

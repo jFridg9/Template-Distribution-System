@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel</title>
+  
+  <!-- Google Drive Picker API -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+    }
+    
+    header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    
+    header p {
+      opacity: 0.9;
+    }
+    
+    .content {
+      padding: 30px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+    
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #da190b;
+    }
+    
+    .products-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .products-table th,
+    .products-table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .products-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      font-size: 0.85em;
+    }
+    
+    .products-table tr:hover {
+      background: #f9f9f9;
+    }
+    
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+    
+    .status-enabled {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .status-disabled {
+      background: #ffebee;
+      color: #c62828;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      margin-bottom: 20px;
+    }
+    
+    .modal-header h2 {
+      color: #667eea;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
+      font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+    
+    .folder-picker {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .folder-info {
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .folder-info.active {
+      display: block;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border-left: 4px solid #2e7d32;
+    }
+    
+    .alert-error {
+      background: #ffebee;
+      color: #c62828;
+      border-left: 4px solid #c62828;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛠️ Admin Panel</h1>
+      <p>Template Distribution System - Product Management</p>
+    </header>
+    
+    <div class="content">
+      <div id="alertContainer"></div>
+      
+      <div class="actions">
+        <button class="btn btn-primary" onclick="openAddProductModal()">
+          ➕ Add New Product
+        </button>
+        <button class="btn btn-secondary" onclick="refreshProducts()">
+          🔄 Refresh
+        </button>
+        <button class="btn btn-secondary" onclick="clearCache()">
+          🗑️ Clear Cache
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href='?'">
+          🏠 View Landing Page
+        </button>
+      </div>
+      
+      <div id="productsContainer">
+        <? if (products.length === 0) { ?>
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            <h2>No Products Yet</h2>
+            <p>Click "Add New Product" to get started</p>
+          </div>
+        <? } else { ?>
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Display Name</th>
+                <th>Status</th>
+                <th>Files</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <!-- Products will be loaded here -->
+            </tbody>
+          </table>
+        <? } ?>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add/Edit Product Modal -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Product</h2>
+      </div>
+      
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <div class="form-group">
+          <label for="productName">Product Name (Internal ID)*</label>
+          <input type="text" id="productName" required 
+                 pattern="[A-Za-z0-9_-]+" 
+                 title="Only letters, numbers, hyphens and underscores">
+          <small>Used in URLs. Example: EventPlanning</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="displayName">Display Name*</label>
+          <input type="text" id="displayName" required>
+          <small>User-facing name shown on landing page</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="folderId">Google Drive Folder*</label>
+          <div class="folder-picker">
+            <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
+            <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
+              📁 Browse Drive
+            </button>
+          </div>
+          <div id="folderInfo" class="folder-info"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" placeholder="Brief description for landing page"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="enabled" checked>
+            <label for="enabled">Enable this product</label>
+          </div>
+        </div>
+        
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">
+            💾 Save Product
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">
+            ❌ Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // State
+    let products = <?!= JSON.stringify(products) ?>;
+    let pickerApiLoaded = false;
+    let oauthToken = null;
+    let editingProduct = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProducts();
+      loadGooglePicker();
+    });
+    
+    // Load products into table
+    function loadProducts() {
+      const tbody = document.getElementById('productsTableBody');
+      if (!tbody) return;
+      
+      tbody.innerHTML = products.map(product => `
+        <tr>
+          <td><strong>${product.name}</strong></td>
+          <td>${product.displayName}</td>
+          <td>
+            <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
+              ${product.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </td>
+          <td>
+            <a href="https://drive.google.com/drive/folders/${product.folderId}" target="_blank">
+              View Folder →
+            </a>
+          </td>
+          <td>
+            <button class="btn btn-secondary" onclick='editProduct(${JSON.stringify(product)})' style="padding: 6px 12px; font-size: 0.9em;">
+              ✏️ Edit
+            </button>
+            <button class="btn btn-secondary" onclick="toggleProduct('${product.name}')" style="padding: 6px 12px; font-size: 0.9em;">
+              ${product.enabled ? '⏸️ Disable' : '▶️ Enable'}
+            </button>
+            <button class="btn btn-danger" onclick="deleteProduct_confirm('${product.name}')" style="padding: 6px 12px; font-size: 0.9em;">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    // Modal functions
+    function openAddProductModal() {
+      editingProduct = null;
+      document.getElementById('modalTitle').textContent = 'Add New Product';
+      document.getElementById('productForm').reset();
+      document.getElementById('productName').disabled = false;
+      document.getElementById('productModal').classList.add('active');
+    }
+    
+    function editProduct(product) {
+      editingProduct = product.name;
+      document.getElementById('modalTitle').textContent = 'Edit Product';
+      document.getElementById('productName').value = product.name;
+      document.getElementById('productName').disabled = true;
+      document.getElementById('displayName').value = product.displayName;
+      document.getElementById('folderId').value = product.folderId;
+      document.getElementById('description').value = product.description || '';
+      document.getElementById('enabled').checked = product.enabled;
+      document.getElementById('productModal').classList.add('active');
+      
+      // Load folder info
+      validateFolder(product.folderId);
+    }
+    
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('active');
+    }
+    
+    // Save product
+    function saveProduct(event) {
+      event.preventDefault();
+      
+      const productData = {
+        name: document.getElementById('productName').value,
+        displayName: document.getElementById('displayName').value,
+        folderId: document.getElementById('folderId').value,
+        description: document.getElementById('description').value,
+        enabled: document.getElementById('enabled').checked
+      };
+      
+      showAlert('Saving...', 'info');
+      
+      const functionName = editingProduct ? 'updateProduct' : 'addProduct';
+      const args = editingProduct ? [editingProduct, productData] : [productData];
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showAlert(result.message, 'success');
+            closeModal();
+            refreshProducts();
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showAlert('Error: ' + error.message, 'error');
+        })
+        [functionName](...args);
+    }
+    
+    // Toggle product
+    function toggleProduct(productName) {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showAlert(result.message, 'success');
+            refreshProducts();
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        })
+        .toggleProductEnabled(productName);
+    }
+    
+    // Delete product
+    function deleteProduct_confirm(productName) {
+      if (!confirm(`Are you sure you want to delete "${productName}"?`)) {
+        return;
+      }
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showAlert(result.message, 'success');
+            refreshProducts();
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        })
+        .deleteProduct(productName);
+    }
+    
+    // Refresh products
+    function refreshProducts() {
+      window.location.reload();
+    }
+    
+    // Clear cache
+    function clearCache() {
+      google.script.run
+        .withSuccessHandler(function() {
+          showAlert('Cache cleared successfully', 'success');
+        })
+        .clearConfigCache();
+    }
+    
+    // Validate folder
+    function validateFolder(folderId) {
+      const folderInfo = document.getElementById('folderInfo');
+      folderInfo.innerHTML = '<div class="loading"></div> Checking folder...';
+      folderInfo.classList.add('active');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            folderInfo.innerHTML = `
+              ✅ <strong>${result.name}</strong><br>
+              📊 Contains ${result.fileCount} Google Sheets file(s)
+            `;
+          } else {
+            folderInfo.innerHTML = `❌ ${result.error}`;
+          }
+        })
+        .getFolderDetails(folderId);
+    }
+    
+    // Google Drive Picker
+    function loadGooglePicker() {
+      gapi.load('picker', function() {
+        pickerApiLoaded = true;
+      });
+      
+      google.script.run
+        .withSuccessHandler(function(token) {
+          oauthToken = token;
+        })
+        .getOAuthToken();
+    }
+    
+    function openDrivePicker() {
+      if (!pickerApiLoaded || !oauthToken) {
+        alert('Drive Picker is loading... please try again in a moment.');
+        return;
+      }
+      
+      const picker = new google.picker.PickerBuilder()
+        .setOAuthToken(oauthToken)
+        .addView(google.picker.ViewId.FOLDERS)
+        .setCallback(pickerCallback)
+        .build();
+      
+      picker.setVisible(true);
+    }
+    
+    function pickerCallback(data) {
+      if (data.action === google.picker.Action.PICKED) {
+        const folder = data.docs[0];
+        document.getElementById('folderId').value = folder.id;
+        validateFolder(folder.id);
+      }
+    }
+    
+    // Alert helper
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `
+        <div class="alert alert-${type === 'error' ? 'error' : 'success'}">
+          ${message}
+        </div>
+      `;
+      
+      setTimeout(function() {
+        container.innerHTML = '';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
