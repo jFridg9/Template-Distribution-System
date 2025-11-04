@@ -391,6 +391,7 @@
     let products = <?!= JSON.stringify(products) ?>;
     let pickerApiLoaded = false;
     let oauthToken = null;
+  let developerKey = null;
     let editingProduct = null;
     
     // Initialize
@@ -571,6 +572,16 @@
           oauthToken = token;
         })
         .getOAuthToken();
+
+      // Fetch the Google Picker API key from Script Properties
+      google.script.run
+        .withSuccessHandler(function(key) {
+          developerKey = key;
+          if (!developerKey) {
+            console.warn('Google Picker API key not set. Add PICKER_API_KEY in Script Properties.');
+          }
+        })
+        .getPickerApiKey();
     }
     
     function openDrivePicker() {
@@ -578,9 +589,20 @@
         alert('Drive Picker is loading... please try again in a moment.');
         return;
       }
+
+      if (!developerKey) {
+        alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
+        return;
+      }
       
+      const origin = (google && google.script && google.script.host && google.script.host.origin)
+        ? google.script.host.origin
+        : window.location.origin;
+
       const picker = new google.picker.PickerBuilder()
         .setOAuthToken(oauthToken)
+        .setDeveloperKey(developerKey)
+        .setOrigin(origin)
         .addView(google.picker.ViewId.FOLDERS)
         .setCallback(pickerCallback)
         .build();

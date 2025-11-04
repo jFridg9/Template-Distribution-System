@@ -320,6 +320,18 @@ function getRuntimeConfig() {
   return scriptProps.getProperties();
 }
 
+/**
+ * Retrieves the Google Picker API key from Script Properties.
+ * Set this in Apps Script: Project Settings → Script properties →
+ *   key: PICKER_API_KEY, value: <your API key>
+ *
+ * @returns {string} API key or empty string if not set
+ */
+function getPickerApiKey() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  return scriptProps.getProperty('PICKER_API_KEY') || '';
+}
+
 
 /**
  * ============================================================================
