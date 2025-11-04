@@ -36,3 +36,10 @@ desktop.ini
 tmp/
 temp/
 *.tmp
+
+# Setup files with credentials (DO NOT COMMIT)
+SETUP_COMPLETE.md
+TROUBLESHOOTING_CI.md
+CI_CD_STATUS.md
+GITHUB_SECRETS_SETUP.md
+set-github-secrets.ps1
