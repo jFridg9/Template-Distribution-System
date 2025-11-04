@@ -416,6 +416,38 @@ function toggleProductEnabled(productName) {
 function getOAuthToken() {
   return ScriptApp.getOAuthToken();
 }
+/**
+ * Normalizes various folder inputs (raw ID or full URL) into a Drive folder ID
+ *
+ * @param {string} input - Folder ID or Google Drive URL
+ * @returns {string} Extracted folder ID
+ */
+function normalizeFolderId(input) {
+  if (!input) return '';
+  var str = String(input).trim();
+
+  // If it's already a 25+ char ID-like string without URL parts
+  if (str.indexOf('http') !== 0 && str.indexOf('/') === -1 && str.indexOf('?') === -1) {
+    return str;
+  }
+
+  // Handle typical Drive URL formats
+  // 1) https://drive.google.com/drive/folders/<ID>
+  var m1 = str.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
+  if (m1 && m1[1]) return m1[1];
+
+  // 2) https://drive.google.com/open?id=<ID>
+  var m2 = str.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  if (m2 && m2[1]) return m2[1];
+
+  // 3) https://drive.google.com/drive/u/0/folders/<ID>
+  var m3 = str.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
+  if (m3 && m3[1]) return m3[1];
+
+  // Fallback: return as-is
+  return str;
+}
+
 
 
 /**
@@ -427,7 +459,9 @@ function getOAuthToken() {
  */
 function getFolderDetails(folderId) {
   try {
-    const folder = DriveApp.getFolderById(folderId);
+    const id = normalizeFolderId(folderId);
+    Logger.log('getFolderDetails(): resolving folder ID: ' + id);
+    const folder = DriveApp.getFolderById(id);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
     
     let fileCount = 0;
@@ -443,6 +477,7 @@ function getFolderDetails(folderId) {
       fileCount: fileCount
     };
   } catch (err) {
+    Logger.log('ERROR getFolderDetails(): ' + err.message);
     return {
       success: false,
       error: 'Cannot access folder: ' + err.message
