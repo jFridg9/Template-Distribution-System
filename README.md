@@ -38,6 +38,13 @@ This system provides **one permanent URL** that always points to the latest vers
 - No code changes needed for configuration updates
 - Instant updates (with 5-minute cache)
 
+### 🛠️ **Admin Panel** ⭐ NEW
+- **Visual Drive Picker** - Select folders without copy/pasting IDs
+- **Setup Wizard** - Automated first-time configuration
+- **Product Management** - Add, edit, delete, enable/disable products via UI
+- **Folder Validation** - Automatic checking of Drive folders and file counts
+- **No Sheet Editing** - Manage everything through the web interface
+
 ### 🔧 **Dual Deployment Modes**
 
 **Full Mode** (Portfolio / Power Users):
@@ -94,6 +101,25 @@ This system provides **one permanent URL** that always points to the latest vers
 ---
 
 ## 🚀 Quick Start
+
+### Option A: Setup Wizard (Recommended) ⭐
+
+The easiest way to get started—**no manual configuration needed**:
+
+1. **Push to GitHub** (CI/CD deploys automatically via GitHub Actions)
+2. **Open Apps Script** editor and deploy as web app
+3. **Run Setup Wizard**: Visit your web app URL with `?setup=true`
+4. **Follow 4 steps**:
+   - Welcome & overview
+   - Create configuration sheet (automatic)
+   - Add first product with Drive Picker (visual folder selection)
+   - Complete & access admin panel
+
+**That's it!** Your system is configured and ready to use.
+
+### Option B: Manual Configuration
+
+If you prefer full control:
 
 ### 1. **Create Configuration Sheet**
 
@@ -154,6 +180,32 @@ Visit your URLs:
 
 ## 📖 Usage Examples
 
+### For Administrators
+
+**Admin Panel:**
+```
+https://your-webapp/exec?admin=true
+```
+Access the admin panel to:
+- Add, edit, delete products
+- Enable/disable products
+- Use Drive Picker to select folders visually
+- View folder contents and file counts
+- Clear configuration cache
+- Navigate to landing page
+
+**Setup Wizard:**
+```
+https://your-webapp/exec?setup=true
+```
+First-time setup wizard (automatic redirect if not configured):
+- Creates configuration sheet automatically
+- Guides through first product setup
+- Uses Drive Picker for folder selection
+- Validates configuration
+
+**Note:** Both admin panel and setup wizard are only accessible to the script deployer for security.
+
 ### For End Users
 
 **Landing Page (Full Mode):**
@@ -200,6 +252,15 @@ branding: {
 
 ### Adding New Products
 
+**Via Admin Panel (Recommended):**
+1. Visit `?admin=true`
+2. Click "➕ Add New Product"
+3. Fill in product details
+4. Click "📁 Browse Drive" to select folder visually
+5. Save—configuration updates automatically
+
+**Via Google Sheet (Manual):**
+
 Simply add a new row to your configuration sheet:
 
 | name        | folderId  | displayName      | enabled | description           |
@@ -208,7 +269,7 @@ Simply add a new row to your configuration sheet:
 
 Changes take effect within 5 minutes (cache refresh).
 
-To force immediate update:
+To force immediate update (Admin Panel → Clear Cache button, or run in Apps Script editor):
 ```javascript
 clearConfigCache()
 ```
