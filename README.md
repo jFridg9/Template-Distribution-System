@@ -38,12 +38,22 @@ This system provides **one permanent URL** that always points to the latest vers
 - No code changes needed for configuration updates
 - Instant updates (with 5-minute cache)
 
-### 🛠️ **Admin Panel** ⭐ NEW
-- **Visual Drive Picker** - Select folders without copy/pasting IDs
-- **Setup Wizard** - Automated first-time configuration
-- **Product Management** - Add, edit, delete, enable/disable products via UI
-- **Folder Validation** - Automatic checking of Drive folders and file counts
-- **No Sheet Editing** - Manage everything through the web interface
+### 🛠️ **Admin Panel** ⭐ NEW - Fully Automated Setup
+- **🚀 Zero Manual Configuration** - Setup wizard handles everything automatically
+- **📁 Visual Drive Picker** - Select folders without copy/pasting IDs
+- **⚡ Instant Configuration** - Sheet created and linked automatically via Script Properties
+- **🎨 Product Management** - Add, edit, delete, enable/disable products via UI
+- **✅ Folder Validation** - Automatic checking of Drive folders and file counts
+- **🚫 No Code Editing** - All configuration through web interface (no sheet editing, no ID copying)
+
+**What you DON'T need to do:**
+- ❌ Copy sheet IDs into code
+- ❌ Copy folder IDs from URLs
+- ❌ Edit configuration sheets manually
+- ❌ Understand Apps Script
+- ❌ Make any code changes
+
+**What you DO:** Visit `?admin=true` → Click buttons → Select folders → Done! (5 minutes)
 
 ### 🔧 **Dual Deployment Modes**
 
@@ -104,18 +114,23 @@ This system provides **one permanent URL** that always points to the latest vers
 
 ### Option A: Setup Wizard (Recommended) ⭐
 
-The easiest way to get started—**no manual configuration needed**:
+The easiest way to get started—**fully automated, zero manual configuration**:
 
-1. **Push to GitHub** (CI/CD deploys automatically via GitHub Actions)
-2. **Open Apps Script** editor and deploy as web app
-3. **Run Setup Wizard**: Visit your web app URL with `?setup=true`
-4. **Follow 4 steps**:
-   - Welcome & overview
-   - Create configuration sheet (automatic)
-   - Add first product with Drive Picker (visual folder selection)
-   - Complete & access admin panel
+1. **Deploy the Web App**:
+   - Push to GitHub (CI/CD deploys automatically via GitHub Actions), OR
+   - Use `clasp push` to deploy manually
+2. **Deploy as Web App** in Apps Script editor:
+   - Deploy → New deployment → Web app
+   - Execute as: Me
+   - Who has access: Anyone (or Anyone with Google account)
+3. **Access Admin Panel**: Visit your web app URL with `?admin=true`
+4. **Setup Wizard Runs Automatically** (first time only):
+   - **Step 1:** Welcome & overview of automated features
+   - **Step 2:** Click to create configuration sheet (automatically linked - no ID copying!)
+   - **Step 3:** Add first product using Drive Picker (visual folder selection - no ID copying!)
+   - **Step 4:** Complete & access admin panel
 
-**That's it!** Your system is configured and ready to use.
+**That's it!** Your system is configured and ready. The configuration sheet ID is automatically saved to Script Properties, so no code changes are needed.
 
 ### Option B: Manual Configuration
 
@@ -146,12 +161,12 @@ Replace `abc123...` with your actual Google Drive folder IDs.
 
 ### 3. **Configure the Script**
 
-In `Code.gs`, update the `CONFIG` object:
+In `Code.gs`, update the `CONFIG` object (optional if using Setup Wizard):
 
 ```javascript
 const CONFIG = {
   mode: 'full',  // or 'simple' for client deployments
-  configSheetId: 'YOUR_CONFIG_SHEET_ID_HERE',  // Paste from step 1
+  configSheetId: 'YOUR_CONFIG_SHEET_ID_HERE',  // Optional - Setup Wizard uses Script Properties
   branding: {
     organizationName: 'Your Organization',
     tagline: 'Professional Templates',
@@ -159,6 +174,8 @@ const CONFIG = {
   }
 };
 ```
+
+**Note:** If you use the Setup Wizard (Option A), the configuration sheet ID is stored in Script Properties and takes precedence over the hardcoded value. Manual configuration in `CONFIG` is only needed if you want to bypass the Setup Wizard.
 
 ### 4. **Deploy as Web App**
 
@@ -187,17 +204,18 @@ Visit your URLs:
 https://your-webapp/exec?admin=true
 ```
 Access the admin panel to:
-- Add, edit, delete products
-- Enable/disable products
-- Use Drive Picker to select folders visually
+- Add, edit, delete products via web UI
+- Enable/disable products with toggle
+- Use Drive Picker to select folders visually (no ID copying!)
 - View folder contents and file counts
+- Validate folder accessibility
 - Clear configuration cache
 - Navigate to landing page
 
-**Setup Wizard:**
-```
-https://your-webapp/exec?setup=true
-```
+**Setup Wizard** (runs automatically on first `?admin=true` visit):
+- Automatically shown if no configuration exists
+- Creates and links configuration sheet automatically
+- No manual ID copying or code changes needed
 First-time setup wizard (automatic redirect if not configured):
 - Creates configuration sheet automatically
 - Guides through first product setup
