@@ -485,6 +485,103 @@ function getFolderDetails(folderId) {
   }
 }
 
+/**
+ * Lists root-level folders in the deployer's Drive account.
+ * Used as a fallback UI when the Picker cannot be used.
+ * @returns {Object} { success: true, folders: [{id,name}, ...] }
+ */
+function listRootFolders() {
+  try {
+    const folders = DriveApp.getFolders();
+    const out = [];
+    while (folders.hasNext()) {
+      const f = folders.next();
+      out.push({ id: f.getId(), name: f.getName() });
+    }
+    return { success: true, folders: out };
+  } catch (err) {
+    Logger.log('ERROR listRootFolders: ' + err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Lists child folders for a given folder ID.
+ * @param {string} folderId
+ * @returns {Object} { success: true, folders: [...] }
+ */
+function listFolderChildren(folderId) {
+  try {
+    const id = normalizeFolderId(folderId);
+    const folder = DriveApp.getFolderById(id);
+    const children = folder.getFolders();
+    const out = [];
+    while (children.hasNext()) {
+      const f = children.next();
+      out.push({ id: f.getId(), name: f.getName() });
+    }
+    return { success: true, folders: out };
+  } catch (err) {
+    Logger.log('ERROR listFolderChildren: ' + err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Diagnostic: attempt to fetch the Picker page server-side using the configured
+ * PICKER_API_KEY and PICKER_APP_ID. This helps confirm whether the key/project
+ * pairing is rejected on Google's side independently of the browser.
+ *
+ * Run this from the Apps Script editor (select function `pickerKeyDiagnostics`)
+ * or call from an admin UI helper if exposed.
+ *
+ * @returns {Object} diagnostic info
+ */
+function pickerKeyDiagnostics() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const key = props.getProperty('PICKER_API_KEY') || '';
+    const appId = props.getProperty('PICKER_APP_ID') || '';
+
+    if (!key) return { success: false, error: 'PICKER_API_KEY not set in Script Properties' };
+
+    const origin = 'https://script.google.com';
+    const hostId = ScriptApp.getService().getUrl ? ScriptApp.getService().getUrl() : '';
+
+    const url = 'https://docs.google.com/picker?protocol=gadgets'
+      + '&origin=' + encodeURIComponent(origin)
+      + (key ? '&developerKey=' + encodeURIComponent(key) : '')
+      + (appId ? '&appId=' + encodeURIComponent(appId) : '')
+      + '&nav=((%22folders%22))&thirdParty=true';
+
+    const options = {
+      method: 'get',
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: {
+        'Referer': origin,
+        'Origin': origin,
+        'User-Agent': 'AppsScript-Diagnostic/1.0'
+      },
+      validateHttpsCertificates: true
+    };
+
+    const resp = UrlFetchApp.fetch(url, options);
+    const code = resp.getResponseCode();
+    const text = resp.getContentText().slice(0, 2000);
+    const hdrs = resp.getAllHeaders ? resp.getAllHeaders() : {};
+
+    return {
+      success: true,
+      status: code,
+      headers: hdrs,
+      bodySnippet: text
+    };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 
 /**
  * ============================================================================
