@@ -38,12 +38,22 @@ This system provides **one permanent URL** that always points to the latest vers
 - No code changes needed for configuration updates
 - Instant updates (with 5-minute cache)
 
-### 🛠️ **Admin Panel** ⭐ NEW
-- **Visual Drive Picker** - Select folders without copy/pasting IDs
-- **Setup Wizard** - Automated first-time configuration
-- **Product Management** - Add, edit, delete, enable/disable products via UI
-- **Folder Validation** - Automatic checking of Drive folders and file counts
-- **No Sheet Editing** - Manage everything through the web interface
+### 🛠️ **Admin Panel** ⭐ NEW - Fully Automated Setup
+- **🚀 Zero Manual Configuration** - Setup wizard handles everything automatically
+- **📁 Visual Drive Picker** - Select folders without copy/pasting IDs
+- **⚡ Instant Configuration** - Sheet created and linked automatically via Script Properties
+- **🎨 Product Management** - Add, edit, delete, enable/disable products via UI
+- **✅ Folder Validation** - Automatic checking of Drive folders and file counts
+- **🚫 No Code Editing** - All configuration through web interface (no sheet editing, no ID copying)
+
+**What you DON'T need to do:**
+- ❌ Copy sheet IDs into code
+- ❌ Copy folder IDs from URLs
+- ❌ Edit configuration sheets manually
+- ❌ Understand Apps Script
+- ❌ Make any code changes
+
+**What you DO:** Visit `?admin=true` → Click buttons → Select folders → Done! (5 minutes)
 
 ### 🔧 **Dual Deployment Modes**
 
