@@ -332,6 +332,16 @@ function getPickerApiKey() {
   return scriptProps.getProperty('PICKER_API_KEY') || '';
 }
 
+/**
+ * Retrieves the optional Picker App ID (GCP numeric project number) from Script Properties.
+ * Set this to the Google Cloud project number associated with the API key if you have one.
+ * @returns {string} App ID or empty string
+ */
+function getPickerAppId() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  return scriptProps.getProperty('PICKER_APP_ID') || '';
+}
+
 
 /**
  * ============================================================================

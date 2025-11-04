@@ -392,6 +392,7 @@
     let pickerApiLoaded = false;
     let oauthToken = null;
   let developerKey = null;
+  let pickerAppId = null;
     let editingProduct = null;
     
     // Initialize
@@ -586,6 +587,14 @@
           });
         })
         .getPickerApiKey();
+
+      // Fetch optional Picker App ID (numeric GCP project number)
+      google.script.run
+        .withSuccessHandler(function(id) {
+          pickerAppId = id;
+          if (pickerAppId) console.log('Picker App ID:', pickerAppId);
+        })
+        .getPickerAppId();
     }
     
     function openDrivePicker() {
@@ -609,13 +618,22 @@
         origin
       });
 
-      const picker = new google.picker.PickerBuilder()
+      const builder = new google.picker.PickerBuilder()
         .setOAuthToken(oauthToken)
         .setDeveloperKey(developerKey)
         .setOrigin(origin)
         .addView(google.picker.ViewId.FOLDERS)
-        .setCallback(pickerCallback)
-        .build();
+        .setCallback(pickerCallback);
+
+      if (pickerAppId) {
+        try {
+          builder.setAppId(pickerAppId);
+        } catch (err) {
+          console.warn('Failed to set Picker App ID:', err && err.message);
+        }
+      }
+
+      const picker = builder.build();
       
       picker.setVisible(true);
     }
