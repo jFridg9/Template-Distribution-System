@@ -58,7 +58,7 @@ const CONFIG = {
    * 
    * See CONFIG_TEMPLATE.md for the expected sheet structure.
    */
-  configSheetId: 'YOUR_CONFIG_SHEET_ID_HERE',
+  configSheetId: '1X4RrTt45ceYRYrzC0jAlcgBMADF1S4cWHuOfxjHZ4Is',
   
   /**
    * FALLBACK FOLDER (Optional)
