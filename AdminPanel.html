@@ -361,6 +361,9 @@
             <button type="button" class="btn btn-secondary" onclick="openFallbackPicker()" title="Browse folders using server-side Drive access">
               📂 Browse Drive (fallback)
             </button>
+            <button type="button" class="btn btn-secondary" onclick="runPickerDiag()" title="Run server-side Picker diagnostics">
+              🧪 Picker diag
+            </button>
           </div>
           <div id="folderInfo" class="folder-info"></div>
         </div>
@@ -696,6 +699,27 @@
       showAlert('Selected folder: ' + name, 'success');
     }
     
+    // Run server-side Picker diagnostics and surface results
+    function runPickerDiag() {
+      showAlert('Running picker diagnostics... (check console for details)', 'success');
+      google.script.run.withSuccessHandler(function(res) {
+        console.log('pickerKeyDiagnostics result:', res);
+        if (!res) {
+          showAlert('No response from diagnostic', 'error');
+          return;
+        }
+        if (!res.success) {
+          showAlert('Diag error: ' + res.error, 'error');
+          return;
+        }
+        // show a compact summary
+        showAlert('Diag status: ' + res.status + ' (see console for details)', 'success');
+        // also print full headers to console
+        console.log('picker diag headers:', res.headers);
+        console.log('picker diag bodySnippet:', res.bodySnippet);
+      }).pickerKeyDiagnostics();
+    }
+
     // Alert helper
     function showAlert(message, type) {
       const container = document.getElementById('alertContainer');

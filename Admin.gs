@@ -571,14 +571,21 @@ function pickerKeyDiagnostics() {
     const text = resp.getContentText().slice(0, 2000);
     const hdrs = resp.getAllHeaders ? resp.getAllHeaders() : {};
 
-    return {
+    const out = {
       success: true,
       status: code,
       headers: hdrs,
       bodySnippet: text
     };
+
+    // Log result so it appears in Execution logs when run from the editor
+    try { Logger.log('pickerKeyDiagnostics result: %s', JSON.stringify(out)); } catch (e) {}
+
+    return out;
   } catch (err) {
-    return { success: false, error: err.message };
+    const out = { success: false, error: err.message };
+    try { Logger.log('pickerKeyDiagnostics error: %s', JSON.stringify(out)); } catch (e) {}
+    return out;
   }
 }
 
