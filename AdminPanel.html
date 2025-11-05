@@ -281,6 +281,11 @@
       <h1>🛠️ Admin Panel</h1>
       <p>Template Distribution System - Product Management</p>
     </header>
+    <!-- Editor-preview warning banner (hidden by default) -->
+    <div id="editorBanner" style="display:none;padding:12px;background:#fff3cd;border-left:4px solid #ffecb5;color:#664d03;">
+      You are viewing the admin panel inside the Apps Script editor preview. Some features (Picker) may be blocked by iframe restrictions. 
+      <button class="btn btn-secondary" style="margin-left:12px;" id="openTopBtn">Open in new tab</button>
+    </div>
     
     <div class="content">
       <div id="alertContainer"></div>
@@ -419,6 +424,23 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadProducts();
       loadGooglePicker();
+
+      // If we're embedded in the Apps Script editor iframe, show an instruction banner
+      try {
+        if (window.top !== window) {
+          const b = document.getElementById('editorBanner');
+          if (b) {
+            b.style.display = 'block';
+            const btn = document.getElementById('openTopBtn');
+            if (btn) btn.addEventListener('click', function() {
+              // Open the current iframe content at top-level
+              try { window.top.location.href = window.location.href; } catch (e) { window.open(window.location.href, '_blank'); }
+            });
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
     });
     
     // Load products into table
@@ -505,7 +527,20 @@
           if (result.success) {
             showAlert(result.message, 'success');
             closeModal();
-            refreshProducts();
+            // Update local products array and re-render instead of full reload
+            if (editingProduct) {
+              // update existing
+              products = products.map(function(p) {
+                if (p.name === editingProduct) {
+                  return Object.assign({}, p, productData);
+                }
+                return p;
+              });
+            } else {
+              // add new
+              products.push(productData);
+            }
+            loadProducts();
           } else {
             showAlert('Error: ' + result.error, 'error');
           }
