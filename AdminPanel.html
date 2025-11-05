@@ -642,8 +642,50 @@
         .setOAuthToken(oauthToken)
         .setDeveloperKey(developerKey)
         .setOrigin(origin)
-        .addView(google.picker.ViewId.FOLDERS)
         .setCallback(pickerCallback);
+
+      // Add a set of useful views: Recents, My Drive (Docs), Folders, and Shared Drives.
+      // Wrap each in try/catch so older or slightly-different Picker builds won't break.
+      try {
+        // Recents / Recently accessed
+        const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
+        builder.addView(recentView);
+      } catch (e) {
+        console.warn('Could not add Recents view to Picker (may not be supported):', e && e.message);
+      }
+
+      try {
+        // My Drive / Docs view (include folders)
+        const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+          .setIncludeFolders(true)
+          .setOwnedByMe(true);
+        builder.addView(docsView);
+      } catch (e) {
+        console.warn('Could not add Docs/My Drive view to Picker:', e && e.message);
+      }
+
+      try {
+        // Folders view (explicit folder browser)
+        builder.addView(google.picker.ViewId.FOLDERS);
+      } catch (e) {
+        console.warn('Could not add Folders view to Picker:', e && e.message);
+      }
+
+      try {
+        // Shared Drives / Team Drives (best-effort - API surface may vary)
+        const sharedView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+          .setIncludeFolders(true)
+          // attempt to enable shared drives support; method name varies across versions
+          ;
+        // try common method names for enabling Shared/Team Drives
+        try { sharedView.setEnableTeamDrives && sharedView.setEnableTeamDrives(true); } catch (e) {}
+        try { sharedView.setIncludeTeamDrives && sharedView.setIncludeTeamDrives(true); } catch (e) {}
+        try { sharedView.setSupportTeamDrives && sharedView.setSupportTeamDrives(true); } catch (e) {}
+        try { sharedView.setEnableDriveApi && sharedView.setEnableDriveApi(true); } catch (e) {}
+        builder.addView(sharedView);
+      } catch (e) {
+        console.warn('Could not add Shared Drives view to Picker (best-effort):', e && e.message);
+      }
 
       if (pickerAppId) {
         try {
