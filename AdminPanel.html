@@ -398,9 +398,45 @@
     let products = <?!= JSON.stringify(products) ?>;
     let pickerApiLoaded = false;
     let oauthToken = null;
-  let developerKey = null;
-  let pickerAppId = null;
+    let developerKey = null;
+    let pickerAppId = null;
     let editingProduct = null;
+
+    // Verbose UI logging helper
+    const UI_DEBUG = true; // set to false to disable verbose client logging
+    function uiLog(...args) {
+      if (!UI_DEBUG) return;
+      try { console.log(new Date().toISOString(), ...args); } catch (e) {}
+    }
+
+    // Helper to wrap google.script.run calls with consistent logging and timing
+    function runServerCall(functionName, args, label, handlers) {
+      args = args || [];
+      label = label || functionName;
+      handlers = handlers || {};
+      const start = Date.now();
+      uiLog(`[${label}] -> request`, { functionName, args });
+
+      const caller = google.script.run
+        .withSuccessHandler(function(result) {
+          const duration = Date.now() - start;
+          uiLog(`[${label}] <- success`, { durationMs: duration, result });
+          if (handlers.success) try { handlers.success(result); } catch (e) { uiLog(`[${label}] success handler error`, e); }
+        })
+        .withFailureHandler(function(error) {
+          const duration = Date.now() - start;
+          uiLog(`[${label}] <- failure`, { durationMs: duration, error });
+          if (handlers.failure) try { handlers.failure(error); } catch (e) { uiLog(`[${label}] failure handler error`, e); }
+        });
+
+      // Invoke the named server function on the chained caller
+      try {
+        caller[functionName].apply(caller, args);
+      } catch (err) {
+        uiLog(`[${label}] call error`, err);
+        if (handlers.failure) handlers.failure(err);
+      }
+    }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -504,8 +540,8 @@
       const functionName = editingProduct ? 'updateProduct' : 'addProduct';
       const args = editingProduct ? [editingProduct, productData] : [productData];
       
-      google.script.run
-        .withSuccessHandler(function(result) {
+      runServerCall(functionName, args, 'saveProduct', {
+        success: function(result) {
           if (result.success) {
             showAlert(result.message, 'success');
             closeModal();
@@ -526,17 +562,17 @@
           } else {
             showAlert('Error: ' + result.error, 'error');
           }
-        })
-        .withFailureHandler(function(error) {
-          showAlert('Error: ' + error.message, 'error');
-        })
-        [functionName](...args);
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
     }
     
     // Toggle product
     function toggleProduct(productName) {
-      google.script.run
-        .withSuccessHandler(function(result) {
+      runServerCall('toggleProductEnabled', [productName], 'toggleProduct', {
+        success: function(result) {
           if (result.success) {
             showAlert(result.message, 'success');
             // Update local products array and re-render without a full reload
@@ -550,8 +586,11 @@
           } else {
             showAlert('Error: ' + result.error, 'error');
           }
-        })
-        .toggleProductEnabled(productName);
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
     }
     
     // Delete product
@@ -560,8 +599,8 @@
         return;
       }
       
-      google.script.run
-        .withSuccessHandler(function(result) {
+      runServerCall('deleteProduct', [productName], 'deleteProduct', {
+        success: function(result) {
           if (result.success) {
             // Remove from local products array and re-render
             products = products.filter(function(p) { return p.name !== productName; });
@@ -570,8 +609,11 @@
           } else {
             showAlert('Error: ' + result.error, 'error');
           }
-        })
-        .deleteProduct(productName);
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
     }
     
     // Refresh products
@@ -581,11 +623,10 @@
     
     // Clear cache
     function clearCache() {
-      google.script.run
-        .withSuccessHandler(function() {
-          showAlert('Cache cleared successfully', 'success');
-        })
-        .clearConfigCache();
+      runServerCall('clearConfigCache', [], 'clearCache', {
+        success: function() { showAlert('Cache cleared successfully', 'success'); },
+        failure: function(error) { showAlert('Error: ' + (error && error.message ? error.message : error), 'error'); }
+      });
     }
     
     // Validate folder
@@ -594,8 +635,8 @@
       folderInfo.innerHTML = '<div class="loading"></div> Checking folder...';
       folderInfo.classList.add('active');
       
-      google.script.run
-        .withSuccessHandler(function(result) {
+      runServerCall('getFolderDetails', [folderId], 'validateFolder', {
+        success: function(result) {
           if (result.success) {
             folderInfo.innerHTML = `
               ✅ <strong>${result.name}</strong><br>
@@ -604,8 +645,11 @@
           } else {
             folderInfo.innerHTML = `❌ ${result.error}`;
           }
-        })
-        .getFolderDetails(folderId);
+        },
+        failure: function(error) {
+          folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+        }
+      });
     }
     
     // Google Drive Picker
@@ -614,33 +658,28 @@
         pickerApiLoaded = true;
       });
       
-      google.script.run
-        .withSuccessHandler(function(token) {
-          oauthToken = token;
-        })
-        .getOAuthToken();
+      runServerCall('getOAuthToken', [], 'getOAuthToken', {
+        success: function(token) { oauthToken = token; uiLog('oauthToken retrieved', { hasToken: !!token }); },
+        failure: function(error) { uiLog('getOAuthToken failed', error); }
+      });
 
       // Fetch the Google Picker API key from Script Properties
-      google.script.run
-        .withSuccessHandler(function(key) {
+      runServerCall('getPickerApiKey', [], 'getPickerApiKey', {
+        success: function(key) {
           developerKey = key;
           if (!developerKey) {
             console.warn('Google Picker API key not set. Add PICKER_API_KEY in Script Properties.');
           }
-          console.log('Picker diagnostics after key fetch:', {
-            keyPrefix: developerKey ? developerKey.substring(0, 6) : null,
-            keyLength: developerKey ? developerKey.length : 0
-          });
-        })
-        .getPickerApiKey();
+          uiLog('Picker key fetched', { keyPrefix: developerKey ? developerKey.substring(0,6) : null, keyLength: developerKey ? developerKey.length : 0 });
+        },
+        failure: function(error) { uiLog('getPickerApiKey failed', error); }
+      });
 
       // Fetch optional Picker App ID (numeric GCP project number)
-      google.script.run
-        .withSuccessHandler(function(id) {
-          pickerAppId = id;
-          if (pickerAppId) console.log('Picker App ID:', pickerAppId);
-        })
-        .getPickerAppId();
+      runServerCall('getPickerAppId', [], 'getPickerAppId', {
+        success: function(id) { pickerAppId = id; if (pickerAppId) uiLog('Picker App ID:', pickerAppId); },
+        failure: function(error) { uiLog('getPickerAppId failed', error); }
+      });
     }
     
     function openDrivePicker() {
