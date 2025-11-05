@@ -522,7 +522,14 @@
         .withSuccessHandler(function(result) {
           if (result.success) {
             showAlert(result.message, 'success');
-            refreshProducts();
+            // Update local products array and re-render without a full reload
+            products = products.map(function(p) {
+              if (p.name === productName) {
+                p.enabled = result.enabled;
+              }
+              return p;
+            });
+            loadProducts();
           } else {
             showAlert('Error: ' + result.error, 'error');
           }
@@ -539,8 +546,10 @@
       google.script.run
         .withSuccessHandler(function(result) {
           if (result.success) {
+            // Remove from local products array and re-render
+            products = products.filter(function(p) { return p.name !== productName; });
+            loadProducts();
             showAlert(result.message, 'success');
-            refreshProducts();
           } else {
             showAlert('Error: ' + result.error, 'error');
           }

@@ -432,11 +432,9 @@
   </div>
   
   <script>
-    let currentStep = 1;
-    const totalSteps = 4;
-    let pickerApiLoaded = false;
-    let oauthToken = null;
-    let configCreated = false;
+  let currentStep = 1;
+  const totalSteps = 4;
+  let configCreated = false;
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -599,6 +597,11 @@
     }
     
     // Google Drive Picker
+    let pickerApiLoaded = false;
+    let oauthToken = null;
+    let developerKey = null;
+    let pickerAppId = null;
+
     function loadGooglePicker() {
       gapi.load('picker', function() {
         pickerApiLoaded = true;
@@ -609,20 +612,74 @@
           oauthToken = token;
         })
         .getOAuthToken();
+
+      // Fetch the Google Picker API key from Script Properties
+      google.script.run
+        .withSuccessHandler(function(key) {
+          developerKey = key;
+          if (!developerKey) {
+            console.warn('Google Picker API key not set. Add PICKER_API_KEY in Script Properties.');
+          }
+        })
+        .getPickerApiKey();
+
+      // Fetch optional Picker App ID (numeric GCP project number)
+      google.script.run
+        .withSuccessHandler(function(id) {
+          pickerAppId = id;
+          if (pickerAppId) console.log('Picker App ID:', pickerAppId);
+        })
+        .getPickerAppId();
     }
-    
+
     function openDrivePicker() {
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
         return;
       }
-      
-      const picker = new google.picker.PickerBuilder()
+
+      if (!developerKey) {
+        alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
+        return;
+      }
+
+      const origin = (google && google.script && google.script.host && google.script.host.origin)
+        ? google.script.host.origin
+        : window.location.origin;
+
+      const builder = new google.picker.PickerBuilder()
         .setOAuthToken(oauthToken)
-        .addView(google.picker.ViewId.FOLDERS)
-        .setCallback(pickerCallback)
-        .build();
-      
+        .setDeveloperKey(developerKey)
+        .setOrigin(origin)
+        .setCallback(pickerCallback);
+
+      try {
+        const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
+        builder.addView(recentView);
+      } catch (e) { console.warn('Could not add Recents view to Picker:', e && e.message); }
+
+      try {
+        const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+          .setIncludeFolders(true)
+          .setOwnedByMe(true);
+        builder.addView(docsView);
+      } catch (e) { console.warn('Could not add Docs/My Drive view to Picker:', e && e.message); }
+
+      try { builder.addView(google.picker.ViewId.FOLDERS); } catch (e) { console.warn('Could not add Folders view:', e && e.message); }
+
+      try {
+        const sharedView = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true);
+        try { sharedView.setEnableTeamDrives && sharedView.setEnableTeamDrives(true); } catch (e) {}
+        try { sharedView.setIncludeTeamDrives && sharedView.setIncludeTeamDrives(true); } catch (e) {}
+        try { sharedView.setSupportTeamDrives && sharedView.setSupportTeamDrives(true); } catch (e) {}
+        builder.addView(sharedView);
+      } catch (e) { console.warn('Could not add Shared Drives view to Picker:', e && e.message); }
+
+      if (pickerAppId) {
+        try { builder.setAppId(pickerAppId); } catch (err) { console.warn('Failed to set Picker App ID:', err && err.message); }
+      }
+
+      const picker = builder.build();
       picker.setVisible(true);
     }
     
