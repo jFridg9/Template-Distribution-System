@@ -379,7 +379,7 @@
             <label for="folderId">Google Drive Folder*</label>
             <div class="folder-picker">
               <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
-              <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
+              <button type="button" class="btn btn-secondary" onclick="openDrivePicker(true)">
                 📁 Browse Drive
               </button>
             </div>
@@ -659,7 +659,9 @@
       });
     }
 
-    function openDrivePicker() {
+    function openDrivePicker(foldersOnly) {
+      foldersOnly = !!foldersOnly;
+      uiLog('openDrivePicker called (setup)', { foldersOnly, pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
         return;
@@ -675,32 +677,56 @@
         : window.location.origin;
 
       const builder = new google.picker.PickerBuilder()
+        .setTitle('Select a Folder')
         .setOAuthToken(oauthToken)
         .setDeveloperKey(developerKey)
         .setOrigin(origin)
         .setCallback(pickerCallback);
 
-      try {
-        const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
-        builder.addView(recentView);
-      } catch (e) { console.warn('Could not add Recents view to Picker:', e && e.message); }
+      if (foldersOnly) {
+        try {
+          const folderMimeType = 'application/vnd.google-apps.folder';
+          try {
+            const driveFolderView = new google.picker.View(google.picker.ViewId.FOLDERS).setMimeTypes(folderMimeType);
+            builder.addView(driveFolderView);
+          } catch (e) {
+            try { builder.addView(google.picker.ViewId.FOLDERS); } catch (ee) { uiLog('addView(FOLDERS) failed', ee && ee.message); }
+          }
 
-      try {
-        const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-          .setIncludeFolders(true)
-          .setOwnedByMe(true);
-        builder.addView(docsView);
-      } catch (e) { console.warn('Could not add Docs/My Drive view to Picker:', e && e.message); }
+          try {
+            const recentFolderView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT).setMimeTypes(folderMimeType);
+            builder.addView(recentFolderView);
+          } catch (e) {
+            uiLog('addView(FOLDERS_RECENT) not supported in this Picker build', e && e.message);
+          }
 
-      try { builder.addView(google.picker.ViewId.FOLDERS); } catch (e) { console.warn('Could not add Folders view:', e && e.message); }
+          try { builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES); } catch (e) { uiLog('enableFeature(SUPPORT_DRIVES) not supported', e && e.message); }
+        } catch (err) {
+          uiLog('foldersOnly picker build failed (setup)', err && err.message);
+        }
+      } else {
+        try {
+          const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
+          builder.addView(recentView);
+        } catch (e) { console.warn('Could not add Recents view to Picker:', e && e.message); }
 
-      try {
-        const sharedView = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true);
-        try { sharedView.setEnableTeamDrives && sharedView.setEnableTeamDrives(true); } catch (e) {}
-        try { sharedView.setIncludeTeamDrives && sharedView.setIncludeTeamDrives(true); } catch (e) {}
-        try { sharedView.setSupportTeamDrives && sharedView.setSupportTeamDrives(true); } catch (e) {}
-        builder.addView(sharedView);
-      } catch (e) { console.warn('Could not add Shared Drives view to Picker:', e && e.message); }
+        try {
+          const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+            .setIncludeFolders(true)
+            .setOwnedByMe(true);
+          builder.addView(docsView);
+        } catch (e) { console.warn('Could not add Docs/My Drive view to Picker:', e && e.message); }
+
+        try { builder.addView(google.picker.ViewId.FOLDERS); } catch (e) { console.warn('Could not add Folders view:', e && e.message); }
+
+        try {
+          const sharedView = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true);
+          try { sharedView.setEnableTeamDrives && sharedView.setEnableTeamDrives(true); } catch (e) {}
+          try { sharedView.setIncludeTeamDrives && sharedView.setIncludeTeamDrives(true); } catch (e) {}
+          try { sharedView.setSupportTeamDrives && sharedView.setSupportTeamDrives(true); } catch (e) {}
+          builder.addView(sharedView);
+        } catch (e) { console.warn('Could not add Shared Drives view to Picker:', e && e.message); }
+      }
 
       if (pickerAppId) {
         try { builder.setAppId(pickerAppId); } catch (err) { console.warn('Failed to set Picker App ID:', err && err.message); }
