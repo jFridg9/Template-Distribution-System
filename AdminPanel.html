@@ -624,8 +624,11 @@
       }
 
       if (!developerKey) {
-        alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
-        return;
+        // No explicit API key in Script Properties. If the Apps Script project is linked
+        // to a GCP project with an API key, Google may use that key automatically. Do
+        // not block — proceed and let Picker attempt to use the linked project credentials.
+        console.warn('No PICKER_API_KEY found in Script Properties; proceeding without explicit developerKey.');
+        showAlert('No explicit Picker API key configured — attempting to use linked GCP project key.', 'info');
       }
       
       const origin = (google && google.script && google.script.host && google.script.host.origin)
@@ -640,10 +643,16 @@
 
       const builder = new google.picker.PickerBuilder()
         .setOAuthToken(oauthToken)
-        .setDeveloperKey(developerKey)
         .setOrigin(origin)
         .addView(google.picker.ViewId.FOLDERS)
         .setCallback(pickerCallback);
+
+      // Only set developerKey if we actually have one from Script Properties. When the
+      // script is linked to a GCP project, Picker may be able to use the project's key
+      // automatically — so it's important we don't force a missing/invalid key.
+      if (developerKey) {
+        try { builder.setDeveloperKey(developerKey); } catch (err) { console.warn('Failed to set developerKey on PickerBuilder', err); }
+      }
 
       if (pickerAppId) {
         try {
