@@ -728,27 +728,26 @@ function openDrivePicker() {
     .setOrigin(origin)
     .setCallback(pickerCallback);
 
-  // --- FORGE: This is the simplified, correct logic ---
-  
-  // 1. Define the MIME type that all views will use.
-  const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
+      // --- FORGE: This is the simplified, correct logic ---
+      
+      // 1. Define the MIME type that all views will use.
+      const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 
-  // 2. Create the "Recent" view (will show recent folders).
-  const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
-    .setMimeTypes(FOLDER_MIME_TYPE);
+      // 2. Create the "Recent" view (will show recent folders).
+      const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
+        .setIncludeFolders(true);
+      try { recentView.setSelectFolderEnabled(true); } catch (e) {} // best-effort
 
-  // 3. Create the "My Drive" view (will show drive folders).
-  const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
-    .setMimeTypes(FOLDER_MIME_TYPE);
+      // 3. Create the "My Drive" view (will show drive folders).
+      const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
+        .setMimeTypes(FOLDER_MIME_TYPE);
 
-  // 4. Add the views to the builder. "Recent" is first, so it's the default.
-  builder.addView(recentView);  // Default view
-  builder.addView(driveView);   // Second tab
+      // 4. Add the views to the builder. "Recent" is first, so it's the default.
+      builder.addView(recentView);  // Default view
+      builder.addView(driveView);   // Second tab
 
-  // 5. Add the "Shared Drives" view. This flag adds the tab automatically.
-  builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);
-  
-  // --- End of rewrite ---
+      // 5. Add the "Shared Drives" view. This flag adds the tab automatically.
+      builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);  // --- End of rewrite ---
 
   if (pickerAppId) {
     try {

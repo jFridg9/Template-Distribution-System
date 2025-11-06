@@ -703,8 +703,9 @@
       const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 
       // 2. Create the "Recent" view (will show recent folders).
-      const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
-        .setMimeTypes(FOLDER_MIME_TYPE);
+      const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
+        .setIncludeFolders(true);
+      try { recentView.setSelectFolderEnabled(true); } catch (e) {} // best-effort
 
       // 3. Create the "My Drive" view (will show drive folders).
       const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
