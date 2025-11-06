@@ -362,12 +362,12 @@
         <div class="form-group">
           <label for="folderId">Google Drive Folder*</label>
           <div class="folder-picker">
-            <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
-            <button type="button" class="btn btn-secondary" onclick="openDrivePicker(true)">
-              📁 Browse Drive
-            </button>
-            <!-- Fallback picker and diagnostics removed; use primary Browse Drive -->
-          </div>
+              <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
+              <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
+                📁 Browse Drive
+              </button>
+              <!-- Fallback picker and diagnostics removed; use primary Browse Drive -->
+            </div>
           <div id="folderInfo" class="folder-info"></div>
         </div>
         
@@ -694,9 +694,8 @@
       });
     }
     
-    function openDrivePicker(foldersOnly) {
-      // Picker is always folders-only for this app. Ignore callers' flags.
-      foldersOnly = true;
+    function openDrivePicker() {
+      // Picker is always folders-only for this app.
       uiLog('openDrivePicker called', { foldersOnly, pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
@@ -725,9 +724,8 @@
         .setOrigin(origin)
         .setCallback(pickerCallback);
 
-      // Always configure the picker to only surface folders (Recent, My Drive, Shared Drives).
-      if (foldersOnly) {
-        try {
+      // Configure the picker to only surface folders (Recent, My Drive, Shared Drives).
+      try {
           // Build a compact folders-only picker that shows:
           // - Recently accessed items that include folders
           // - My Drive (Docs view) filtered to folders and owned by me
@@ -770,9 +768,9 @@
           } catch (e) {
             uiLog('Could not add Shared Drives folders view', e && e.message);
           }
-        } catch (err) {
-          uiLog('foldersOnly picker build failed', err && err.message);
-        }
+      } catch (err) {
+        uiLog('folders-only picker build failed', err && err.message);
+      }
 
       if (pickerAppId) {
         try {
