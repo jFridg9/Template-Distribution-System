@@ -886,25 +886,48 @@
           const hint = current && current.length ? current : detectBaseFromLocation();
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
           if (val === null) return; // cancelled
-          // If blank, clear by setting empty
-          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-            success: function(res) {
-              if (res && res.success) {
-                showAlert(res.message, 'success');
+          // Validate the provided URL (best-effort) before saving
+          runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
+            success: function(validation) {
+              if (validation && validation.success) {
+                // Verified redirect to Apps Script — save it
+                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+                  success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify: ' + (res && res.error ? res.error : ''), 'error'); },
+                  failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
+                });
               } else {
-                showAlert('Error saving public URL: ' + (res && res.error ? res.error : 'unknown'), 'error');
+                // Show warning and let admin choose to save anyway
+                const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
+                if (confirm(msg + '\n\nSave this URL anyway?')) {
+                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+                    success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error'); },
+                    failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
+                  });
+                } else {
+                  showAlert('Public URL not saved', 'info');
+                }
               }
             },
-            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
           });
         },
         failure: function(err) {
           uiLog('getPublicWebAppUrl failed', err);
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', detectBaseFromLocation());
           if (val === null) return;
-          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-            success: function(res) { if (res && res.success) showAlert(res.message, 'success'); else showAlert('Error saving public URL', 'error'); },
-            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+          // Validate when fallback path used
+          runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
+            success: function(validation) {
+              if (validation && validation.success) {
+                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify', 'error'); }, failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); } });
+              } else {
+                const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
+                if (confirm(msg + '\n\nSave this URL anyway?')) {
+                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL', 'error'); }, failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); } });
+                } else { showAlert('Public URL not saved', 'info'); }
+              }
+            },
+            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
           });
         }
       });

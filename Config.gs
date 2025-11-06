@@ -384,6 +384,60 @@ function setPublicWebAppUrl(url) {
 
 
 /**
+ * Best-effort validator for a public webapp URL.
+ * It performs a non-following HTTP fetch and checks for a redirect Location
+ * header that points at script.google.com (typical Apps Script exec redirects).
+ *
+ * Returns an object describing success, warnings, or errors. This is a
+ * lightweight, best-effort check and not a guarantee.
+ *
+ * @param {string} url
+ * @returns {Object}
+ */
+function validatePublicWebAppUrl(url) {
+  try {
+    if (!url || typeof url !== 'string') return { success: false, error: 'Invalid or empty URL' };
+
+    // Basic normalization: ensure scheme present
+    if (!(url.indexOf('http://') === 0 || url.indexOf('https://') === 0)) {
+      return { success: false, error: 'URL must start with http:// or https://' };
+    }
+
+    // Try fetching without following redirects so we can inspect Location header
+    const options = { muteHttpExceptions: true, followRedirects: false, method: 'get' };
+    let resp;
+    try {
+      resp = UrlFetchApp.fetch(url, options);
+    } catch (err) {
+      return { success: false, error: 'Fetch failed: ' + err.message };
+    }
+
+    const code = resp.getResponseCode();
+    const headers = resp.getHeaders();
+    const location = headers['Location'] || headers['location'] || '';
+
+    // If redirecting (3xx) and Location points to script.google.com or contains /macros/s/, treat as verified
+    if (code >= 300 && code < 400) {
+      if (location && (location.indexOf('script.google.com') !== -1 || location.indexOf('/macros/s/') !== -1)) {
+        return { success: true, message: 'URL redirects to Apps Script exec: ' + location };
+      }
+      return { success: false, warning: 'URL redirects (HTTP ' + code + ') but not to Apps Script', location: location || null, code: code };
+    }
+
+    // If 200 OK, it's not a redirect. This may be a proxy that returns content — warn
+    if (code === 200) {
+      return { success: false, warning: 'URL returned HTTP 200 OK and did not redirect to Apps Script. Ensure this path forwards to the Apps Script exec URL.' };
+    }
+
+    // Other response codes: surface as warning/error
+    return { success: false, warning: 'URL returned HTTP ' + code, code: code };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+
+/**
  * ============================================================================
  * SETUP HELPER
  * ============================================================================
