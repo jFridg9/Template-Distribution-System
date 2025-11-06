@@ -432,6 +432,10 @@ function renderLandingPage() {
           <header>
             <h1>${CONFIG.branding.organizationName}</h1>
             <p class="tagline">${CONFIG.branding.tagline}</p>
+            <!-- Admin login link: navigates to the admin panel route (?admin=true) -->
+            <div style="position: absolute; right: 24px; top: 24px;">
+              <a href="?admin=true" style="color:#667eea; text-decoration:none; font-weight:600;">Admin</a>
+            </div>
           </header>
           
           ${products.length > 0 ? `
