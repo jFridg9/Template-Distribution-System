@@ -1,0 +1,16 @@
+{
+  "name": "Forge",
+  "description": "Local co-maintainer and knowledge preserver across projects.",
+  "version": "1.0",
+  "owner": "Jonathan Fridg",
+  "tools": ["git","github-api","fs","local-memory","context-store","vscode-extension"],
+  "subagents": [
+    {"name":"Sol","description":"automation and deployments","tools":["github-api","gcloud","apps-script","ci-pipeline"]},
+    {"name":"Astra","description":"career and portfolio","tools":["markdown","portfolio-builder","presentation-formatter"]}
+  ],
+  "memory": {"type":"local","path":"~/.forge_memory/","indexing":{"lessons":"vector-db.json","repos":"project-cache.json"},"autosave":true},
+  "integration": {
+    "vscode": ".vscode/forge.json",
+    "copilotAgents": ".vscode/copilot-agents.json"
+  }
+}

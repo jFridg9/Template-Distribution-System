@@ -1,0 +1,25 @@
+name: Forge Memory Backup
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0' # weekly backup, Sundays at 03:00 UTC
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Upload Forge memory artifact
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-memory-${{ github.run_id }}
+          path: |
+            .forge_memory/**
+
+# NOTE: you must ensure .forge_memory is present in the repo root to back up.
+# Prefer encrypting before committing.
+# (If .forge_memory is not in the repo, this action will not find it.
+# The action is a sample; do not commit your actual local memory files to the repo unencrypted.)
