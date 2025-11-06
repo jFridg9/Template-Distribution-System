@@ -723,24 +723,19 @@ function openDrivePicker() {
 
   // --- FORGE: This is the corrected, robust logic ---
 
-  // 1. Define the MIME type that all views will use.
-  const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
-
-  // 2. Create the "Recent" view.
-  //    This view shows recent items, but we'll filter it to folders.
+  // 1. Create the "Recent" view.
+  //    Files will be visible but grayed out.
   const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
     .setIncludeFolders(true)       // Make sure folders appear
-    .setSelectFolderEnabled(true)  // Only allow folders to be selected
-    .setMimeTypes(FOLDER_MIME_TYPE); // <<< Filter to *only* show folders
+    .setSelectFolderEnabled(true); // <<< THIS is the only filter needed
 
-  // 3. Create the "My Drive" view using the DocsView.
-  //    This provides the tree navigation you want.
+  // 2. Create the "My Drive" view (with tree navigation)
+  //    Files will be visible but grayed out.
   const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setIncludeFolders(true)       // Show folders
-    .setSelectFolderEnabled(true)  // Make *only* folders selectable
-    .setMimeTypes(FOLDER_MIME_TYPE); // <<< Filter to *only* show folders
+    .setIncludeFolders(true)
+    .setSelectFolderEnabled(true); // <<< THIS is the only filter needed
 
-  // 4. Build the Picker
+  // 3. Build the Picker
   const builder = new google.picker.PickerBuilder()
     .setTitle('Select a Folder')
     .setOAuthToken(oauthToken)
@@ -748,7 +743,7 @@ function openDrivePicker() {
     .setOrigin(origin)
     .setCallback(pickerCallback)
     .addView(recentView) // "Recent" tab (default)
-    .addView(driveView)  // "My Drive" tab (now with tree view)
+    .addView(driveView)  // "My Drive" tab (tree view)
     .enableFeature(google.picker.Feature.SUPPORT_DRIVES); // Adds "Shared Drives" tab
   
   // --- End of fix ---
