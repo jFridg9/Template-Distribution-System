@@ -300,6 +300,9 @@
     <div class="wizard-header">
       <h1>🚀 Setup Wizard</h1>
       <p>Let's get your Template Distribution System configured</p>
+      <div style="position:absolute; right:18px; top:18px;">
+        <button class="btn btn-secondary" onclick="configurePublicUrl()" title="Set canonical public webapp URL">⚙️ Set Public URL</button>
+      </div>
     </div>
     
     <div class="progress-bar">
@@ -396,6 +399,11 @@
               <input type="checkbox" id="enabled" checked>
               <label for="enabled">Enable this product immediately</label>
             </div>
+          </div>
+          <div style="margin-top:10px;">
+            <button type="button" class="btn btn-secondary" onclick="copyProductLink(document.getElementById('productName').value)">
+              🔗 Copy Link
+            </button>
           </div>
         </form>
       </div>
@@ -742,6 +750,88 @@
         document.getElementById('folderId').value = folder.id;
         validateFolder(folder.id);
       }
+    }
+
+    // Public URL helpers (same behavior as AdminPanel)
+    function detectBaseFromLocation() {
+      try {
+        const href = window.location.href;
+        const execIndex = href.indexOf('/exec');
+        const devIndex = href.indexOf('/dev');
+        if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
+        if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
+        return (window.location.origin + window.location.pathname).replace(/\/$/, '');
+      } catch (e) {
+        uiLog('detectBaseFromLocation failed', e && e.message);
+        return window.location.origin;
+      }
+    }
+
+    function copyProductLink(productName) {
+      if (!productName) {
+        alert('Please fill the Product Name field first');
+        return;
+      }
+      uiLog('copyProductLink (setup)', { productName });
+      runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
+        success: function(override) {
+          const base = override && override.length ? override : detectBaseFromLocation();
+          let url = base;
+          if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
+          url += '?product=' + encodeURIComponent(productName);
+          copyToClipboard(url).then(function() {
+            showAlert('Product link copied to clipboard', 'success');
+          }).catch(function() { prompt('Copy the product link below', url); });
+        },
+        failure: function(err) {
+          uiLog('getPublicWebAppUrl failed (setup)', err);
+          const base = detectBaseFromLocation();
+          let url = base;
+          if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
+          url += '?product=' + encodeURIComponent(productName);
+          copyToClipboard(url).then(function() { showAlert('Product link copied to clipboard', 'success'); }).catch(function() { prompt('Copy the product link below', url); });
+        }
+      });
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function(resolve, reject) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          resolve();
+        } catch (e) { reject(e); }
+      });
+    }
+
+    function configurePublicUrl() {
+      runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
+        success: function(current) {
+          const hint = current && current.length ? current : detectBaseFromLocation();
+          const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
+          if (val === null) return;
+          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+            success: function(res) { if (res && res.success) showAlert(res.message, 'success'); else showAlert('Error saving public URL', 'error'); },
+            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+          });
+        },
+        failure: function(err) {
+          uiLog('getPublicWebAppUrl failed (setup)', err);
+          const val = prompt('Set the canonical public web app URL (leave blank to clear):', detectBaseFromLocation());
+          if (val === null) return;
+          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+            success: function(res) { if (res && res.success) showAlert(res.message, 'success'); else showAlert('Error saving public URL', 'error'); },
+            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+          });
+        }
+      });
     }
     
     // Alert helper

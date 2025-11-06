@@ -303,6 +303,9 @@
         <button class="btn btn-secondary" onclick="window.location.href='?'">
           🏠 View Landing Page
         </button>
+        <button class="btn btn-secondary" onclick="configurePublicUrl()">
+          ⚙️ Set Public URL
+        </button>
       </div>
       
       <div id="productsContainer">
@@ -483,6 +486,9 @@
           <td>
             <button class="btn btn-secondary" onclick='editProduct(${JSON.stringify(product)})' style="padding: 6px 12px; font-size: 0.9em;">
               ✏️ Edit
+            </button>
+            <button class="btn btn-secondary" onclick="copyProductLink('${product.name}')" style="padding: 6px 12px; font-size: 0.9em; margin-left:6px;">
+              🔗 Copy Link
             </button>
             <button class="btn btn-secondary" onclick="toggleProduct('${product.name}')" style="padding: 6px 12px; font-size: 0.9em;">
               ${product.enabled ? '⏸️ Disable' : '▶️ Enable'}
@@ -801,6 +807,107 @@
         document.getElementById('folderId').value = folder.id;
         validateFolder(folder.id);
       }
+    }
+
+    // Public URL helpers
+    function detectBaseFromLocation() {
+      try {
+        const href = window.location.href;
+        const execIndex = href.indexOf('/exec');
+        const devIndex = href.indexOf('/dev');
+        if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
+        if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
+        // Fallback to origin + pathname (without trailing slash)
+        return (window.location.origin + window.location.pathname).replace(/\/$/, '');
+      } catch (e) {
+        uiLog('detectBaseFromLocation failed', e && e.message);
+        return window.location.origin;
+      }
+    }
+
+    function copyProductLink(productName) {
+      uiLog('copyProductLink', { productName });
+
+      runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
+        success: function(override) {
+          const base = override && override.length ? override : detectBaseFromLocation();
+          // Ensure no duplicate slashes
+          let url = base;
+          // If base already ends with /exec or /dev, avoid adding another slash
+          if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
+          url += '?product=' + encodeURIComponent(productName);
+          copyToClipboard(url).then(function() {
+            showAlert('Product link copied to clipboard', 'success');
+            uiLog('copyProductLink success', { url });
+          }).catch(function(err) {
+            // Fallback: show prompt
+            const fallback = prompt('Copy the product link below', url);
+            uiLog('copyProductLink fallback prompt', { result: fallback });
+          });
+        },
+        failure: function(err) {
+          uiLog('getPublicWebAppUrl failed', err);
+          const base = detectBaseFromLocation();
+          let url = base;
+          if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
+          url += '?product=' + encodeURIComponent(productName);
+          copyToClipboard(url).then(function() {
+            showAlert('Product link copied to clipboard', 'success');
+          }).catch(function() {
+            prompt('Copy the product link below', url);
+          });
+        }
+      });
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function(resolve, reject) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }
+
+    function configurePublicUrl() {
+      // Ask admin for an override URL (or clear it)
+      runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
+        success: function(current) {
+          const hint = current && current.length ? current : detectBaseFromLocation();
+          const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
+          if (val === null) return; // cancelled
+          // If blank, clear by setting empty
+          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+            success: function(res) {
+              if (res && res.success) {
+                showAlert(res.message, 'success');
+              } else {
+                showAlert('Error saving public URL: ' + (res && res.error ? res.error : 'unknown'), 'error');
+              }
+            },
+            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+          });
+        },
+        failure: function(err) {
+          uiLog('getPublicWebAppUrl failed', err);
+          const val = prompt('Set the canonical public web app URL (leave blank to clear):', detectBaseFromLocation());
+          if (val === null) return;
+          runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+            success: function(res) { if (res && res.success) showAlert(res.message, 'success'); else showAlert('Error saving public URL', 'error'); },
+            failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); }
+          });
+        }
+      });
     }
 
     

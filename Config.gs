@@ -344,6 +344,46 @@ function getPickerAppId() {
 
 
 /**
+ * Retrieves an optional PUBLIC_WEBAPP_URL override stored in Script Properties.
+ * Admins can set this to a canonical public URL (useful when the auto-detected
+ * URL from the editor or preview is not the published /exec URL).
+ *
+ * @returns {string} Public web app URL or empty string if not set
+ */
+function getPublicWebAppUrl() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  return scriptProps.getProperty('PUBLIC_WEBAPP_URL') || '';
+}
+
+
+/**
+ * Sets the optional PUBLIC_WEBAPP_URL in Script Properties.
+ * Validates basic shape before saving.
+ *
+ * @param {string} url - The canonical public URL to save (e.g. https://script.google.com/.../exec)
+ * @returns {Object} result with success/message or error
+ */
+function setPublicWebAppUrl(url) {
+  try {
+    if (!url || typeof url !== 'string') throw new Error('Invalid URL');
+    // Basic sanity check
+    if (!(url.indexOf('http://') === 0 || url.indexOf('https://') === 0)) {
+      throw new Error('URL must start with http:// or https://');
+    }
+
+    const scriptProps = PropertiesService.getScriptProperties();
+    scriptProps.setProperty('PUBLIC_WEBAPP_URL', url);
+
+    Logger.log('PUBLIC_WEBAPP_URL set to: ' + url);
+    return { success: true, message: 'Public web app URL saved' };
+  } catch (err) {
+    Logger.log('ERROR in setPublicWebAppUrl: ' + err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+
+/**
  * ============================================================================
  * SETUP HELPER
  * ============================================================================
