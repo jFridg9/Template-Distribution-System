@@ -725,17 +725,14 @@ function openDrivePicker() {
   // Create standard views for file selection (most reliable approach)
   // No MIME type filter - allow any file type (templates can be Sheets, Docs, Slides, PDFs, etc.)
   
-  // Recent view with folders visible
-  const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
-    .setIncludeFolders(true);
+  // Recent view
+  const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
 
-  // My Drive with tree navigation
-  const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setIncludeFolders(true);
+  // My Drive with tree navigation (no setIncludeFolders - that makes it flat!)
+  const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS);
 
   // Shared Drives view
   const sharedDriveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setIncludeFolders(true)
     .setEnableDrives(true);
 
   // Build the Picker
