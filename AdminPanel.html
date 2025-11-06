@@ -696,7 +696,7 @@
     
     function openDrivePicker() {
       // Picker is always folders-only for this app.
-      uiLog('openDrivePicker called', { foldersOnly, pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
+      uiLog('openDrivePicker called', { foldersOnly: true, pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
         return;
