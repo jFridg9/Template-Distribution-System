@@ -668,8 +668,8 @@
     }
 
     function openDrivePicker() {
-      // Always use folders-only picker in the setup flow.
-      uiLog('openDrivePicker called (setup)', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
+      // Picker is always folders-only for this app.
+      uiLog('openDrivePicker called', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
         return;
@@ -679,10 +679,16 @@
         alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
         return;
       }
-
+      
       const origin = (google && google.script && google.script.host && google.script.host.origin)
         ? google.script.host.origin
         : window.location.origin;
+
+      console.log('Picker diagnostics on open:', {
+        pickerApiLoaded,
+        hasToken: !!oauthToken,
+        origin
+      });
 
       const builder = new google.picker.PickerBuilder()
         .setTitle('Select a Folder')
@@ -691,44 +697,38 @@
         .setOrigin(origin)
         .setCallback(pickerCallback);
 
-      // Build a folders-only picker with a Recent tab first, then My Drive, then Shared Drives.
-      try {
-        const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
+      // --- FORGE: This is the simplified, correct logic ---
+      
+      // 1. Define the MIME type that all views will use.
+      const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 
-        try {
-          if (google.picker.View && google.picker.ViewId && google.picker.ViewId.FOLDERS_RECENT) {
-            const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
-              .setMimeTypes(FOLDER_MIME_TYPE);
-            builder.addView(recentView);
-          } else {
-            throw new Error('FOLDERS_RECENT not available');
-          }
-        } catch (e) {
-          uiLog('FOLDERS_RECENT not available (setup), falling back to RECENTLY_PICKED DocsView', e && e.message);
-          try {
-            const recentDocs = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
-              .setIncludeFolders(true);
-            try { recentDocs.setSelectFolderEnabled && recentDocs.setSelectFolderEnabled(true); } catch (ee) {}
-            builder.addView(recentDocs);
-          } catch (ee) { uiLog('Could not add RECENTLY_PICKED view (setup)', ee && ee.message); }
-        }
+      // 2. Create the "Recent" view (will show recent folders).
+      const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
+        .setMimeTypes(FOLDER_MIME_TYPE);
 
-        try {
-          const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
-            .setMimeTypes(FOLDER_MIME_TYPE);
-          builder.addView(driveView);
-        } catch (e) { uiLog('Could not add FOLDERS view (setup)', e && e.message); }
+      // 3. Create the "My Drive" view (will show drive folders).
+      const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
+        .setMimeTypes(FOLDER_MIME_TYPE);
 
-        try { builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES); } catch (e) { uiLog('enableFeature(SUPPORT_DRIVES) not supported (setup)', e && e.message); }
-      } catch (err) {
-        uiLog('picker build failed (setup)', err && err.message);
-      }
+      // 4. Add the views to the builder. "Recent" is first, so it's the default.
+      builder.addView(recentView);  // Default view
+      builder.addView(driveView);   // Second tab
+
+      // 5. Add the "Shared Drives" view. This flag adds the tab automatically.
+      builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);
+      
+      // --- End of rewrite ---
 
       if (pickerAppId) {
-        try { builder.setAppId(pickerAppId); } catch (err) { console.warn('Failed to set Picker App ID:', err && err.message); }
+        try {
+          builder.setAppId(pickerAppId);
+        } catch (err) {
+          console.warn('Failed to set Picker App ID:', err && err.message);
+        }
       }
 
       const picker = builder.build();
+      
       picker.setVisible(true);
     }
     
