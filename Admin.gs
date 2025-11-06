@@ -462,7 +462,7 @@ function getFolderDetails(folderId) {
     const id = normalizeFolderId(folderId);
     Logger.log('getFolderDetails(): resolving folder ID: ' + id);
     const folder = DriveApp.getFolderById(id);
-    const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+    const files = folder.getFiles(); // Count all files, not just Sheets
     
     let fileCount = 0;
     while (files.hasNext()) {
@@ -513,8 +513,8 @@ function getParentFolderFromFile(fileId) {
     const folder = parents.next();
     const folderId = folder.getId();
     
-    // Count Google Sheets files in the folder
-    const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+    // Count all files in the folder (templates can be any type)
+    const files = folder.getFiles();
     let fileCount = 0;
     while (files.hasNext()) {
       files.next();

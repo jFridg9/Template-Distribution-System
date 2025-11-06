@@ -722,14 +722,11 @@ function openDrivePicker() {
     origin
   });
 
-  // Create standard views for file selection (most reliable approach)
-  const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
-    .setMimeTypes('application/vnd.google-apps.spreadsheet'); // Only show Sheets
+      // Create standard views for file selection (most reliable approach)
+      // No MIME type filter - allow any file type (templates can be Sheets, Docs, Slides, PDFs, etc.)
+      const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
 
-  const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes('application/vnd.google-apps.spreadsheet'); // Only show Sheets
-
-  // Build the Picker
+      const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS);  // Build the Picker
   const builder = new google.picker.PickerBuilder()
     .setTitle('Select a Template File')
     .setOAuthToken(oauthToken)
@@ -769,7 +766,7 @@ function openDrivePicker() {
               document.getElementById('folderId').value = result.folderId;
               folderInfo.innerHTML = `
                 ✅ <strong>${result.folderName}</strong><br>
-                📊 Contains ${result.fileCount} Google Sheets file(s)<br>
+                📊 Contains ${result.fileCount} file(s)<br>
                 <small style="color: #666;">Selected from: ${file.name}</small>
               `;
             } else {

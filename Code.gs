@@ -180,8 +180,8 @@ function handleProductRedirect(productName, version) {
     ).setMimeType(ContentService.MimeType.TEXT);
   }
   
-  // Get all Google Sheets in the folder
-  const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+  // Get all files in the folder (templates can be any type)
+  const files = folder.getFiles();
   const fileList = [];
   
   while (files.hasNext()) {
