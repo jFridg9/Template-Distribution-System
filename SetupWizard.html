@@ -693,22 +693,32 @@
 
       if (foldersOnly) {
         try {
-          const folderMimeType = 'application/vnd.google-apps.folder';
           try {
-            const driveFolderView = new google.picker.View(google.picker.ViewId.FOLDERS).setMimeTypes(folderMimeType);
-            builder.addView(driveFolderView);
-          } catch (e) {
-            try { builder.addView(google.picker.ViewId.FOLDERS); } catch (ee) { uiLog('addView(FOLDERS) failed', ee && ee.message); }
-          }
+            const recentFolders = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
+              .setIncludeFolders(true)
+              .setOwnedByMe(true);
+            try { recentFolders.setSelectFolderEnabled && recentFolders.setSelectFolderEnabled(true); } catch (e) {}
+            try { recentFolders.setSelectable && recentFolders.setSelectable(true); } catch (e) {}
+            builder.addView(recentFolders);
+          } catch (e) { uiLog('Could not add recent folders view (setup)', e && e.message); }
 
           try {
-            const recentFolderView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT).setMimeTypes(folderMimeType);
-            builder.addView(recentFolderView);
-          } catch (e) {
-            uiLog('addView(FOLDERS_RECENT) not supported in this Picker build', e && e.message);
-          }
+            const myDriveFolders = new google.picker.DocsView(google.picker.ViewId.DOCS)
+              .setIncludeFolders(true)
+              .setOwnedByMe(true);
+            try { myDriveFolders.setSelectFolderEnabled && myDriveFolders.setSelectFolderEnabled(true); } catch (e) {}
+            try { myDriveFolders.setSelectable && myDriveFolders.setSelectable(true); } catch (e) {}
+            builder.addView(myDriveFolders);
+          } catch (e) { uiLog('Could not add My Drive folders view (setup)', e && e.message); try { builder.addView(google.picker.ViewId.FOLDERS); } catch (ee) { uiLog('addView(FOLDERS) failed (setup)', ee && ee.message); } }
 
-          try { builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES); } catch (e) { uiLog('enableFeature(SUPPORT_DRIVES) not supported', e && e.message); }
+          try {
+            const sharedFolders = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true);
+            try { sharedFolders.setEnableTeamDrives && sharedFolders.setEnableTeamDrives(true); } catch (e) {}
+            try { sharedFolders.setIncludeTeamDrives && sharedFolders.setIncludeTeamDrives(true); } catch (e) {}
+            try { sharedFolders.setSelectFolderEnabled && sharedFolders.setSelectFolderEnabled(true); } catch (e) {}
+            builder.addView(sharedFolders);
+            try { builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES); } catch (e) { uiLog('enableFeature(SUPPORT_DRIVES) not supported (setup)', e && e.message); }
+          } catch (e) { uiLog('Could not add Shared Drives folders view (setup)', e && e.message); }
         } catch (err) {
           uiLog('foldersOnly picker build failed (setup)', err && err.message);
         }
