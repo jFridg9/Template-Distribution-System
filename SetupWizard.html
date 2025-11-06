@@ -691,14 +691,27 @@
         .setOrigin(origin)
         .setCallback(pickerCallback);
 
-      // Build a simple folders-only picker using ViewId.FOLDERS_RECENT and ViewId.FOLDERS
+      // Build a folders-only picker with a Recent tab first, then My Drive, then Shared Drives.
       try {
         const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
+
         try {
-          const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
-            .setMimeTypes(FOLDER_MIME_TYPE);
-          builder.addView(recentView);
-        } catch (e) { uiLog('Could not add FOLDERS_RECENT view (setup)', e && e.message); }
+          if (google.picker.View && google.picker.ViewId && google.picker.ViewId.FOLDERS_RECENT) {
+            const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
+              .setMimeTypes(FOLDER_MIME_TYPE);
+            builder.addView(recentView);
+          } else {
+            throw new Error('FOLDERS_RECENT not available');
+          }
+        } catch (e) {
+          uiLog('FOLDERS_RECENT not available (setup), falling back to RECENTLY_PICKED DocsView', e && e.message);
+          try {
+            const recentDocs = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
+              .setIncludeFolders(true);
+            try { recentDocs.setSelectFolderEnabled && recentDocs.setSelectFolderEnabled(true); } catch (ee) {}
+            builder.addView(recentDocs);
+          } catch (ee) { uiLog('Could not add RECENTLY_PICKED view (setup)', ee && ee.message); }
+        }
 
         try {
           const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
