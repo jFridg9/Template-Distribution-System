@@ -486,6 +486,61 @@ function getFolderDetails(folderId) {
 }
 
 /**
+ * Gets the parent folder ID from a file ID.
+ * This allows users to select a file in the Picker, and we extract the folder.
+ * More reliable than folder-only Picker views.
+ * 
+ * @param {string} fileId - Google Drive file ID
+ * @returns {Object} Result with folderId, folderName, and fileCount
+ */
+function getParentFolderFromFile(fileId) {
+  try {
+    Logger.log('getParentFolderFromFile(): fileId = ' + fileId);
+    
+    // Get the file
+    const file = DriveApp.getFileById(fileId);
+    
+    // Get parent folders (files can have multiple parents, but we'll use the first)
+    const parents = file.getParents();
+    
+    if (!parents.hasNext()) {
+      return {
+        success: false,
+        error: 'File has no parent folder (orphaned file)'
+      };
+    }
+    
+    const folder = parents.next();
+    const folderId = folder.getId();
+    
+    // Count Google Sheets files in the folder
+    const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+    let fileCount = 0;
+    while (files.hasNext()) {
+      files.next();
+      fileCount++;
+    }
+    
+    Logger.log('getParentFolderFromFile(): success - folder ' + folder.getName() + ' with ' + fileCount + ' files');
+    
+    return {
+      success: true,
+      folderId: folderId,
+      folderName: folder.getName(),
+      folderUrl: folder.getUrl(),
+      fileCount: fileCount
+    };
+    
+  } catch (err) {
+    Logger.log('ERROR getParentFolderFromFile(): ' + err.message);
+    return {
+      success: false,
+      error: 'Cannot access file or folder: ' + err.message
+    };
+  }
+}
+
+/**
  * Lists root-level folders in the deployer's Drive account.
  * Used as a fallback UI when the Picker cannot be used.
  * @returns {Object} { success: true, folders: [{id,name}, ...] }

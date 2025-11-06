@@ -381,11 +381,14 @@
           <div class="form-group">
             <label for="folderId">Google Drive Folder*</label>
             <div class="folder-picker">
-              <input type="text" id="folderId" required placeholder="Click 'Browse Drive' to select">
+              <input type="text" id="folderId" required placeholder="Click 'Browse File' to select a template file">
               <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
-                📁 Browse Drive
+                � Browse File
               </button>
             </div>
+            <small style="color: #666; display: block; margin-top: 6px;">
+              Select any template file from your Drive. We'll automatically use its parent folder to find all versions.
+            </small>
             <div id="folderInfo" class="folder-info"></div>
           </div>
           
@@ -667,8 +670,11 @@
       });
     }
 
+    /**
+     * Opens the Google Picker to select a template FILE.
+     * We'll extract the parent folder server-side for reliable folder detection.
+     */
     function openDrivePicker() {
-      // Picker is always folders-only for this app.
       uiLog('openDrivePicker called', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
@@ -690,32 +696,23 @@
         origin
       });
 
-  // --- FORGE: This is the corrected, robust logic ---
+      // Create standard views for file selection (most reliable approach)
+      const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
+        .setMimeTypes('application/vnd.google-apps.spreadsheet'); // Only show Sheets
 
-  // 1. Create the "Recent" view.
-  //    Files will be visible but grayed out.
-  const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED)
-    .setIncludeFolders(true)       // Make sure folders appear
-    .setSelectFolderEnabled(true); // <<< THIS is the only filter needed
+      const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+        .setMimeTypes('application/vnd.google-apps.spreadsheet'); // Only show Sheets
 
-  // 2. Create the "My Drive" view (with tree navigation)
-  //    Files will be visible but grayed out.
-  const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setIncludeFolders(true)
-    .setSelectFolderEnabled(true); // <<< THIS is the only filter needed
-
-  // 3. Build the Picker
-  const builder = new google.picker.PickerBuilder()
-    .setTitle('Select a Folder')
-    .setOAuthToken(oauthToken)
-    .setDeveloperKey(developerKey)
-    .setOrigin(origin)
-    .setCallback(pickerCallback)
-    .addView(recentView) // "Recent" tab (default)
-    .addView(driveView)  // "My Drive" tab (tree view)
-    .enableFeature(google.picker.Feature.SUPPORT_DRIVES); // Adds "Shared Drives" tab
-  
-  // --- End of fix ---
+      // Build the Picker
+      const builder = new google.picker.PickerBuilder()
+        .setTitle('Select a Template File')
+        .setOAuthToken(oauthToken)
+        .setDeveloperKey(developerKey)
+        .setOrigin(origin)
+        .setCallback(pickerCallback)
+        .addView(recentView)
+        .addView(driveView)
+        .enableFeature(google.picker.Feature.SUPPORT_DRIVES); // Adds Shared Drives tab
 
       if (pickerAppId) {
         try {
@@ -726,15 +723,37 @@
       }
 
       const picker = builder.build();
-      
       picker.setVisible(true);
     }
     
     function pickerCallback(data) {
       if (data.action === google.picker.Action.PICKED) {
-        const folder = data.docs[0];
-        document.getElementById('folderId').value = folder.id;
-        validateFolder(folder.id);
+        const file = data.docs[0];
+        uiLog('pickerCallback: file selected', { fileId: file.id, fileName: file.name });
+        
+        // Show loading state
+        const folderInfo = document.getElementById('folderInfo');
+        folderInfo.innerHTML = '<div class="loading"></div> Getting parent folder...';
+        folderInfo.classList.add('active');
+        
+        // Call server to get parent folder from file ID
+        runServerCall('getParentFolderFromFile', [file.id], 'getParentFolder', {
+          success: function(result) {
+            if (result.success) {
+              document.getElementById('folderId').value = result.folderId;
+              folderInfo.innerHTML = `
+                ✅ <strong>${result.folderName}</strong><br>
+                📊 Contains ${result.fileCount} Google Sheets file(s)<br>
+                <small style="color: #666;">Selected from: ${file.name}</small>
+              `;
+            } else {
+              folderInfo.innerHTML = `❌ ${result.error}`;
+            }
+          },
+          failure: function(error) {
+            folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+          }
+        });
       }
     }
 
