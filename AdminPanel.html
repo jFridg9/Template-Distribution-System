@@ -694,8 +694,74 @@
       });
     }
     
-    function openDrivePicker() {
-      // Picker is always folders-only for this app.
+/**
+ * Opens the Google Picker, configured to select FOLDERS ONLY.
+ * This version uses the modern, simplified view definitions.
+ */
+function openDrivePicker() {
+  // Picker is always folders-only for this app.
+  uiLog('openDrivePicker called', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
+  if (!pickerApiLoaded || !oauthToken) {
+    alert('Drive Picker is loading... please try again in a moment.');
+    return;
+  }
+
+  if (!developerKey) {
+    alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
+    return;
+  }
+  
+  const origin = (google && google.script && google.script.host && google.script.host.origin)
+    ? google.script.host.origin
+    : window.location.origin;
+
+  console.log('Picker diagnostics on open:', {
+    pickerApiLoaded,
+    hasToken: !!oauthToken,
+    origin
+  });
+
+  const builder = new google.picker.PickerBuilder()
+    .setTitle('Select a Folder')
+    .setOAuthToken(oauthToken)
+    .setDeveloperKey(developerKey)
+    .setOrigin(origin)
+    .setCallback(pickerCallback);
+
+  // --- FORGE: This is the simplified, correct logic ---
+  
+  // 1. Define the MIME type that all views will use.
+  const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
+
+  // 2. Create the "Recent" view (will show recent folders).
+  const recentView = new google.picker.View(google.picker.ViewId.FOLDERS_RECENT)
+    .setMimeTypes(FOLDER_MIME_TYPE);
+
+  // 3. Create the "My Drive" view (will show drive folders).
+  const driveView = new google.picker.View(google.picker.ViewId.FOLDERS)
+    .setMimeTypes(FOLDER_MIME_TYPE);
+
+  // 4. Add the views to the builder. "Recent" is first, so it's the default.
+  builder.addView(recentView);  // Default view
+  builder.addView(driveView);   // Second tab
+
+  // 5. Add the "Shared Drives" view. This flag adds the tab automatically.
+  builder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);
+  
+  // --- End of rewrite ---
+
+  if (pickerAppId) {
+    try {
+      builder.setAppId(pickerAppId);
+    } catch (err) {
+      console.warn('Failed to set Picker App ID:', err && err.message);
+    }
+  }
+
+  const picker = builder.build();
+  
+  picker.setVisible(true);
+}      // Picker is always folders-only for this app.
       uiLog('openDrivePicker called', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
       if (!pickerApiLoaded || !oauthToken) {
         alert('Drive Picker is loading... please try again in a moment.');
