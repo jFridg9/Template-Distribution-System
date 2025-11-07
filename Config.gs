@@ -170,7 +170,9 @@ function createFallbackConfig() {
         folderId: CONFIG.fallbackFolderId,
         displayName: 'Template',
         enabled: true,
-        description: 'Latest template version'
+        description: 'Latest template version',
+        category: 'Uncategorized',
+        tags: []
       }
     ]
   };
