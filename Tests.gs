@@ -172,10 +172,11 @@ function test_SetupWizardFlow() {
   Logger.log('=== TEST: Setup Wizard Flow ===');
   Logger.log('⚠️  WARNING: This will create a new test spreadsheet');
   
+  // Store original ID outside try block so finally can access it
+  const scriptProps = PropertiesService.getScriptProperties();
+  const originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
+  
   try {
-    // Clear Script Properties to simulate fresh setup
-    const scriptProps = PropertiesService.getScriptProperties();
-    const originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
     Logger.log(`Original CONFIG_SHEET_ID: ${originalId || '(not set)'}`);
     
     // Temporarily clear the property to simulate fresh setup
@@ -202,12 +203,6 @@ function test_SetupWizardFlow() {
         Logger.log('❌ FAIL: Sheet ID not saved to Script Properties');
       }
       
-      // Restore original if it existed
-      if (originalId) {
-        Logger.log(`Restoring original CONFIG_SHEET_ID: ${originalId}`);
-        scriptProps.setProperty('CONFIG_SHEET_ID', originalId);
-      }
-      
       Logger.log('⚠️  Remember to delete the test sheet: ' + result.sheetUrl);
       
     } else {
@@ -221,6 +216,12 @@ function test_SetupWizardFlow() {
   } catch (err) {
     Logger.log('❌ ERROR: ' + err.message);
     return 'Test failed: ' + err.message;
+  } finally {
+    // Always restore original ID if it existed, regardless of test outcome
+    if (originalId) {
+      Logger.log(`Restoring original CONFIG_SHEET_ID: ${originalId}`);
+      scriptProps.setProperty('CONFIG_SHEET_ID', originalId);
+    }
   }
 }
 
@@ -261,7 +262,7 @@ function test_GetRuntimeConfig() {
  * RUN ALL TESTS
  * 
  * Runs all test functions in sequence.
- * Note: Test 4 (Setup Wizard Flow) is skipped to avoid creating test sheets.
+ * Note: test_SetupWizardFlow() is skipped to avoid creating test sheets.
  */
 function runAllTests() {
   Logger.log('=============================================================');
