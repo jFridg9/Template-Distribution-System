@@ -49,15 +49,13 @@ function testScriptPropertiesPriority() {
     // Test 2: Set Script Properties and verify it takes priority
     Logger.log('\n--- Test 1b: Script Properties takes priority ---');
     const testSheetId = 'TEST_RUNTIME_SHEET_ID_12345';
-    const setResult = setConfigSheetId(testSheetId);
     
-    if (!setResult.success) {
-      // This is expected - the test ID won't be a valid sheet
-      Logger.log('Expected error (test ID not accessible): ' + setResult.error);
-    }
-    
-    // Even though setConfigSheetId validates, let's test the getter directly
+    // Note: We bypass setConfigSheetId() validation here to test the getter logic directly.
+    // This simulates the scenario where a valid sheet ID has been saved to Script Properties.
+    // In production, setConfigSheetId() validates the sheet before saving.
+    Logger.log('Setting test ID directly in Script Properties (bypassing validation for testing)');
     scriptProps.setProperty('CONFIG_SHEET_ID', testSheetId);
+    
     const runtimeValue = getConfigSheetId();
     Logger.log('Result: ' + runtimeValue);
     Logger.log('Expected: ' + testSheetId);
