@@ -28,6 +28,17 @@
  */
 
 /**
+ * Helper function to determine version type from version parameter.
+ * 
+ * @param {string} version - Version parameter (null/undefined for latest, or specific version)
+ * @returns {string} 'latest' or 'specific'
+ */
+function getVersionType(version) {
+  return version ? 'specific' : 'latest';
+}
+
+
+/**
  * Tracks a product redirect event.
  * Non-blocking: Uses try-catch to ensure tracking failures don't break redirects.
  * 
@@ -76,7 +87,7 @@ function incrementProductCounter(productName) {
  */
 function trackVersionRequest(productName, version) {
   const props = PropertiesService.getScriptProperties();
-  const versionType = version ? 'specific' : 'latest';
+  const versionType = getVersionType(version);
   const key = 'analytics_version_' + versionType + '_' + productName;
   
   const currentCount = parseInt(props.getProperty(key)) || 0;
@@ -119,7 +130,7 @@ function logAccessEvent(productName, version, fileName) {
     
     // Append log entry
     const timestamp = new Date();
-    const versionType = version ? 'specific' : 'latest';
+    const versionType = getVersionType(version);
     const versionValue = version || 'latest';
     
     sheet.appendRow([timestamp, productName, versionType, versionValue, fileName]);

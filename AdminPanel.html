@@ -426,10 +426,10 @@
       
       <!-- Tab Navigation -->
       <div class="tabs">
-        <button class="tab active" onclick="switchTab('products')">
+        <button class="tab active" onclick="switchTab('products', this)">
           📦 Products
         </button>
-        <button class="tab" onclick="switchTab('analytics')">
+        <button class="tab" onclick="switchTab('analytics', this)">
           📊 Analytics
         </button>
       </div>
@@ -1095,12 +1095,15 @@ function openDrivePicker() {
     /**
      * Switches between tabs in the admin panel
      */
-    function switchTab(tabName) {
+    function switchTab(tabName, clickedElement) {
       // Update tab buttons
       document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
       });
-      event.target.classList.add('active');
+      
+      if (clickedElement) {
+        clickedElement.classList.add('active');
+      }
       
       // Update tab content
       document.querySelectorAll('.tab-content').forEach(content => {
@@ -1169,7 +1172,7 @@ function openDrivePicker() {
           </div>
           <div class="analytics-card">
             <h3>Last Updated</h3>
-            <div class="value" style="font-size: 1.2em;">${new Date().toLocaleTimeString()}</div>
+            <div class="value" style="font-size: 1.2em;">${data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()}</div>
           </div>
         </div>
       `;
