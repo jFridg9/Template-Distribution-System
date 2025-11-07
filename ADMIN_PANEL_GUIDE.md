@@ -102,6 +102,143 @@ The admin panel provides a complete web-based interface for managing templates:
 
 ---
 
+### Bulk Operations
+
+**Path:** Admin Panel → Select products → Choose action from dropdown → Apply
+
+**Available Actions:**
+- **Enable Selected:** Enable multiple products at once
+- **Disable Selected:** Disable multiple products at once
+- **Delete Selected:** Delete multiple products with confirmation
+
+**How to Use:**
+1. Check boxes next to products you want to modify
+2. Use "Select All" checkbox to select all products
+3. Bulk actions bar appears showing selection count
+4. Choose action from dropdown menu
+5. Click "Apply" button
+6. Confirm action if prompted (especially for delete)
+
+**Use Cases:**
+- **Seasonal Updates:** Disable multiple products during off-season
+- **Mass Enable:** Launch multiple products simultaneously
+- **Cleanup:** Delete outdated products in batch
+- **Testing:** Quickly toggle groups of products
+
+**Tips:**
+- Selection persists until cleared or action executed
+- Click "Clear Selection" to deselect all
+- Delete action requires confirmation for safety
+- Actions update configuration sheet immediately
+
+---
+
+### CSV Import/Export
+
+**Path:** Admin Panel → Import/Export section (top right)
+
+#### Exporting Products to CSV
+
+**Button:** 📥 Export CSV
+
+**What It Does:**
+- Downloads all products as CSV file
+- Includes all product fields (name, folderId, displayName, enabled, description)
+- File named: `products_export_YYYY-MM-DD_HHMMSS.csv`
+- Compatible with Excel, Google Sheets, and text editors
+
+**Use Cases:**
+- **Backup:** Save product configuration
+- **Documentation:** Share product list with team
+- **Migration:** Move products to another instance
+- **Bulk Editing:** Edit in spreadsheet, then re-import
+
+**Example CSV Format:**
+```csv
+name,folderId,displayName,enabled,description
+EventPlanning,abc123def456,Event Planning Tool,TRUE,Organize events effortlessly
+MailMerge,xyz789ghi012,Mail Merge Pro,TRUE,Send personalized emails at scale
+```
+
+#### Downloading CSV Template
+
+**Button:** 📋 CSV Template
+
+**What It Does:**
+- Downloads a sample CSV file with example products
+- Shows correct column headers and format
+- Includes helpful example data
+
+**Use Cases:**
+- **Learning:** See proper CSV structure
+- **Quick Start:** Modify examples rather than starting from scratch
+- **Reference:** Check column names and format
+
+#### Importing Products from CSV
+
+**Button:** 📤 Import CSV
+
+**How It Works:**
+1. Click "Import CSV" button
+2. Select your CSV file from computer
+3. System validates CSV structure and data
+4. Preview modal shows:
+   - Summary (total, new products, updates)
+   - Warnings if any issues detected
+   - Detailed table of products to import
+   - Visual indicators (🔄 Update or ➕ New)
+5. Review preview carefully
+6. Click "Confirm Import" to apply changes
+7. System imports products and refreshes view
+
+**Validation Checks:**
+- Required columns present (name, folderId)
+- Valid folder IDs (accessibility verified during import)
+- Duplicate names (within import file)
+- Existing products identified for update vs. create
+
+**Preview Color Coding:**
+- 🟢 Green background: New product (will be added)
+- 🟡 Orange background: Existing product (will be updated)
+
+**Import Behavior:**
+- **New products:** Added to configuration sheet
+- **Existing products:** Updated with new values
+- **Invalid folders:** Skipped with error message
+- **Warnings:** Shown but don't block import
+
+**Safety Features:**
+- Preview before committing changes
+- Validation catches common errors
+- Folder accessibility verified
+- Cancel option available before import
+- Detailed error messages for debugging
+
+**Tips:**
+- Export existing products first as backup
+- Use template to learn CSV format
+- Test with small CSV before bulk import
+- Check folder IDs are accessible
+- Review warnings carefully before confirming
+- Existing products matched by name (case-insensitive)
+
+**CSV Requirements:**
+- **Required columns:** `name`, `folderId`
+- **Optional columns:** `displayName`, `enabled`, `description`
+- **Format:** Standard CSV with comma separators
+- **Quotes:** Use quotes if field contains commas or newlines
+- **Encoding:** UTF-8 recommended
+
+**Common Issues:**
+- **Missing columns:** Add required columns to header row
+- **Invalid folder IDs:** Verify IDs are correct and accessible
+- **Duplicate names:** Each product name must be unique
+- **File format:** Save as CSV, not Excel (.xlsx)
+
+**Tip:** To rename a product, create a new one and delete the old one.
+
+---
+
 ### Enabling/Disabling Products
 
 **Quick Toggle:**
