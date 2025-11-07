@@ -647,6 +647,86 @@ function pickerKeyDiagnostics() {
 
 /**
  * ============================================================================
+ * ANALYTICS ADMIN FUNCTIONS
+ * ============================================================================
+ */
+
+/**
+ * Gets analytics summary for admin panel display.
+ * Wraps the Analytics.gs function with admin-specific formatting.
+ * 
+ * @returns {Object} Analytics summary
+ */
+function getAnalyticsForAdmin() {
+  try {
+    return getAnalyticsSummary();
+  } catch (err) {
+    Logger.log('ERROR in getAnalyticsForAdmin: ' + err.message);
+    return {
+      error: err.message,
+      totalAccesses: 0,
+      products: []
+    };
+  }
+}
+
+
+/**
+ * Gets filtered access logs for admin panel.
+ * 
+ * @param {Object} options - Filter options
+ * @returns {Object} Access logs
+ */
+function getAccessLogsForAdmin(options) {
+  try {
+    return getAccessLogs(options);
+  } catch (err) {
+    Logger.log('ERROR in getAccessLogsForAdmin: ' + err.message);
+    return {
+      success: false,
+      error: err.message,
+      logs: []
+    };
+  }
+}
+
+
+/**
+ * Creates the analytics sheet from admin panel.
+ * 
+ * @returns {Object} Result with sheet info
+ */
+function adminCreateAnalyticsSheet() {
+  try {
+    return createAnalyticsSheet();
+  } catch (err) {
+    Logger.log('ERROR in adminCreateAnalyticsSheet: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Exports analytics to CSV for download.
+ * 
+ * @param {Object} options - Export options
+ * @returns {string} CSV data
+ */
+function adminExportAnalytics(options) {
+  try {
+    return exportAnalyticsToCSV(options);
+  } catch (err) {
+    Logger.log('ERROR in adminExportAnalytics: ' + err.message);
+    return 'Error: ' + err.message;
+  }
+}
+
+
+/**
+ * ============================================================================
  * INCLUDE HTML HELPER
  * ============================================================================
  */
