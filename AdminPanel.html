@@ -281,52 +281,9 @@
      * Breakpoints: 320px (small phones), 480px (phones), 768px (tablets)
      * ========================================================================== */
     
-    /* Small phones (iPhone SE, etc) - 320px to 479px */
-    @media (max-width: 479px) {
-      body {
-        padding: 10px;
-      }
-      
-      .container {
-        border-radius: 0;
-        box-shadow: none;
-      }
-      
-      header {
-        padding: 20px 15px;
-      }
-      
-      header h1 {
-        font-size: 1.5em;
-      }
-      
-      header p {
-        font-size: 0.9em;
-      }
-      
-      .content {
-        padding: 15px;
-      }
-      
-      /* Stack action buttons vertically on very small screens */
-      .actions {
-        flex-direction: column;
-        gap: 10px;
-      }
-      
-      .actions .btn {
-        width: 100%;
-        text-align: center;
-      }
-      
-      /* Make buttons touch-friendly (minimum 44px) */
-      .btn {
-        min-height: 44px;
-        padding: 14px 20px;
-        font-size: 0.95em;
-      }
-      
-      /* Convert table to card layout on mobile */
+    /* All phones - shared styles (320px to 767px) */
+    @media (max-width: 767px) {
+      /* Convert table to card layout on all phones */
       .products-table {
         display: block;
       }
@@ -365,6 +322,60 @@
         text-transform: uppercase;
       }
       
+      /* Touch-friendly buttons */
+      .btn {
+        min-height: 44px;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+    }
+    
+    /* Small phones (iPhone SE, etc) - 320px to 479px */
+    @media (max-width: 479px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        border-radius: 0;
+        box-shadow: none;
+      }
+      
+      header {
+        padding: 20px 15px;
+      }
+      
+      header h1 {
+        font-size: 1.5em;
+      }
+      
+      header p {
+        font-size: 0.9em;
+      }
+      
+      .content {
+        padding: 15px;
+      }
+      
+      /* Stack action buttons vertically on very small screens */
+      .actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .actions .btn {
+        width: 100%;
+        text-align: center;
+      }
+      
+      .btn {
+        padding: 14px 20px;
+        font-size: 0.95em;
+      }
+      
       /* Stack action buttons in table rows */
       .products-table td button {
         display: block;
@@ -389,7 +400,6 @@
       
       .form-group input,
       .form-group textarea {
-        font-size: 16px; /* Prevents zoom on iOS */
         min-height: 44px;
       }
       
@@ -432,46 +442,7 @@
       }
       
       .btn {
-        min-height: 44px;
         padding: 12px 20px;
-      }
-      
-      /* Convert table to cards on medium-small screens */
-      .products-table {
-        display: block;
-      }
-      
-      .products-table thead {
-        display: none;
-      }
-      
-      .products-table tbody {
-        display: block;
-      }
-      
-      .products-table tr {
-        display: block;
-        margin-bottom: 20px;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 15px;
-      }
-      
-      .products-table td {
-        display: block;
-        text-align: left;
-        border: none;
-        padding: 8px 0;
-      }
-      
-      .products-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: #666;
-        display: block;
-        margin-bottom: 4px;
-        font-size: 0.85em;
-        text-transform: uppercase;
       }
       
       /* Horizontal button layout for actions in cards */
@@ -485,11 +456,6 @@
       .modal-content {
         width: 95%;
         padding: 25px 20px;
-      }
-      
-      .form-group input,
-      .form-group textarea {
-        font-size: 16px; /* Prevents zoom on iOS */
       }
     }
     
