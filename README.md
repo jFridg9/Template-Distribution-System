@@ -308,6 +308,23 @@ Checks:
 - Folder accessibility
 - File counts per product
 
+**Test Script Properties implementation:**
+```javascript
+// Run individual tests
+test_ScriptPropertiesPriority()
+test_SetConfigSheetId()
+test_LoadConfigurationWithScriptProperties()
+
+// Or run all tests at once
+runAllTests()
+```
+
+See `Tests.gs` for detailed test suite that verifies:
+- Script Properties priority system
+- Configuration loading with runtime values
+- Setup wizard automation
+- All runtime configuration functions
+
 ### Cache Management
 
 Configuration is cached for 5 minutes for performance.
