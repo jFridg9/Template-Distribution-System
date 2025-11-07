@@ -273,6 +273,315 @@
       margin-bottom: 20px;
       opacity: 0.3;
     }
+    
+    /* ============================================================================
+     * MOBILE RESPONSIVE STYLES
+     * ============================================================================
+     * Optimizations for mobile devices (phones and tablets)
+     * Breakpoints: 320px (small phones), 480px (phones), 768px (tablets)
+     * ========================================================================== */
+    
+    /* Small phones (iPhone SE, etc) - 320px to 479px */
+    @media (max-width: 479px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        border-radius: 0;
+        box-shadow: none;
+      }
+      
+      header {
+        padding: 20px 15px;
+      }
+      
+      header h1 {
+        font-size: 1.5em;
+      }
+      
+      header p {
+        font-size: 0.9em;
+      }
+      
+      .content {
+        padding: 15px;
+      }
+      
+      /* Stack action buttons vertically on very small screens */
+      .actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .actions .btn {
+        width: 100%;
+        text-align: center;
+      }
+      
+      /* Make buttons touch-friendly (minimum 44px) */
+      .btn {
+        min-height: 44px;
+        padding: 14px 20px;
+        font-size: 0.95em;
+      }
+      
+      /* Convert table to card layout on mobile */
+      .products-table {
+        display: block;
+      }
+      
+      .products-table thead {
+        display: none;
+      }
+      
+      .products-table tbody {
+        display: block;
+      }
+      
+      .products-table tr {
+        display: block;
+        margin-bottom: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+      }
+      
+      .products-table td {
+        display: block;
+        text-align: left;
+        border: none;
+        padding: 8px 0;
+      }
+      
+      .products-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #666;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.85em;
+        text-transform: uppercase;
+      }
+      
+      /* Stack action buttons in table rows */
+      .products-table td button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        min-height: 44px;
+      }
+      
+      /* Modal optimizations for mobile */
+      .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 95vh;
+        padding: 20px 15px;
+        border-radius: 8px 8px 0 0;
+        margin: auto auto 0 auto;
+      }
+      
+      .modal-header h2 {
+        font-size: 1.3em;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+      }
+      
+      .folder-picker {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .folder-picker input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      
+      .folder-picker .btn {
+        width: 100%;
+      }
+    }
+    
+    /* Phones in portrait - 480px to 767px */
+    @media (min-width: 480px) and (max-width: 767px) {
+      body {
+        padding: 15px;
+      }
+      
+      header {
+        padding: 25px 20px;
+      }
+      
+      header h1 {
+        font-size: 1.8em;
+      }
+      
+      .content {
+        padding: 20px;
+      }
+      
+      /* Wrap action buttons but keep some on same line */
+      .actions {
+        gap: 12px;
+      }
+      
+      .btn {
+        min-height: 44px;
+        padding: 12px 20px;
+      }
+      
+      /* Convert table to cards on medium-small screens */
+      .products-table {
+        display: block;
+      }
+      
+      .products-table thead {
+        display: none;
+      }
+      
+      .products-table tbody {
+        display: block;
+      }
+      
+      .products-table tr {
+        display: block;
+        margin-bottom: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+      }
+      
+      .products-table td {
+        display: block;
+        text-align: left;
+        border: none;
+        padding: 8px 0;
+      }
+      
+      .products-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #666;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.85em;
+        text-transform: uppercase;
+      }
+      
+      /* Horizontal button layout for actions in cards */
+      .products-table td button {
+        display: inline-block;
+        width: auto;
+        margin: 5px 5px 5px 0;
+        min-height: 44px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 25px 20px;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+    }
+    
+    /* Tablets - 768px to 1023px */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .container {
+        max-width: 100%;
+      }
+      
+      header {
+        padding: 30px 25px;
+      }
+      
+      .content {
+        padding: 25px;
+      }
+      
+      /* Keep table but optimize spacing */
+      .products-table th,
+      .products-table td {
+        padding: 12px 10px;
+        font-size: 0.95em;
+      }
+      
+      /* Ensure buttons are touch-friendly */
+      .btn {
+        min-height: 44px;
+      }
+      
+      .products-table td button {
+        padding: 8px 12px;
+        font-size: 0.85em;
+        min-height: 44px;
+      }
+      
+      .modal-content {
+        width: 90%;
+        max-width: 600px;
+      }
+    }
+    
+    /* Touch device optimizations (all mobile devices) */
+    @media (hover: none) and (pointer: coarse) {
+      /* Increase touch targets */
+      .btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      /* Remove hover effects on touch devices */
+      .btn-primary:hover {
+        background: #667eea;
+      }
+      
+      .btn-secondary:hover {
+        background: #e0e0e0;
+      }
+      
+      .btn-danger:hover {
+        background: #f44336;
+      }
+      
+      .products-table tr:hover {
+        background: white;
+      }
+      
+      .product-card:hover {
+        transform: none;
+      }
+      
+      /* Add active state for touch feedback */
+      .btn:active {
+        opacity: 0.8;
+        transform: scale(0.98);
+      }
+    }
+    
+    /* Landscape orientation handling */
+    @media (max-width: 767px) and (orientation: landscape) {
+      header {
+        padding: 15px 20px;
+      }
+      
+      header h1 {
+        font-size: 1.4em;
+      }
+      
+      .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -473,19 +782,19 @@
       
       tbody.innerHTML = products.map(product => `
         <tr>
-          <td><strong>${product.name}</strong></td>
-          <td>${product.displayName}</td>
-          <td>
+          <td data-label="Product Name"><strong>${product.name}</strong></td>
+          <td data-label="Display Name">${product.displayName}</td>
+          <td data-label="Status">
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
             </span>
           </td>
-          <td>
+          <td data-label="Files">
             <a href="https://drive.google.com/drive/folders/${product.folderId}" target="_blank">
               View Folder →
             </a>
           </td>
-          <td>
+          <td data-label="Actions">
             <button class="btn btn-secondary" onclick='editProduct(${JSON.stringify(product)})' style="padding: 6px 12px; font-size: 0.9em;">
               ✏️ Edit
             </button>
