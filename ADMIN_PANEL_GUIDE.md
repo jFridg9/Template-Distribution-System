@@ -235,8 +235,6 @@ MailMerge,xyz789ghi012,Mail Merge Pro,TRUE,Send personalized emails at scale
 - **Duplicate names:** Each product name must be unique
 - **File format:** Save as CSV, not Excel (.xlsx)
 
-**Tip:** To rename a product, create a new one and delete the old one.
-
 ---
 
 ### Enabling/Disabling Products

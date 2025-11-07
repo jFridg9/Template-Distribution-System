@@ -1267,8 +1267,16 @@ function openDrivePicker() {
         return;
       }
       
+      // Validate file extension
       if (!file.name.endsWith('.csv')) {
         alert('Please select a CSV file');
+        event.target.value = '';
+        return;
+      }
+      
+      // Validate MIME type for security
+      if (file.type && file.type !== 'text/csv' && file.type !== 'application/csv' && file.type !== 'text/plain') {
+        alert('Invalid file type. Please select a valid CSV file.');
         event.target.value = '';
         return;
       }
@@ -1382,10 +1390,8 @@ function openDrivePicker() {
             
             showAlert(message, 'success');
             
-            // Force full page reload to get updated products
-            setTimeout(function() {
-              refreshProducts();
-            }, 2000);
+            // Reload products after import completes
+            refreshProducts();
           } else {
             showAlert('Import failed: ' + result.error, 'error');
           }

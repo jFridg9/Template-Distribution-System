@@ -710,8 +710,8 @@ function validateCSVImport(csvContent) {
       throw new Error('Invalid CSV content');
     }
     
-    // Parse CSV
-    const lines = csvContent.split('\n').filter(line => line.trim());
+    // Parse CSV - handle different line ending formats (Windows, Unix, Mac)
+    const lines = csvContent.split(/\r?\n|\r/).filter(line => line.trim());
     
     if (lines.length < 2) {
       throw new Error('CSV must contain at least a header row and one data row');
