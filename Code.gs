@@ -56,6 +56,13 @@ const CONFIG = {
    * Format: Spreadsheet ID from the URL
    * Example: https://docs.google.com/spreadsheets/d/[THIS_IS_THE_ID]/edit
    * 
+   * IMPORTANT: Script Properties Override
+   * If the setup wizard has been used, the config sheet ID is stored in
+   * Script Properties and takes precedence over this hardcoded value.
+   * This enables autonomous setup without code editing.
+   * 
+   * Priority: Script Properties > configSheetId > fallbackFolderId
+   * 
    * See CONFIG_TEMPLATE.md for the expected sheet structure.
    */
   configSheetId: '1X4RrTt45ceYRYrzC0jAlcgBMADF1S4cWHuOfxjHZ4Is',
