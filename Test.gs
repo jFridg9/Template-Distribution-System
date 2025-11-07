@@ -30,7 +30,12 @@
  * ============================================================================
  */
 
-// Test results tracker
+/**
+ * Test results tracker
+ * Note: This is intentionally global and reset before each test run.
+ * Apps Script doesn't support concurrent execution, so this is safe.
+ * Always call resetTestResults() at the start of test runs.
+ */
 var TEST_RESULTS = {
   passed: 0,
   failed: 0,
@@ -39,6 +44,7 @@ var TEST_RESULTS = {
 
 /**
  * Resets test results for a new test run
+ * IMPORTANT: Always call this before running tests to ensure clean state
  */
 function resetTestResults() {
   TEST_RESULTS = {
@@ -67,15 +73,37 @@ function assert(condition, message) {
 
 /**
  * Asserts that two values are equal
+ * Handles primitive types and simple comparisons
  * 
  * @param {*} actual - Actual value
  * @param {*} expected - Expected value
  * @param {string} message - Test description
  */
 function assertEqual(actual, expected, message) {
-  const condition = actual === expected;
-  const fullMessage = message + ` (expected: ${expected}, got: ${actual})`;
-  assert(condition, fullMessage);
+  // Handle null/undefined cases
+  if (actual === null && expected === null) {
+    assert(true, message);
+    return;
+  }
+  
+  // For objects/arrays, convert to JSON for comparison
+  if (typeof actual === 'object' && typeof expected === 'object') {
+    try {
+      const condition = JSON.stringify(actual) === JSON.stringify(expected);
+      const fullMessage = message + ' (expected: ' + JSON.stringify(expected) + ', got: ' + JSON.stringify(actual) + ')';
+      assert(condition, fullMessage);
+    } catch (err) {
+      // Fallback to reference equality if JSON.stringify fails
+      const condition = actual === expected;
+      const fullMessage = message + ' (object comparison)';
+      assert(condition, fullMessage);
+    }
+  } else {
+    // Primitive comparison
+    const condition = actual === expected;
+    const fullMessage = message + ' (expected: ' + expected + ', got: ' + actual + ')';
+    assert(condition, fullMessage);
+  }
 }
 
 /**
