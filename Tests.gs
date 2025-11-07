@@ -65,7 +65,7 @@ function test_ScriptPropertiesPriority() {
  * TEST 2: Verify setConfigSheetId() Functionality
  * 
  * Tests that setConfigSheetId() properly saves to Script Properties
- * and validates the sheet ID.
+ * and validates sheet accessibility before saving.
  */
 function test_SetConfigSheetId() {
   Logger.log('=== TEST: setConfigSheetId() Functionality ===');
@@ -117,8 +117,8 @@ function test_SetConfigSheetId() {
 /**
  * TEST 3: Verify Configuration Loading with Script Properties
  * 
- * Tests that loadConfiguration() successfully loads config
- * when using Script Properties.
+ * Tests that loadConfiguration() successfully loads configuration
+ * from the sheet ID resolved via Script Properties priority system.
  */
 function test_LoadConfigurationWithScriptProperties() {
   Logger.log('=== TEST: Configuration Loading with Script Properties ===');
@@ -177,6 +177,12 @@ function test_SetupWizardFlow() {
     const scriptProps = PropertiesService.getScriptProperties();
     const originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
     Logger.log(`Original CONFIG_SHEET_ID: ${originalId || '(not set)'}`);
+    
+    // Temporarily clear the property to simulate fresh setup
+    if (originalId) {
+      Logger.log('Temporarily clearing CONFIG_SHEET_ID to simulate fresh setup...');
+      scriptProps.deleteProperty('CONFIG_SHEET_ID');
+    }
     
     // Run setup
     Logger.log('Running setupCreateConfigSheet()...');
