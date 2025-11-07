@@ -275,6 +275,8 @@ function updateProduct(productName, productData) {
     }
     
     // Update row
+    // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
+    const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
       productData.name || productName,
       productData.folderId,
@@ -285,7 +287,11 @@ function updateProduct(productName, productData) {
       productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    // Update entire row (number of columns matches headers in sheet)
+    // Validate column count matches expected
+    if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
+      Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
+    }
+    
     sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     
     // Clear cache

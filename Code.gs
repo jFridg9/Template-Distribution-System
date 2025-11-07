@@ -76,6 +76,13 @@ const CONFIG = {
     organizationName: 'Your Organization',
     tagline: 'Professional Templates',
     supportEmail: 'support@example.com'
+  },
+  
+  /**
+   * LANDING PAGE SETTINGS (Full mode only)
+   */
+  landingPage: {
+    tagCloudLimit: 15  // Maximum number of tags to show in tag cloud
   }
 };
 
@@ -335,10 +342,9 @@ function renderLandingPage() {
   });
   
   // Sort tags by frequency (most popular first)
-  const TAG_CLOUD_LIMIT = 15; // Maximum tags to display in cloud
   const sortedTags = Object.keys(tagFrequency)
     .sort((a, b) => tagFrequency[b] - tagFrequency[a])
-    .slice(0, TAG_CLOUD_LIMIT);
+    .slice(0, CONFIG.landingPage.tagCloudLimit);
   
   // Build product cards HTML with category and tags
   const productCards = products.map(product => {
@@ -634,7 +640,7 @@ function renderLandingPage() {
                 <h3>Popular Tags</h3>
                 <div class="tag-cloud-items">
                   ${sortedTags.map(tag => 
-                    `<span class="tag-cloud-item" onclick="filterByTag('${tag}')">${tag} (${tagFrequency[tag]})</span>`
+                    `<span class="tag-cloud-item" data-tag="${tag}" onclick="filterByTag('${tag}')">${tag} (${tagFrequency[tag]})</span>`
                   ).join('')}
                 </div>
               </div>
@@ -705,7 +711,8 @@ function renderLandingPage() {
           function filterByTag(tag) {
             const tagItems = document.querySelectorAll('.tag-cloud-item');
             tagItems.forEach(item => {
-              if (item.textContent.startsWith(tag + ' ')) {
+              // Use data attribute for more robust matching
+              if (item.getAttribute('data-tag') === tag) {
                 item.classList.toggle('active');
               }
             });
