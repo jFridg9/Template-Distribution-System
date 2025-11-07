@@ -274,6 +274,7 @@
       opacity: 0.3;
     }
     
+<<<<<<< HEAD
     /* Tab Navigation */
     .tabs {
       display: flex;
@@ -406,10 +407,163 @@
       border: 2px solid #e0e0e0;
       border-radius: 6px;
       font-size: 1em;
+=======
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+    }
+    
+    .toast {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+      border-left: 4px solid #666;
+    }
+    
+    .toast.success {
+      border-left-color: #4caf50;
+    }
+    
+    .toast.error {
+      border-left-color: #f44336;
+    }
+    
+    .toast.warning {
+      border-left-color: #ff9800;
+    }
+    
+    .toast.info {
+      border-left-color: #2196f3;
+    }
+    
+    .toast-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    
+    .toast-content {
+      flex: 1;
+    }
+    
+    .toast-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    
+    .toast-message {
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    .toast-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .toast-close:hover {
+      color: #333;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+    
+    .toast.hiding {
+      animation: slideOut 0.3s ease-out forwards;
+    }
+    
+    /* Loading overlay for operations */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .loading-spinner {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    
+    .loading-spinner .loading {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 15px;
+    }
+    
+    .loading-text {
+      color: #666;
+      font-weight: 600;
+>>>>>>> 8488f04 (Enhanced UI with toast notifications and loading overlays in AdminPanel and SetupWizard)
     }
   </style>
 </head>
 <body>
+  <!-- Toast notification container -->
+  <div id="toastContainer" class="toast-container"></div>
+  
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="loading"></div>
+      <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+  </div>
+  
   <div class="container">
     <header>
       <h1>🛠️ Admin Panel</h1>
@@ -628,6 +782,95 @@
       }
     }
     
+    // Toast notification system
+    const toastQueue = [];
+    let toastIdCounter = 0;
+    
+    /**
+     * Shows a toast notification
+     * @param {string} message - Message to display
+     * @param {string} type - Type: 'success', 'error', 'warning', 'info'
+     * @param {number} duration - Duration in ms (0 = don't auto-close)
+     * @param {string} title - Optional title
+     */
+    function showToast(message, type, duration, title) {
+      type = type || 'info';
+      duration = duration !== undefined ? duration : 5000;
+      
+      const toastId = 'toast-' + (toastIdCounter++);
+      const container = document.getElementById('toastContainer');
+      
+      const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+      
+      const titles = {
+        success: title || 'Success',
+        error: title || 'Error',
+        warning: title || 'Warning',
+        info: title || 'Info'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.id = toastId;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-content">
+          <div class="toast-title">${titles[type]}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="closeToast('${toastId}')" aria-label="Close">×</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Auto-close after duration
+      if (duration > 0) {
+        setTimeout(function() {
+          closeToast(toastId);
+        }, duration);
+      }
+      
+      return toastId;
+    }
+    
+    /**
+     * Closes a toast notification
+     * @param {string} toastId - ID of toast to close
+     */
+    function closeToast(toastId) {
+      const toast = document.getElementById(toastId);
+      if (!toast) return;
+      
+      toast.classList.add('hiding');
+      setTimeout(function() {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }
+    
+    /**
+     * Shows/hides loading overlay
+     * @param {boolean} show - Whether to show overlay
+     * @param {string} text - Loading text
+     */
+    function showLoading(show, text) {
+      const overlay = document.getElementById('loadingOverlay');
+      const textEl = document.getElementById('loadingText');
+      
+      if (show) {
+        if (text) textEl.textContent = text;
+        overlay.classList.add('active');
+      } else {
+        overlay.classList.remove('active');
+      }
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       loadProducts();
@@ -744,15 +987,17 @@
         enabled: document.getElementById('enabled').checked
       };
       
-      showAlert('Saving...', 'info');
+      showLoading(true, editingProduct ? 'Updating product...' : 'Adding product...');
       
       const functionName = editingProduct ? 'updateProduct' : 'addProduct';
       const args = editingProduct ? [editingProduct, productData] : [productData];
       
       runServerCall(functionName, args, 'saveProduct', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
-            showAlert(result.message, 'success');
+            showToast(result.message, 'success');
             closeModal();
             // Update local products array and re-render instead of full reload
             if (editingProduct) {
@@ -769,21 +1014,27 @@
             }
             loadProducts();
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to save product: ' + errorMsg, 'error', 7000);
         }
       });
     }
     
     // Toggle product
     function toggleProduct(productName) {
+      showLoading(true, 'Updating product status...');
+      
       runServerCall('toggleProductEnabled', [productName], 'toggleProduct', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
-            showAlert(result.message, 'success');
+            showToast(result.message, 'success');
             // Update local products array and re-render without a full reload
             products = products.map(function(p) {
               if (p.name === productName) {
@@ -793,34 +1044,42 @@
             });
             loadProducts();
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to update product: ' + errorMsg, 'error', 7000);
         }
       });
     }
     
     // Delete product
     function deleteProduct_confirm(productName) {
-      if (!confirm(`Are you sure you want to delete "${productName}"?`)) {
+      if (!confirm(`Are you sure you want to permanently delete "${productName}"?\n\nThis action cannot be undone.`)) {
         return;
       }
       
+      showLoading(true, 'Deleting product...');
+      
       runServerCall('deleteProduct', [productName], 'deleteProduct', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
+            showToast(result.message, 'success');
             // Remove from local products array and re-render
             products = products.filter(function(p) { return p.name !== productName; });
             loadProducts();
-            showAlert(result.message, 'success');
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to delete product: ' + errorMsg, 'error', 7000);
         }
       });
     }
@@ -838,9 +1097,18 @@
     
     // Clear cache
     function clearCache() {
+      showLoading(true, 'Clearing cache...');
+      
       runServerCall('clearConfigCache', [], 'clearCache', {
-        success: function() { showAlert('Cache cleared successfully', 'success'); },
-        failure: function(error) { showAlert('Error: ' + (error && error.message ? error.message : error), 'error'); }
+        success: function() {
+          showLoading(false);
+          showToast('Cache cleared successfully', 'success');
+        },
+        failure: function(error) {
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to clear cache: ' + errorMsg, 'error', 7000);
+        }
       });
     }
     
@@ -855,14 +1123,17 @@
           if (result.success) {
             folderInfo.innerHTML = `
               ✅ <strong>${result.name}</strong><br>
-              📊 Contains ${result.fileCount} Google Sheets file(s)
+              📊 Contains ${result.fileCount} file(s)
             `;
           } else {
             folderInfo.innerHTML = `❌ ${result.error}`;
+            showToast(result.error, 'warning', 5000);
           }
         },
         failure: function(error) {
-          folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+          const errorMsg = error && error.message ? error.message : String(error);
+          folderInfo.innerHTML = `❌ ${errorMsg}`;
+          showToast('Failed to validate folder: ' + errorMsg, 'error', 5000);
         }
       });
     }
@@ -980,12 +1251,16 @@ function openDrivePicker() {
                 📊 Contains ${result.fileCount} file(s)<br>
                 <small style="color: #666;">Selected from: ${file.name}</small>
               `;
+              showToast('Folder selected successfully', 'success', 3000);
             } else {
               folderInfo.innerHTML = `❌ ${result.error}`;
+              showToast(result.error, 'error', 7000);
             }
           },
           failure: function(error) {
-            folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+            const errorMsg = error && error.message ? error.message : String(error);
+            folderInfo.innerHTML = `❌ ${errorMsg}`;
+            showToast('Failed to get folder: ' + errorMsg, 'error', 7000);
           }
         });
       }
@@ -1019,12 +1294,12 @@ function openDrivePicker() {
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
           copyToClipboard(url).then(function() {
-            showAlert('Product link copied to clipboard', 'success');
+            showToast('Product link copied to clipboard', 'success', 3000);
             uiLog('copyProductLink success', { url });
           }).catch(function(err) {
             // Fallback: show prompt
-            const fallback = prompt('Copy the product link below', url);
-            uiLog('copyProductLink fallback prompt', { result: fallback });
+            prompt('Copy the product link below', url);
+            uiLog('copyProductLink fallback prompt', { result: url });
           });
         },
         failure: function(err) {
@@ -1034,7 +1309,7 @@ function openDrivePicker() {
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
           copyToClipboard(url).then(function() {
-            showAlert('Product link copied to clipboard', 'success');
+            showToast('Product link copied to clipboard', 'success', 3000);
           }).catch(function() {
             prompt('Copy the product link below', url);
           });
@@ -1068,48 +1343,114 @@ function openDrivePicker() {
           const hint = current && current.length ? current : detectBaseFromLocation();
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
           if (val === null) return; // cancelled
+          
+          showLoading(true, 'Validating URL...');
+          
           // Validate the provided URL (best-effort) before saving
           runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
             success: function(validation) {
               if (validation && validation.success) {
                 // Verified redirect to Apps Script — save it
+                showLoading(true, 'Saving URL...');
                 runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                  success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify: ' + (res && res.error ? res.error : ''), 'error'); },
-                  failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
+                  success: function(res) {
+                    showLoading(false);
+                    if (res && res.success) {
+                      showToast('Public URL saved and verified', 'success');
+                    } else {
+                      showToast('Saved but could not verify: ' + (res && res.error ? res.error : ''), 'warning', 7000);
+                    }
+                  },
+                  failure: function(err) {
+                    showLoading(false);
+                    showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
+                  }
                 });
               } else {
+                showLoading(false);
                 // Show warning and let admin choose to save anyway
                 const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
                 if (confirm(msg + '\n\nSave this URL anyway?')) {
+                  showLoading(true, 'Saving URL...');
                   runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                    success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error'); },
-                    failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
+                    success: function(res) {
+                      showLoading(false);
+                      if (res && res.success) {
+                        showToast('Public URL saved', 'success');
+                      } else {
+                        showToast('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error', 7000);
+                      }
+                    },
+                    failure: function(err) {
+                      showLoading(false);
+                      showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
+                    }
                   });
                 } else {
-                  showAlert('Public URL not saved', 'info');
+                  showToast('Public URL not saved', 'info', 3000);
                 }
               }
             },
-            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
+            failure: function(err) {
+              showLoading(false);
+              showToast('Validation error: ' + (err && err.message ? err.message : err), 'error', 7000);
+            }
           });
         },
         failure: function(err) {
           uiLog('getPublicWebAppUrl failed', err);
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', detectBaseFromLocation());
           if (val === null) return;
+          
+          showLoading(true, 'Validating URL...');
+          
           // Validate when fallback path used
           runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
             success: function(validation) {
               if (validation && validation.success) {
-                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify', 'error'); }, failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); } });
+                showLoading(true, 'Saving URL...');
+                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+                  success: function(res) {
+                    showLoading(false);
+                    if (res && res.success) {
+                      showToast('Public URL saved and verified', 'success');
+                    } else {
+                      showToast('Saved but could not verify', 'warning', 5000);
+                    }
+                  },
+                  failure: function(err) {
+                    showLoading(false);
+                    showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
+                  }
+                });
               } else {
+                showLoading(false);
                 const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
                 if (confirm(msg + '\n\nSave this URL anyway?')) {
-                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL', 'error'); }, failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); } });
-                } else { showAlert('Public URL not saved', 'info'); }
+                  showLoading(true, 'Saving URL...');
+                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
+                    success: function(res) {
+                      showLoading(false);
+                      if (res && res.success) {
+                        showToast('Public URL saved', 'success');
+                      } else {
+                        showToast('Error saving public URL', 'error', 5000);
+                      }
+                    },
+                    failure: function(err) {
+                      showLoading(false);
+                      showToast('Error: ' + (err && err.message ? err.message : err), 'error', 7000);
+                    }
+                  });
+                } else {
+                  showToast('Public URL not saved', 'info', 3000);
+                }
               }
             },
-            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
+            failure: function(err) {
+              showLoading(false);
+              showToast('Validation error: ' + (err && err.message ? err.message : err), 'error', 7000);
+            }
           });
         }
       });
@@ -1321,18 +1662,18 @@ function openDrivePicker() {
       });
     }
 
-    // Alert helper
+    // Alert helper (backward compatibility - uses toast system)
     function showAlert(message, type) {
-      const container = document.getElementById('alertContainer');
-      container.innerHTML = `
-        <div class="alert alert-${type === 'error' ? 'error' : 'success'}">
-          ${message}
-        </div>
-      `;
+      // Map old alert types to toast types
+      const typeMap = {
+        'success': 'success',
+        'error': 'error',
+        'info': 'info',
+        'warning': 'warning'
+      };
       
-      setTimeout(function() {
-        container.innerHTML = '';
-      }, 5000);
+      const toastType = typeMap[type] || 'info';
+      showToast(message, toastType, 5000);
     }
   </script>
 

@@ -293,9 +293,115 @@
       font-weight: bold;
       font-size: 1.2em;
     }
+    
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+    }
+    
+    .toast {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+      border-left: 4px solid #666;
+    }
+    
+    .toast.success { border-left-color: #4caf50; }
+    .toast.error { border-left-color: #f44336; }
+    .toast.warning { border-left-color: #ff9800; }
+    .toast.info { border-left-color: #2196f3; }
+    
+    .toast-icon { font-size: 24px; flex-shrink: 0; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 600; margin-bottom: 4px; color: #333; }
+    .toast-message { color: #666; font-size: 0.9em; }
+    
+    .toast-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .toast-close:hover { color: #333; }
+    
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+    
+    .toast.hiding { animation: slideOut 0.3s ease-out forwards; }
+    
+    /* Loading overlay */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-overlay.active { display: flex; }
+    
+    .loading-spinner {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    
+    .loading-spinner .loading {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 15px;
+    }
+    
+    .loading-text { color: #666; font-weight: 600; }
   </style>
 </head>
 <body>
+  <!-- Toast notification container -->
+  <div id="toastContainer" class="toast-container"></div>
+  
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="loading"></div>
+      <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+  </div>
+  
   <div class="wizard-container">
     <div class="wizard-header">
       <h1>🚀 Setup Wizard</h1>
@@ -471,6 +577,68 @@
 
     try { caller[functionName].apply(caller, args); } catch (err) { uiLog(`[${label}] call error`, err); if (handlers.failure) handlers.failure(err); }
   }
+  
+  // Toast notification system (same as AdminPanel)
+  const toastQueue = [];
+  let toastIdCounter = 0;
+  
+  function showToast(message, type, duration, title) {
+    type = type || 'info';
+    duration = duration !== undefined ? duration : 5000;
+    
+    const toastId = 'toast-' + (toastIdCounter++);
+    const container = document.getElementById('toastContainer');
+    
+    const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+    const titles = {
+      success: title || 'Success',
+      error: title || 'Error',
+      warning: title || 'Warning',
+      info: title || 'Info'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.id = toastId;
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || icons.info}</div>
+      <div class="toast-content">
+        <div class="toast-title">${titles[type]}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+      <button class="toast-close" onclick="closeToast('${toastId}')" aria-label="Close">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (duration > 0) {
+      setTimeout(function() { closeToast(toastId); }, duration);
+    }
+    
+    return toastId;
+  }
+  
+  function closeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (!toast) return;
+    
+    toast.classList.add('hiding');
+    setTimeout(function() {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 300);
+  }
+  
+  function showLoading(show, text) {
+    const overlay = document.getElementById('loadingOverlay');
+    const textEl = document.getElementById('loadingText');
+    
+    if (show) {
+      if (text) textEl.textContent = text;
+      overlay.classList.add('active');
+    } else {
+      overlay.classList.remove('active');
+    }
+  }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -547,8 +715,12 @@
       const statusDiv = document.getElementById('configStatus');
       statusDiv.innerHTML = '<p>Creating configuration sheet... <span class="loading"></span></p>';
       
+      showLoading(true, 'Creating configuration sheet...');
+      
       runServerCall('setupCreateConfigSheet', [], 'createConfigSheet', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
             configCreated = true;
             statusDiv.innerHTML = `
@@ -560,13 +732,22 @@
               </div>
             `;
             updateButtons();
-            showAlert('Configuration sheet created and linked automatically!', 'success');
+            
+            if (result.warning) {
+              showToast(result.warning, 'warning', 7000);
+            } else {
+              showToast('Configuration sheet created and linked automatically!', 'success');
+            }
           } else {
             statusDiv.innerHTML = `<div class="alert alert-error">${result.error}</div>`;
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          statusDiv.innerHTML = `<div class="alert alert-error">Error: ${error && error.message ? error.message : error}</div>`;
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          statusDiv.innerHTML = `<div class="alert alert-error">Error: ${errorMsg}</div>`;
+          showToast('Failed to create configuration sheet: ' + errorMsg, 'error', 7000);
         }
       });
     }
@@ -576,6 +757,7 @@
       const form = document.getElementById('productForm');
       if (!form.checkValidity()) {
         form.reportValidity();
+        showToast('Please fill in all required fields', 'warning', 4000);
         return;
       }
       
@@ -591,23 +773,28 @@
       nextBtn.disabled = true;
       nextBtn.innerHTML = 'Adding Product... <span class="loading"></span>';
       
+      showLoading(true, 'Adding product...');
+      
       runServerCall('addProduct', [productData], 'addProduct', {
         success: function(result) {
+          showLoading(false);
           nextBtn.disabled = false;
           nextBtn.textContent = 'Add Product';
 
           if (result.success) {
-            showAlert('Product added successfully!', 'success');
+            showToast(result.message, 'success');
             currentStep++;
             showStep(currentStep);
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
+          showLoading(false);
           nextBtn.disabled = false;
           nextBtn.textContent = 'Add Product';
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to add product: ' + errorMsg, 'error', 7000);
         }
       });
     }
@@ -623,14 +810,17 @@
           if (result.success) {
             folderInfo.innerHTML = `
               ✅ <strong>${result.name}</strong><br>
-              📊 Contains ${result.fileCount} Google Sheets file(s)
+              📊 Contains ${result.fileCount} file(s)
             `;
           } else {
             folderInfo.innerHTML = `❌ ${result.error}`;
+            showToast(result.error, 'warning', 5000);
           }
         },
         failure: function(error) {
-          folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+          const errorMsg = error && error.message ? error.message : String(error);
+          folderInfo.innerHTML = `❌ ${errorMsg}`;
+          showToast('Failed to validate folder: ' + errorMsg, 'error', 5000);
         }
       });
     }
@@ -753,12 +943,16 @@
                 📊 Contains ${result.fileCount} file(s)<br>
                 <small style="color: #666;">Selected from: ${file.name}</small>
               `;
+              showToast('Folder selected successfully', 'success', 3000);
             } else {
               folderInfo.innerHTML = `❌ ${result.error}`;
+              showToast(result.error, 'error', 7000);
             }
           },
           failure: function(error) {
-            folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
+            const errorMsg = error && error.message ? error.message : String(error);
+            folderInfo.innerHTML = `❌ ${errorMsg}`;
+            showToast('Failed to get folder: ' + errorMsg, 'error', 7000);
           }
         });
       }
@@ -781,7 +975,7 @@
 
     function copyProductLink(productName) {
       if (!productName) {
-        alert('Please fill the Product Name field first');
+        showToast('Please fill the Product Name field first', 'warning', 4000);
         return;
       }
       uiLog('copyProductLink (setup)', { productName });
@@ -792,7 +986,7 @@
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
           copyToClipboard(url).then(function() {
-            showAlert('Product link copied to clipboard', 'success');
+            showToast('Product link copied to clipboard', 'success', 3000);
           }).catch(function() { prompt('Copy the product link below', url); });
         },
         failure: function(err) {
@@ -801,7 +995,7 @@
           let url = base;
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
-          copyToClipboard(url).then(function() { showAlert('Product link copied to clipboard', 'success'); }).catch(function() { prompt('Copy the product link below', url); });
+          copyToClipboard(url).then(function() { showToast('Product link copied to clipboard', 'success', 3000); }).catch(function() { prompt('Copy the product link below', url); });
         }
       });
     }
@@ -865,18 +1059,17 @@
       });
     }
     
-    // Alert helper
+    // Alert helper (backward compatibility - uses toast system)
     function showAlert(message, type) {
-      const container = document.getElementById('alertContainer');
-      container.innerHTML = `
-        <div class="alert alert-${type === 'error' ? 'error' : 'success'}">
-          ${message}
-        </div>
-      `;
+      const typeMap = {
+        'success': 'success',
+        'error': 'error',
+        'info': 'info',
+        'warning': 'warning'
+      };
       
-      setTimeout(function() {
-        container.innerHTML = '';
-      }, 5000);
+      const toastType = typeMap[type] || 'info';
+      showToast(message, toastType, 5000);
     }
   </script>
 </body>
