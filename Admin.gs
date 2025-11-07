@@ -285,7 +285,8 @@ function updateProduct(productName, productData) {
       productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.getRange(rowIndex, 1, 1, 7).setValues([updatedRow]);
+    // Update entire row (number of columns matches headers in sheet)
+    sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     
     // Clear cache
     clearConfigCache();

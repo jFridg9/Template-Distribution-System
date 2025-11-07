@@ -335,9 +335,10 @@ function renderLandingPage() {
   });
   
   // Sort tags by frequency (most popular first)
+  const TAG_CLOUD_LIMIT = 15; // Maximum tags to display in cloud
   const sortedTags = Object.keys(tagFrequency)
     .sort((a, b) => tagFrequency[b] - tagFrequency[a])
-    .slice(0, 15); // Show top 15 tags
+    .slice(0, TAG_CLOUD_LIMIT);
   
   // Build product cards HTML with category and tags
   const productCards = products.map(product => {
