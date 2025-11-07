@@ -71,18 +71,27 @@ function renderAdminPanel() {
  * @returns {boolean} True if setup is needed
  */
 function checkIfNeedsSetup() {
-  // Check if config sheet ID is set (either in Script Properties or CONFIG)
-  const configSheetId = getConfigSheetId();
-  if (!configSheetId || configSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
-    return true;
-  }
-  
-  // Check if config sheet is accessible and has products
   try {
-    const config = loadConfiguration();
-    return config.products.length === 0;
+    // Check if config sheet ID is set (either in Script Properties or CONFIG)
+    const configSheetId = getConfigSheetId();
+    if (!configSheetId || configSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
+      Logger.log('checkIfNeedsSetup: No config sheet ID configured');
+      return true;
+    }
+    
+    // Check if config sheet is accessible and has products
+    try {
+      const config = loadConfiguration();
+      const needsSetup = config.products.length === 0;
+      Logger.log(`checkIfNeedsSetup: ${needsSetup ? 'Setup needed' : 'System configured'} (${config.products.length} products)`);
+      return needsSetup;
+    } catch (err) {
+      Logger.log(`checkIfNeedsSetup: Error loading config - ${err.message}`);
+      return true;
+    }
   } catch (err) {
-    return true;
+    Logger.log(`ERROR in checkIfNeedsSetup: ${err.message}`);
+    return true; // Assume setup needed on error
   }
 }
 
@@ -118,11 +127,20 @@ function renderSetupWizard() {
  * @returns {Object} Result with sheet ID and URL
  */
 function setupCreateConfigSheet() {
+  Logger.log('setupCreateConfigSheet: Starting configuration sheet creation');
+  
   try {
     // Create the config sheet
+    Logger.log('setupCreateConfigSheet: Creating new spreadsheet');
     const ss = SpreadsheetApp.create('Template Distribution - Configuration');
     const sheet = ss.getSheetByName('Sheet1');
+    
+    if (!sheet) {
+      throw new Error('Failed to access default sheet in new spreadsheet');
+    }
+    
     sheet.setName('Products');
+    Logger.log('setupCreateConfigSheet: Sheet renamed to "Products"');
     
     // Set up headers
     const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
@@ -141,16 +159,24 @@ function setupCreateConfigSheet() {
     
     const sheetId = ss.getId();
     const sheetUrl = ss.getUrl();
+    Logger.log(`setupCreateConfigSheet: Spreadsheet created successfully (ID: ${sheetId})`);
     
     // CRITICAL: Save the sheet ID to Script Properties
     // This makes it available immediately without code changes
+    Logger.log('setupCreateConfigSheet: Saving sheet ID to Script Properties');
     const saveResult = setConfigSheetId(sheetId);
     if (!saveResult.success) {
-      Logger.log(`Warning: Failed to save config sheet ID: ${saveResult.error}`);
-      // Continue anyway - sheet was created successfully
+      Logger.log(`WARNING in setupCreateConfigSheet: Failed to save config sheet ID - ${saveResult.error}`);
+      // Return partial success - sheet was created but not saved to properties
+      return {
+        success: true,
+        sheetId: sheetId,
+        sheetUrl: sheetUrl,
+        warning: 'Sheet created but could not be saved to Script Properties. You may need to configure it manually.'
+      };
     }
     
-    Logger.log(`Setup: Created config sheet ${sheetId} and saved to Script Properties`);
+    Logger.log(`SUCCESS: Configuration sheet created and saved (ID: ${sheetId})`);
     
     return {
       success: true,
@@ -158,10 +184,13 @@ function setupCreateConfigSheet() {
       sheetUrl: sheetUrl
     };
   } catch (err) {
-    Logger.log('ERROR in setupCreateConfigSheet: ' + err.message);
+    Logger.log(`ERROR in setupCreateConfigSheet: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
+    // Return user-friendly error message
     return {
       success: false,
-      error: err.message
+      error: 'Unable to create configuration sheet. Please check your Google Drive permissions and try again.'
     };
   }
 }
@@ -181,32 +210,81 @@ function setupCreateConfigSheet() {
  * @returns {Object} Result of operation
  */
 function addProduct(productData) {
+  Logger.log(`addProduct: Starting - Product name: ${productData ? productData.name : 'undefined'}`);
+  
   try {
-    const configSheetId = getConfigSheetId();
-    const ss = SpreadsheetApp.openById(configSheetId);
-    const sheet = ss.getSheetByName('Products');
-    
     // Validate product data
+    if (!productData || typeof productData !== 'object') {
+      throw new Error('Invalid product data provided');
+    }
+    
     if (!productData.name || !productData.folderId) {
-      throw new Error('Product name and folder ID are required');
+      Logger.log('addProduct: Validation failed - missing required fields');
+      throw new Error('Product name and folder are required. Please fill in all required fields.');
+    }
+    
+    // Validate product name format
+    const namePattern = /^[A-Za-z0-9_-]+$/;
+    if (!namePattern.test(productData.name)) {
+      Logger.log(`addProduct: Invalid product name format: ${productData.name}`);
+      throw new Error('Product name can only contain letters, numbers, hyphens, and underscores');
+    }
+    
+    Logger.log(`addProduct: Opening configuration sheet`);
+    const configSheetId = getConfigSheetId();
+    if (!configSheetId) {
+      throw new Error('Configuration sheet not set up. Please complete the setup wizard first.');
+    }
+    
+    let ss, sheet;
+    try {
+      ss = SpreadsheetApp.openById(configSheetId);
+      sheet = ss.getSheetByName('Products');
+    } catch (err) {
+      Logger.log(`ERROR in addProduct: Cannot access config sheet - ${err.message}`);
+      throw new Error('Cannot access configuration sheet. Please check permissions or contact your administrator.');
+    }
+    
+    if (!sheet) {
+      throw new Error('Products sheet not found in configuration. Please check your setup.');
     }
     
     // Check if product name already exists
+    Logger.log('addProduct: Checking for duplicate product names');
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productData.name) {
-        throw new Error('A product with this name already exists');
+        Logger.log(`addProduct: Duplicate product name found: ${productData.name}`);
+        throw new Error(`A product named "${productData.name}" already exists. Please choose a different name.`);
       }
     }
     
-    // Verify folder is accessible
-    try {
-      DriveApp.getFolderById(productData.folderId);
-    } catch (err) {
-      throw new Error('Cannot access the specified folder. Check permissions.');
+    // Verify folder is accessible with retry logic
+    Logger.log(`addProduct: Verifying folder access (ID: ${productData.folderId})`);
+    let folder;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        folder = DriveApp.getFolderById(productData.folderId);
+        Logger.log(`addProduct: Folder accessed successfully: ${folder.getName()}`);
+        break;
+      } catch (err) {
+        retryCount++;
+        Logger.log(`addProduct: Folder access attempt ${retryCount} failed - ${err.message}`);
+        
+        if (retryCount >= maxRetries) {
+          throw new Error('Cannot access the selected folder. Please verify the folder exists and you have permission to access it.');
+        }
+        
+        // Wait briefly before retry
+        Utilities.sleep(500);
+      }
     }
     
     // Add new row
+    Logger.log('addProduct: Adding product to sheet');
     const newRow = [
       productData.name,
       productData.folderId,
@@ -217,19 +295,32 @@ function addProduct(productData) {
       productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.appendRow(newRow);
+    try {
+      sheet.appendRow(newRow);
+    } catch (err) {
+      Logger.log(`ERROR in addProduct: Failed to append row - ${err.message}`);
+      throw new Error('Failed to save product to configuration sheet. Please try again.');
+    }
     
     // Clear cache
-    clearConfigCache();
+    Logger.log('addProduct: Clearing configuration cache');
+    try {
+      clearConfigCache();
+    } catch (err) {
+      Logger.log(`WARNING in addProduct: Failed to clear cache - ${err.message}`);
+      // Non-critical error, continue
+    }
     
-    Logger.log(`Added product: ${productData.name}`);
+    Logger.log(`SUCCESS: Product "${productData.name}" added successfully`);
     
     return {
       success: true,
-      message: 'Product added successfully'
+      message: `Product "${productData.displayName || productData.name}" added successfully`
     };
   } catch (err) {
-    Logger.log('ERROR in addProduct: ' + err.message);
+    Logger.log(`ERROR in addProduct: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
       error: err.message
@@ -246,13 +337,45 @@ function addProduct(productData) {
  * @returns {Object} Result of operation
  */
 function updateProduct(productName, productData) {
+  Logger.log(`updateProduct: Starting - Product: ${productName}`);
+  
   try {
+    // Validate inputs
+    if (!productName || typeof productName !== 'string') {
+      throw new Error('Invalid product name');
+    }
+    
+    if (!productData || typeof productData !== 'object') {
+      throw new Error('Invalid product data');
+    }
+    
+    if (!productData.folderId) {
+      throw new Error('Folder is required. Please select a folder.');
+    }
+    
+    Logger.log('updateProduct: Opening configuration sheet');
     const configSheetId = getConfigSheetId();
-    const ss = SpreadsheetApp.openById(configSheetId);
-    const sheet = ss.getSheetByName('Products');
+    if (!configSheetId) {
+      throw new Error('Configuration sheet not set up. Please complete the setup wizard first.');
+    }
+    
+    let ss, sheet;
+    try {
+      ss = SpreadsheetApp.openById(configSheetId);
+      sheet = ss.getSheetByName('Products');
+    } catch (err) {
+      Logger.log(`ERROR in updateProduct: Cannot access config sheet - ${err.message}`);
+      throw new Error('Cannot access configuration sheet. Please check permissions.');
+    }
+    
+    if (!sheet) {
+      throw new Error('Products sheet not found in configuration.');
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     // Find the product row
+    Logger.log('updateProduct: Finding product row');
     let rowIndex = -1;
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productName) {
@@ -262,19 +385,37 @@ function updateProduct(productName, productData) {
     }
     
     if (rowIndex === -1) {
-      throw new Error('Product not found');
+      Logger.log(`updateProduct: Product not found: ${productName}`);
+      throw new Error(`Product "${productName}" not found. It may have been deleted.`);
     }
     
-    // Verify folder is accessible if changed
+    // Verify folder is accessible if changed with retry logic
     if (productData.folderId !== data[rowIndex - 1][1]) {
-      try {
-        DriveApp.getFolderById(productData.folderId);
-      } catch (err) {
-        throw new Error('Cannot access the specified folder. Check permissions.');
+      Logger.log(`updateProduct: Verifying new folder (ID: ${productData.folderId})`);
+      
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const folder = DriveApp.getFolderById(productData.folderId);
+          Logger.log(`updateProduct: Folder verified: ${folder.getName()}`);
+          break;
+        } catch (err) {
+          retryCount++;
+          Logger.log(`updateProduct: Folder verification attempt ${retryCount} failed - ${err.message}`);
+          
+          if (retryCount >= maxRetries) {
+            throw new Error('Cannot access the selected folder. Please verify the folder exists and you have permission.');
+          }
+          
+          Utilities.sleep(500);
+        }
       }
     }
     
     // Update row
+    Logger.log('updateProduct: Updating product data');
     // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
     const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
@@ -291,20 +432,32 @@ function updateProduct(productName, productData) {
     if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
       Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
     }
-    
-    sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
+
+    try {
+      sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
+    } catch (err) {
+      Logger.log(`ERROR in updateProduct: Failed to update row - ${err.message}`);
+      throw new Error('Failed to save changes. Please try again.');
+    }
     
     // Clear cache
-    clearConfigCache();
+    Logger.log('updateProduct: Clearing configuration cache');
+    try {
+      clearConfigCache();
+    } catch (err) {
+      Logger.log(`WARNING in updateProduct: Failed to clear cache - ${err.message}`);
+    }
     
-    Logger.log(`Updated product: ${productName}`);
+    Logger.log(`SUCCESS: Product "${productName}" updated successfully`);
     
     return {
       success: true,
-      message: 'Product updated successfully'
+      message: `Product "${productData.displayName || productName}" updated successfully`
     };
   } catch (err) {
-    Logger.log('ERROR in updateProduct: ' + err.message);
+    Logger.log(`ERROR in updateProduct: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
       error: err.message
@@ -315,44 +468,89 @@ function updateProduct(productName, productData) {
 
 /**
  * Deletes a product from configuration
+ * DESTRUCTIVE OPERATION - includes validation
  * 
  * @param {string} productName - Name of product to delete
  * @returns {Object} Result of operation
  */
 function deleteProduct(productName) {
+  Logger.log(`deleteProduct: Starting - Product: ${productName}`);
+  
   try {
+    // Validate input
+    if (!productName || typeof productName !== 'string') {
+      throw new Error('Invalid product name');
+    }
+    
+    Logger.log('deleteProduct: Opening configuration sheet');
     const configSheetId = getConfigSheetId();
-    const ss = SpreadsheetApp.openById(configSheetId);
-    const sheet = ss.getSheetByName('Products');
+    if (!configSheetId) {
+      throw new Error('Configuration sheet not set up.');
+    }
+    
+    let ss, sheet;
+    try {
+      ss = SpreadsheetApp.openById(configSheetId);
+      sheet = ss.getSheetByName('Products');
+    } catch (err) {
+      Logger.log(`ERROR in deleteProduct: Cannot access config sheet - ${err.message}`);
+      throw new Error('Cannot access configuration sheet. Please check permissions.');
+    }
+    
+    if (!sheet) {
+      throw new Error('Products sheet not found in configuration.');
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     // Find the product row
+    Logger.log('deleteProduct: Finding product row');
     let rowIndex = -1;
+    let productDisplayName = productName;
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productName) {
         rowIndex = i + 1; // Sheet rows are 1-indexed
+        productDisplayName = data[i][2] || productName; // Get display name for response
         break;
       }
     }
     
     if (rowIndex === -1) {
-      throw new Error('Product not found');
+      Logger.log(`deleteProduct: Product not found: ${productName}`);
+      throw new Error(`Product "${productName}" not found. It may have already been deleted.`);
     }
     
+    // Additional safety check - confirm product exists before deletion
+    const productToDelete = data[rowIndex - 1];
+    Logger.log(`deleteProduct: Confirmed product for deletion - Name: ${productToDelete[0]}, Display: ${productToDelete[2]}`);
+    
     // Delete the row
-    sheet.deleteRow(rowIndex);
+    Logger.log(`deleteProduct: Deleting row ${rowIndex}`);
+    try {
+      sheet.deleteRow(rowIndex);
+    } catch (err) {
+      Logger.log(`ERROR in deleteProduct: Failed to delete row - ${err.message}`);
+      throw new Error('Failed to delete product. Please try again.');
+    }
     
     // Clear cache
-    clearConfigCache();
+    Logger.log('deleteProduct: Clearing configuration cache');
+    try {
+      clearConfigCache();
+    } catch (err) {
+      Logger.log(`WARNING in deleteProduct: Failed to clear cache - ${err.message}`);
+    }
     
-    Logger.log(`Deleted product: ${productName}`);
+    Logger.log(`SUCCESS: Product "${productName}" deleted successfully`);
     
     return {
       success: true,
-      message: 'Product deleted successfully'
+      message: `Product "${productDisplayName}" has been permanently deleted`
     };
   } catch (err) {
-    Logger.log('ERROR in deleteProduct: ' + err.message);
+    Logger.log(`ERROR in deleteProduct: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
       error: err.message
@@ -368,42 +566,85 @@ function deleteProduct(productName) {
  * @returns {Object} Result of operation
  */
 function toggleProductEnabled(productName) {
+  Logger.log(`toggleProductEnabled: Starting - Product: ${productName}`);
+  
   try {
+    // Validate input
+    if (!productName || typeof productName !== 'string') {
+      throw new Error('Invalid product name');
+    }
+    
+    Logger.log('toggleProductEnabled: Opening configuration sheet');
     const configSheetId = getConfigSheetId();
-    const ss = SpreadsheetApp.openById(configSheetId);
-    const sheet = ss.getSheetByName('Products');
+    if (!configSheetId) {
+      throw new Error('Configuration sheet not set up.');
+    }
+    
+    let ss, sheet;
+    try {
+      ss = SpreadsheetApp.openById(configSheetId);
+      sheet = ss.getSheetByName('Products');
+    } catch (err) {
+      Logger.log(`ERROR in toggleProductEnabled: Cannot access config sheet - ${err.message}`);
+      throw new Error('Cannot access configuration sheet. Please check permissions.');
+    }
+    
+    if (!sheet) {
+      throw new Error('Products sheet not found in configuration.');
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     // Find the product row
+    Logger.log('toggleProductEnabled: Finding product row');
     let rowIndex = -1;
     let currentStatus = false;
+    let productDisplayName = productName;
+    
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productName) {
         rowIndex = i + 1;
         currentStatus = data[i][3];
+        productDisplayName = data[i][2] || productName;
         break;
       }
     }
     
     if (rowIndex === -1) {
-      throw new Error('Product not found');
+      Logger.log(`toggleProductEnabled: Product not found: ${productName}`);
+      throw new Error(`Product "${productName}" not found. It may have been deleted.`);
     }
     
+    const newStatus = !currentStatus;
+    Logger.log(`toggleProductEnabled: Toggling status from ${currentStatus} to ${newStatus}`);
+    
     // Toggle enabled status
-    sheet.getRange(rowIndex, 4).setValue(!currentStatus);
+    try {
+      sheet.getRange(rowIndex, 4).setValue(newStatus);
+    } catch (err) {
+      Logger.log(`ERROR in toggleProductEnabled: Failed to update status - ${err.message}`);
+      throw new Error('Failed to update product status. Please try again.');
+    }
     
     // Clear cache
-    clearConfigCache();
+    Logger.log('toggleProductEnabled: Clearing configuration cache');
+    try {
+      clearConfigCache();
+    } catch (err) {
+      Logger.log(`WARNING in toggleProductEnabled: Failed to clear cache - ${err.message}`);
+    }
     
-    Logger.log(`Toggled product ${productName}: ${currentStatus} -> ${!currentStatus}`);
+    Logger.log(`SUCCESS: Product "${productName}" toggled: ${currentStatus} -> ${newStatus}`);
     
     return {
       success: true,
-      enabled: !currentStatus,
-      message: `Product ${!currentStatus ? 'enabled' : 'disabled'} successfully`
+      enabled: newStatus,
+      message: `Product "${productDisplayName}" ${newStatus ? 'enabled' : 'disabled'} successfully`
     };
   } catch (err) {
-    Logger.log('ERROR in toggleProductEnabled: ' + err.message);
+    Logger.log(`ERROR in toggleProductEnabled: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
       error: err.message
@@ -469,17 +710,57 @@ function normalizeFolderId(input) {
  * @returns {Object} Folder details
  */
 function getFolderDetails(folderId) {
+  Logger.log(`getFolderDetails: Starting - Folder ID: ${folderId ? folderId.substring(0, 10) + '...' : 'undefined'}`);
+  
   try {
-    const id = normalizeFolderId(folderId);
-    Logger.log('getFolderDetails(): resolving folder ID: ' + id);
-    const folder = DriveApp.getFolderById(id);
-    const files = folder.getFiles(); // Count all files, not just Sheets
-    
-    let fileCount = 0;
-    while (files.hasNext()) {
-      files.next();
-      fileCount++;
+    if (!folderId || typeof folderId !== 'string') {
+      throw new Error('Invalid folder ID provided');
     }
+    
+    const id = normalizeFolderId(folderId);
+    Logger.log(`getFolderDetails: Normalized folder ID: ${id.substring(0, 10)}...`);
+    
+    // Retry logic for folder access
+    let folder;
+    let retryCount = 0;
+    const maxRetries = 3;
+    let lastError;
+    
+    while (retryCount < maxRetries) {
+      try {
+        folder = DriveApp.getFolderById(id);
+        break;
+      } catch (err) {
+        lastError = err;
+        retryCount++;
+        Logger.log(`getFolderDetails: Access attempt ${retryCount} failed - ${err.message}`);
+        
+        if (retryCount < maxRetries) {
+          Utilities.sleep(500);
+        }
+      }
+    }
+    
+    if (!folder) {
+      throw lastError || new Error('Unable to access folder');
+    }
+    
+    Logger.log(`getFolderDetails: Folder accessed - Name: ${folder.getName()}`);
+    
+    // Count files with error handling
+    let fileCount = 0;
+    try {
+      const files = folder.getFiles();
+      while (files.hasNext()) {
+        files.next();
+        fileCount++;
+      }
+    } catch (err) {
+      Logger.log(`WARNING in getFolderDetails: Failed to count files - ${err.message}`);
+      // Continue with fileCount = 0
+    }
+    
+    Logger.log(`getFolderDetails: Success - ${fileCount} files found`);
     
     return {
       success: true,
@@ -488,10 +769,12 @@ function getFolderDetails(folderId) {
       fileCount: fileCount
     };
   } catch (err) {
-    Logger.log('ERROR getFolderDetails(): ' + err.message);
+    Logger.log(`ERROR in getFolderDetails: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
-      error: 'Cannot access folder: ' + err.message
+      error: 'Unable to access folder. Please verify the folder ID and your permissions.'
     };
   }
 }
@@ -505,48 +788,87 @@ function getFolderDetails(folderId) {
  * @returns {Object} Result with folderId, folderName, and fileCount
  */
 function getParentFolderFromFile(fileId) {
+  Logger.log(`getParentFolderFromFile: Starting - File ID: ${fileId ? fileId.substring(0, 10) + '...' : 'undefined'}`);
+  
   try {
-    Logger.log('getParentFolderFromFile(): fileId = ' + fileId);
+    if (!fileId || typeof fileId !== 'string') {
+      throw new Error('Invalid file ID provided');
+    }
     
-    // Get the file
-    const file = DriveApp.getFileById(fileId);
+    // Get the file with retry logic
+    let file;
+    let retryCount = 0;
+    const maxRetries = 3;
+    let lastError;
+    
+    while (retryCount < maxRetries) {
+      try {
+        file = DriveApp.getFileById(fileId);
+        break;
+      } catch (err) {
+        lastError = err;
+        retryCount++;
+        Logger.log(`getParentFolderFromFile: File access attempt ${retryCount} failed - ${err.message}`);
+        
+        if (retryCount < maxRetries) {
+          Utilities.sleep(500);
+        }
+      }
+    }
+    
+    if (!file) {
+      throw lastError || new Error('Unable to access file');
+    }
+    
+    Logger.log(`getParentFolderFromFile: File accessed - Name: ${file.getName()}`);
     
     // Get parent folders (files can have multiple parents, but we'll use the first)
     const parents = file.getParents();
     
     if (!parents.hasNext()) {
+      Logger.log('getParentFolderFromFile: File has no parent folder');
       return {
         success: false,
-        error: 'File has no parent folder (orphaned file)'
+        error: 'The selected file has no parent folder. Please select a file that is stored in a folder.'
       };
     }
     
     const folder = parents.next();
     const folderId = folder.getId();
+    const folderName = folder.getName();
+    
+    Logger.log(`getParentFolderFromFile: Parent folder found - ${folderName}`);
     
     // Count all files in the folder (templates can be any type)
-    const files = folder.getFiles();
     let fileCount = 0;
-    while (files.hasNext()) {
-      files.next();
-      fileCount++;
+    try {
+      const files = folder.getFiles();
+      while (files.hasNext()) {
+        files.next();
+        fileCount++;
+      }
+    } catch (err) {
+      Logger.log(`WARNING in getParentFolderFromFile: Failed to count files - ${err.message}`);
+      // Continue with fileCount = 0
     }
     
-    Logger.log('getParentFolderFromFile(): success - folder ' + folder.getName() + ' with ' + fileCount + ' files');
+    Logger.log(`getParentFolderFromFile: Success - Folder "${folderName}" with ${fileCount} files`);
     
     return {
       success: true,
       folderId: folderId,
-      folderName: folder.getName(),
+      folderName: folderName,
       folderUrl: folder.getUrl(),
       fileCount: fileCount
     };
     
   } catch (err) {
-    Logger.log('ERROR getParentFolderFromFile(): ' + err.message);
+    Logger.log(`ERROR in getParentFolderFromFile: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
     return {
       success: false,
-      error: 'Cannot access file or folder: ' + err.message
+      error: 'Unable to access the selected file or its parent folder. Please verify your permissions.'
     };
   }
 }
@@ -557,17 +879,40 @@ function getParentFolderFromFile(fileId) {
  * @returns {Object} { success: true, folders: [{id,name}, ...] }
  */
 function listRootFolders() {
+  Logger.log('listRootFolders: Starting');
+  
   try {
     const folders = DriveApp.getFolders();
     const out = [];
-    while (folders.hasNext()) {
-      const f = folders.next();
-      out.push({ id: f.getId(), name: f.getName() });
+    let count = 0;
+    const maxFolders = 100; // Limit to prevent excessive processing
+    
+    while (folders.hasNext() && count < maxFolders) {
+      try {
+        const f = folders.next();
+        out.push({ id: f.getId(), name: f.getName() });
+        count++;
+      } catch (err) {
+        Logger.log(`WARNING in listRootFolders: Skipping folder due to error - ${err.message}`);
+        // Skip this folder and continue
+      }
     }
-    return { success: true, folders: out };
+    
+    Logger.log(`listRootFolders: Success - Found ${out.length} folders`);
+    
+    return { 
+      success: true, 
+      folders: out,
+      truncated: count >= maxFolders
+    };
   } catch (err) {
-    Logger.log('ERROR listRootFolders: ' + err.message);
-    return { success: false, error: err.message };
+    Logger.log(`ERROR in listRootFolders: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
+    return { 
+      success: false, 
+      error: 'Unable to list folders. Please check your Drive permissions.' 
+    };
   }
 }
 
@@ -577,19 +922,70 @@ function listRootFolders() {
  * @returns {Object} { success: true, folders: [...] }
  */
 function listFolderChildren(folderId) {
+  Logger.log(`listFolderChildren: Starting - Folder ID: ${folderId ? folderId.substring(0, 10) + '...' : 'undefined'}`);
+  
   try {
+    if (!folderId || typeof folderId !== 'string') {
+      throw new Error('Invalid folder ID provided');
+    }
+    
     const id = normalizeFolderId(folderId);
-    const folder = DriveApp.getFolderById(id);
+    
+    // Retry logic for folder access
+    let folder;
+    let retryCount = 0;
+    const maxRetries = 3;
+    let lastError;
+    
+    while (retryCount < maxRetries) {
+      try {
+        folder = DriveApp.getFolderById(id);
+        break;
+      } catch (err) {
+        lastError = err;
+        retryCount++;
+        Logger.log(`listFolderChildren: Access attempt ${retryCount} failed - ${err.message}`);
+        
+        if (retryCount < maxRetries) {
+          Utilities.sleep(500);
+        }
+      }
+    }
+    
+    if (!folder) {
+      throw lastError || new Error('Unable to access folder');
+    }
+    
     const children = folder.getFolders();
     const out = [];
-    while (children.hasNext()) {
-      const f = children.next();
-      out.push({ id: f.getId(), name: f.getName() });
+    let count = 0;
+    const maxFolders = 100;
+    
+    while (children.hasNext() && count < maxFolders) {
+      try {
+        const f = children.next();
+        out.push({ id: f.getId(), name: f.getName() });
+        count++;
+      } catch (err) {
+        Logger.log(`WARNING in listFolderChildren: Skipping folder due to error - ${err.message}`);
+      }
     }
-    return { success: true, folders: out };
+    
+    Logger.log(`listFolderChildren: Success - Found ${out.length} child folders`);
+    
+    return { 
+      success: true, 
+      folders: out,
+      truncated: count >= maxFolders
+    };
   } catch (err) {
-    Logger.log('ERROR listFolderChildren: ' + err.message);
-    return { success: false, error: err.message };
+    Logger.log(`ERROR in listFolderChildren: ${err.message}`);
+    Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
+    
+    return { 
+      success: false, 
+      error: 'Unable to list folder contents. Please verify the folder ID and your permissions.' 
+    };
   }
 }
 
