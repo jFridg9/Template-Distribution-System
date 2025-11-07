@@ -125,7 +125,7 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     
     // Set up headers
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Format header row
@@ -212,7 +212,9 @@ function addProduct(productData) {
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
     sheet.appendRow(newRow);
@@ -278,10 +280,12 @@ function updateProduct(productName, productData) {
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+    sheet.getRange(rowIndex, 1, 1, 7).setValues([updatedRow]);
     
     // Clear cache
     clearConfigCache();

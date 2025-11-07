@@ -109,6 +109,8 @@ function loadConfigFromSheet(sheetId) {
     const displayCol = headers.indexOf('displayname');
     const enabledCol = headers.indexOf('enabled');
     const descCol = headers.indexOf('description');
+    const categoryCol = headers.indexOf('category');
+    const tagsCol = headers.indexOf('tags');
     
     // Validate required columns
     if (nameCol === -1 || folderCol === -1) {
@@ -124,12 +126,20 @@ function loadConfigFromSheet(sheetId) {
       // Skip empty rows
       if (!row[nameCol] || !row[folderCol]) continue;
       
+      // Parse tags (comma-separated) into array
+      let tags = [];
+      if (tagsCol !== -1 && row[tagsCol]) {
+        tags = row[tagsCol].toString().split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      }
+      
       products.push({
         name: row[nameCol].toString().trim(),
         folderId: row[folderCol].toString().trim(),
         displayName: displayCol !== -1 ? row[displayCol].toString().trim() : row[nameCol].toString().trim(),
         enabled: enabledCol !== -1 ? (row[enabledCol] === true || row[enabledCol].toString().toUpperCase() === 'TRUE') : true,
-        description: descCol !== -1 ? row[descCol].toString().trim() : ''
+        description: descCol !== -1 ? row[descCol].toString().trim() : '',
+        category: categoryCol !== -1 && row[categoryCol] ? row[categoryCol].toString().trim() : 'Uncategorized',
+        tags: tags
       });
     }
     
@@ -189,6 +199,8 @@ function validateConfiguration() {
       Logger.log(`  Folder ID: ${product.folderId}`);
       Logger.log(`  Enabled: ${product.enabled}`);
       Logger.log(`  Description: ${product.description || '(none)'}`);
+      Logger.log(`  Category: ${product.category || 'Uncategorized'}`);
+      Logger.log(`  Tags: ${product.tags && product.tags.length > 0 ? product.tags.join(', ') : '(none)'}`);
       
       // Try to access the folder
       try {
@@ -453,7 +465,7 @@ function createConfigurationSheet() {
     sheet.setName('Products');
     
     // Set up headers
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Format header row
@@ -464,9 +476,9 @@ function createConfigurationSheet() {
     
     // Add example rows
     const examples = [
-      ['EventPlanning', 'YOUR_FOLDER_ID_HERE', 'Event Planning Tool', true, 'Organize events effortlessly'],
-      ['MailMerge', 'YOUR_FOLDER_ID_HERE', 'Mail Merge Pro', true, 'Send personalized emails at scale'],
-      ['InvoiceTracker', 'YOUR_FOLDER_ID_HERE', 'Invoice Tracker', false, 'Coming soon!']
+      ['EventPlanning', 'YOUR_FOLDER_ID_HERE', 'Event Planning Tool', true, 'Organize events effortlessly', 'Event Planning', 'planning, calendar, scheduling'],
+      ['MailMerge', 'YOUR_FOLDER_ID_HERE', 'Mail Merge Pro', true, 'Send personalized emails at scale', 'Communication', 'email, communication, outreach'],
+      ['InvoiceTracker', 'YOUR_FOLDER_ID_HERE', 'Invoice Tracker', false, 'Coming soon!', 'Finance', 'budget, expenses, tracking']
     ];
     
     sheet.getRange(2, 1, examples.length, headers.length).setValues(examples);

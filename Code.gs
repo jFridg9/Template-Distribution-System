@@ -321,12 +321,39 @@ function renderLandingPage() {
   const config = loadConfiguration();
   const products = config.products.filter(p => p.enabled);
   
-  // Build product cards HTML
+  // Extract unique categories
+  const categories = [...new Set(products.map(p => p.category || 'Uncategorized'))].sort();
+  
+  // Extract all tags and count frequency
+  const tagFrequency = {};
+  products.forEach(product => {
+    if (product.tags && Array.isArray(product.tags)) {
+      product.tags.forEach(tag => {
+        tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
+      });
+    }
+  });
+  
+  // Sort tags by frequency (most popular first)
+  const sortedTags = Object.keys(tagFrequency)
+    .sort((a, b) => tagFrequency[b] - tagFrequency[a])
+    .slice(0, 15); // Show top 15 tags
+  
+  // Build product cards HTML with category and tags
   const productCards = products.map(product => {
+    const categoryBadge = `<span class="category-badge">${product.category || 'Uncategorized'}</span>`;
+    const tagBadges = product.tags && product.tags.length > 0 
+      ? product.tags.map(tag => `<span class="tag-badge">${tag}</span>`).join('')
+      : '';
+    
     return `
-      <div class="product-card">
+      <div class="product-card" data-category="${product.category || 'Uncategorized'}" data-tags="${product.tags ? product.tags.join(',') : ''}">
+        <div class="badges">
+          ${categoryBadge}
+        </div>
         <h3>${product.displayName}</h3>
         <p class="description">${product.description || 'No description available.'}</p>
+        ${tagBadges ? `<div class="tags">${tagBadges}</div>` : ''}
         <a href="?product=${product.name}" class="btn">Get Latest Version</a>
       </div>
     `;
@@ -349,7 +376,7 @@ function renderLandingPage() {
             color: #333;
           }
           .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
@@ -361,6 +388,7 @@ function renderLandingPage() {
             margin-bottom: 40px;
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 30px;
+            position: relative;
           }
           h1 {
             color: #667eea;
@@ -371,9 +399,109 @@ function renderLandingPage() {
             color: #666;
             font-size: 1.1em;
           }
+          .admin-link {
+            position: absolute;
+            right: 0;
+            top: 0;
+          }
+          .admin-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          
+          /* Filters Section */
+          .filters {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+          }
+          .filters-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+          }
+          .filter-group {
+            flex: 1;
+            min-width: 200px;
+          }
+          .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+          }
+          .filter-group select,
+          .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: inherit;
+          }
+          .filter-group select:focus,
+          .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+          }
+          .clear-filters {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            align-self: flex-end;
+          }
+          .clear-filters:hover {
+            background: #d0d0d0;
+          }
+          
+          /* Tag Cloud */
+          .tag-cloud {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+          }
+          .tag-cloud h3 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+          }
+          .tag-cloud-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .tag-cloud-item {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .tag-cloud-item:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+          }
+          .tag-cloud-item.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+          }
+          
+          /* Products Grid */
           .products {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
           }
@@ -382,11 +510,45 @@ function renderLandingPage() {
             border-radius: 8px;
             padding: 25px;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+          }
+          .product-card.hidden {
+            display: none;
           }
           .product-card:hover {
             border-color: #667eea;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
             transform: translateY(-2px);
+          }
+          .badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+          }
+          .category-badge {
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+          }
+          .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+            margin-bottom: 15px;
+          }
+          .tag-badge {
+            padding: 3px 10px;
+            background: #f0f0f0;
+            color: #666;
+            border-radius: 10px;
+            font-size: 0.75em;
           }
           .product-card h3 {
             color: #333;
@@ -397,7 +559,7 @@ function renderLandingPage() {
             color: #666;
             margin-bottom: 20px;
             line-height: 1.6;
-            min-height: 48px;
+            flex-grow: 1;
           }
           .btn {
             display: inline-block;
@@ -408,10 +570,19 @@ function renderLandingPage() {
             text-decoration: none;
             font-weight: 600;
             transition: background 0.2s;
+            text-align: center;
           }
           .btn:hover {
             background: #5568d3;
           }
+          
+          /* Results counter */
+          .results-info {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 0.95em;
+          }
+          
           footer {
             text-align: center;
             color: #999;
@@ -432,14 +603,47 @@ function renderLandingPage() {
           <header>
             <h1>${CONFIG.branding.organizationName}</h1>
             <p class="tagline">${CONFIG.branding.tagline}</p>
-            <!-- Admin login link: navigates to the admin panel route (?admin=true) -->
-            <div style="position: absolute; right: 24px; top: 24px;">
-              <a href="?admin=true" style="color:#667eea; text-decoration:none; font-weight:600;">Admin</a>
+            <div class="admin-link">
+              <a href="?admin=true">Admin</a>
             </div>
           </header>
           
           ${products.length > 0 ? `
-            <div class="products">
+            <!-- Filters -->
+            <div class="filters">
+              <div class="filters-row">
+                <div class="filter-group">
+                  <label for="categoryFilter">Filter by Category</label>
+                  <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="searchInput">Search Products</label>
+                  <input type="text" id="searchInput" placeholder="Search by name, description, or tag...">
+                </div>
+                <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
+              </div>
+            </div>
+            
+            <!-- Tag Cloud -->
+            ${sortedTags.length > 0 ? `
+              <div class="tag-cloud">
+                <h3>Popular Tags</h3>
+                <div class="tag-cloud-items">
+                  ${sortedTags.map(tag => 
+                    `<span class="tag-cloud-item" onclick="filterByTag('${tag}')">${tag} (${tagFrequency[tag]})</span>`
+                  ).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            <div class="results-info" id="resultsInfo">
+              Showing <span id="resultCount">${products.length}</span> of ${products.length} templates
+            </div>
+            
+            <div class="products" id="productsGrid">
               ${productCards}
             </div>
           ` : `
@@ -453,6 +657,72 @@ function renderLandingPage() {
             <p>Need help? Contact <a href="mailto:${CONFIG.branding.supportEmail}">${CONFIG.branding.supportEmail}</a></p>
           </footer>
         </div>
+        
+        <script>
+          // Filter functionality
+          const categoryFilter = document.getElementById('categoryFilter');
+          const searchInput = document.getElementById('searchInput');
+          const productCards = document.querySelectorAll('.product-card');
+          const resultCount = document.getElementById('resultCount');
+          const totalProducts = productCards.length;
+          
+          function applyFilters() {
+            const selectedCategory = categoryFilter ? categoryFilter.value : '';
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            let visibleCount = 0;
+            
+            productCards.forEach(card => {
+              const category = card.getAttribute('data-category');
+              const tags = card.getAttribute('data-tags');
+              const text = card.textContent.toLowerCase();
+              
+              const categoryMatch = !selectedCategory || category === selectedCategory;
+              const searchMatch = !searchTerm || text.includes(searchTerm) || tags.toLowerCase().includes(searchTerm);
+              
+              if (categoryMatch && searchMatch) {
+                card.classList.remove('hidden');
+                visibleCount++;
+              } else {
+                card.classList.add('hidden');
+              }
+            });
+            
+            if (resultCount) {
+              resultCount.textContent = visibleCount;
+            }
+          }
+          
+          function clearFilters() {
+            if (categoryFilter) categoryFilter.value = '';
+            if (searchInput) searchInput.value = '';
+            document.querySelectorAll('.tag-cloud-item.active').forEach(item => {
+              item.classList.remove('active');
+            });
+            applyFilters();
+          }
+          
+          function filterByTag(tag) {
+            const tagItems = document.querySelectorAll('.tag-cloud-item');
+            tagItems.forEach(item => {
+              if (item.textContent.startsWith(tag + ' ')) {
+                item.classList.toggle('active');
+              }
+            });
+            
+            if (searchInput) {
+              searchInput.value = tag;
+            }
+            applyFilters();
+          }
+          
+          // Event listeners
+          if (categoryFilter) {
+            categoryFilter.addEventListener('change', applyFilters);
+          }
+          if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+          }
+        </script>
       </body>
     </html>
   `;

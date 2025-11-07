@@ -19,6 +19,8 @@ Use this as a reference when setting up your configuration sheet, or run `create
 | **displayName** | Text | ⚠️ Optional | User-facing name shown on landing page. Defaults to `name` if omitted. | `Event Planning Tool` |
 | **enabled** | Boolean | ⚠️ Optional | TRUE to make product visible, FALSE to hide. Defaults to TRUE. | `TRUE` |
 | **description** | Text | ⚠️ Optional | Brief description for landing page. Can be empty. | `Organize events effortlessly` |
+| **category** | Text | ⚠️ Optional | Category for grouping products. Defaults to 'Uncategorized'. | `Event Planning` |
+| **tags** | Text | ⚠️ Optional | Comma-separated tags for filtering and search. | `planning, calendar, scheduling` |
 
 ---
 
@@ -33,12 +35,12 @@ Use this as a reference when setting up your configuration sheet, or run `create
 
 ### Full Example (All Columns)
 
-| name | folderId | displayName | enabled | description |
-|------|----------|-------------|---------|-------------|
-| EventPlanning | 1a2b3c4d5e6f7g8h9i0j | Event Planning Tool | TRUE | Plan and coordinate events with ease |
-| MailMerge | 9i8h7g6f5e4d3c2b1a0 | Mail Merge Pro | TRUE | Send personalized emails at scale |
-| InvoiceTracker | abc123def456ghi789jk | Invoice Tracker | FALSE | Track invoices and payments (Coming soon!) |
-| BudgetPlanner | xyz987wvu654tsr321po | Budget Planning | TRUE | Manage organizational budgets |
+| name | folderId | displayName | enabled | description | category | tags |
+|------|----------|-------------|---------|-------------|----------|------|
+| EventPlanning | 1a2b3c4d5e6f7g8h9i0j | Event Planning Tool | TRUE | Plan and coordinate events with ease | Event Planning | planning, calendar, scheduling |
+| MailMerge | 9i8h7g6f5e4d3c2b1a0 | Mail Merge Pro | TRUE | Send personalized emails at scale | Communication | email, communication, outreach |
+| InvoiceTracker | abc123def456ghi789jk | Invoice Tracker | FALSE | Track invoices and payments (Coming soon!) | Finance | budget, expenses, tracking |
+| BudgetPlanner | xyz987wvu654tsr321po | Budget Planning | TRUE | Manage organizational budgets | Finance | budget, planning, finance |
 
 ---
 
@@ -222,16 +224,37 @@ validateConfiguration()  // In Apps Script editor
 
 ## 🔧 Advanced Customization
 
-### Future: Category Support
+### Categories and Tags
 
-You can add custom columns for future features:
+Categories help organize products into logical groups on the landing page. Tags enable fine-grained filtering and search.
 
-| name | folderId | displayName | enabled | description | **category** |
-|------|----------|-------------|---------|-------------|------------|
-| EventPlanning | abc... | Event Tool | TRUE | Plan events | Operations |
-| MailMerge | def... | Mail Merge | TRUE | Send emails | Communications |
+**Example with Categories:**
 
-**Note:** Custom columns are currently ignored by the system but preserved in the sheet for future use.
+| name | folderId | displayName | enabled | description | **category** | **tags** |
+|------|----------|-------------|---------|-------------|------------|----------|
+| EventPlanning | abc... | Event Tool | TRUE | Plan events | Event Planning | planning, calendar, scheduling |
+| MailMerge | def... | Mail Merge | TRUE | Send emails | Communication | email, communication, outreach |
+| InvoiceTracker | ghi... | Invoice Tracker | TRUE | Track invoices | Finance | budget, expenses, tracking |
+
+**Recommended Categories:**
+- Event Planning
+- Communication
+- Finance
+- Project Management
+- Custom
+
+**Tag Best Practices:**
+- Use lowercase
+- Separate with commas
+- Keep tags short and descriptive
+- Use 2-5 tags per product
+- Common tags help users find related products
+
+**Landing Page Features:**
+- Products are filterable by category
+- Search works across names, descriptions, and tags
+- Tag cloud shows popular tags
+- Click a tag to filter products
 
 ---
 
