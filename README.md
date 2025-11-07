@@ -458,7 +458,8 @@ Template-Distribution-System/
 
 1. Check [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 2. Review [CLIENT-SETUP.md](CLIENT-SETUP.md) for detailed setup guide
-3. Open an issue on GitHub
+3. See [ISSUES_STATUS.md](ISSUES_STATUS.md) for feature roadmap and implementation status
+4. Open an issue on GitHub
 
 ### Contributing
 
