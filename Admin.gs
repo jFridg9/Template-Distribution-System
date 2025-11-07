@@ -647,6 +647,477 @@ function pickerKeyDiagnostics() {
 
 /**
  * ============================================================================
+ * BULK OPERATIONS & CSV IMPORT/EXPORT
+ * ============================================================================
+ */
+
+/**
+ * Exports all products to CSV format
+ * 
+ * @returns {Object} Result with CSV content
+ */
+function exportProductsToCSV() {
+  try {
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
+    const sheet = ss.getSheetByName('Products');
+    const data = sheet.getDataRange().getValues();
+    
+    if (data.length === 0) {
+      throw new Error('No data to export');
+    }
+    
+    // Convert to CSV
+    const csvLines = data.map(row => {
+      return row.map(cell => {
+        // Escape quotes and wrap in quotes if contains comma, newline, or quote
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
+          return '"' + cellStr.replace(/"/g, '""') + '"';
+        }
+        return cellStr;
+      }).join(',');
+    });
+    
+    const csvContent = csvLines.join('\n');
+    
+    Logger.log(`Exported ${data.length - 1} products to CSV`);
+    
+    return {
+      success: true,
+      csv: csvContent,
+      filename: 'products_export_' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd_HHmmss') + '.csv'
+    };
+  } catch (err) {
+    Logger.log('ERROR in exportProductsToCSV: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Validates CSV data before import
+ * 
+ * @param {string} csvContent - CSV content to validate
+ * @returns {Object} Validation result with parsed data and warnings
+ */
+function validateCSVImport(csvContent) {
+  try {
+    if (!csvContent || typeof csvContent !== 'string') {
+      throw new Error('Invalid CSV content');
+    }
+    
+    // Parse CSV
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    
+    if (lines.length < 2) {
+      throw new Error('CSV must contain at least a header row and one data row');
+    }
+    
+    // Parse header
+    const headers = parseCSVLine(lines[0]);
+    const requiredColumns = ['name', 'folderid'];
+    const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+    
+    // Check required columns
+    const missingColumns = requiredColumns.filter(col => !normalizedHeaders.includes(col));
+    if (missingColumns.length > 0) {
+      throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
+    }
+    
+    // Get column indices
+    const nameIdx = normalizedHeaders.indexOf('name');
+    const folderIdIdx = normalizedHeaders.indexOf('folderid');
+    const displayNameIdx = normalizedHeaders.indexOf('displayname');
+    const enabledIdx = normalizedHeaders.indexOf('enabled');
+    const descIdx = normalizedHeaders.indexOf('description');
+    
+    // Parse data rows
+    const parsedProducts = [];
+    const warnings = [];
+    const existingProducts = loadConfiguration().products;
+    const existingNames = existingProducts.map(p => p.name.toLowerCase());
+    
+    for (let i = 1; i < lines.length; i++) {
+      const cells = parseCSVLine(lines[i]);
+      
+      if (cells.length === 0 || !cells[nameIdx]) {
+        continue; // Skip empty rows
+      }
+      
+      const name = cells[nameIdx].trim();
+      const folderId = cells[folderIdIdx] ? cells[folderIdIdx].trim() : '';
+      
+      if (!name || !folderId) {
+        warnings.push(`Row ${i + 1}: Missing name or folderId, skipping`);
+        continue;
+      }
+      
+      // Check for duplicates in import
+      if (parsedProducts.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        warnings.push(`Row ${i + 1}: Duplicate product name "${name}" in import file`);
+        continue;
+      }
+      
+      // Check if product already exists
+      const isUpdate = existingNames.includes(name.toLowerCase());
+      
+      // Validate folder ID format (basic check)
+      if (folderId && folderId.length < 10) {
+        warnings.push(`Row ${i + 1}: "${name}" has suspiciously short folder ID`);
+      }
+      
+      parsedProducts.push({
+        name: name,
+        folderId: folderId,
+        displayName: displayNameIdx !== -1 && cells[displayNameIdx] ? cells[displayNameIdx].trim() : name,
+        enabled: enabledIdx !== -1 && cells[enabledIdx] ? (cells[enabledIdx].toString().toUpperCase() === 'TRUE') : true,
+        description: descIdx !== -1 && cells[descIdx] ? cells[descIdx].trim() : '',
+        isUpdate: isUpdate
+      });
+    }
+    
+    if (parsedProducts.length === 0) {
+      throw new Error('No valid products found in CSV');
+    }
+    
+    const newCount = parsedProducts.filter(p => !p.isUpdate).length;
+    const updateCount = parsedProducts.filter(p => p.isUpdate).length;
+    
+    Logger.log(`CSV validation: ${newCount} new, ${updateCount} updates, ${warnings.length} warnings`);
+    
+    return {
+      success: true,
+      products: parsedProducts,
+      warnings: warnings,
+      summary: {
+        total: parsedProducts.length,
+        new: newCount,
+        updates: updateCount
+      }
+    };
+  } catch (err) {
+    Logger.log('ERROR in validateCSVImport: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Helper function to parse a CSV line respecting quoted fields
+ * 
+ * @param {string} line - CSV line to parse
+ * @returns {Array<string>} Array of cell values
+ */
+function parseCSVLine(line) {
+  const cells = [];
+  let currentCell = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = i < line.length - 1 ? line[i + 1] : '';
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        currentCell += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote mode
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of cell
+      cells.push(currentCell);
+      currentCell = '';
+    } else {
+      currentCell += char;
+    }
+  }
+  
+  // Add last cell
+  cells.push(currentCell);
+  
+  return cells;
+}
+
+
+/**
+ * Imports products from CSV with validation
+ * 
+ * @param {string} csvContent - CSV content to import
+ * @returns {Object} Result of import operation
+ */
+function importProductsFromCSV(csvContent) {
+  try {
+    // Validate first
+    const validation = validateCSVImport(csvContent);
+    
+    if (!validation.success) {
+      return validation;
+    }
+    
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
+    const sheet = ss.getSheetByName('Products');
+    const data = sheet.getDataRange().getValues();
+    
+    let addedCount = 0;
+    let updatedCount = 0;
+    const errors = [];
+    
+    // Process each product
+    for (const product of validation.products) {
+      try {
+        // Verify folder is accessible
+        try {
+          DriveApp.getFolderById(product.folderId);
+        } catch (err) {
+          errors.push(`Cannot access folder for "${product.name}": ${err.message}`);
+          continue;
+        }
+        
+        if (product.isUpdate) {
+          // Update existing product
+          let rowIndex = -1;
+          for (let i = 1; i < data.length; i++) {
+            if (data[i][0].toLowerCase() === product.name.toLowerCase()) {
+              rowIndex = i + 1;
+              break;
+            }
+          }
+          
+          if (rowIndex !== -1) {
+            const updatedRow = [
+              product.name,
+              product.folderId,
+              product.displayName,
+              product.enabled,
+              product.description
+            ];
+            sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+            updatedCount++;
+          }
+        } else {
+          // Add new product
+          const newRow = [
+            product.name,
+            product.folderId,
+            product.displayName,
+            product.enabled,
+            product.description
+          ];
+          sheet.appendRow(newRow);
+          addedCount++;
+        }
+      } catch (err) {
+        errors.push(`Error processing "${product.name}": ${err.message}`);
+      }
+    }
+    
+    // Clear cache
+    clearConfigCache();
+    
+    Logger.log(`CSV import: ${addedCount} added, ${updatedCount} updated, ${errors.length} errors`);
+    
+    return {
+      success: true,
+      added: addedCount,
+      updated: updatedCount,
+      errors: errors,
+      warnings: validation.warnings
+    };
+  } catch (err) {
+    Logger.log('ERROR in importProductsFromCSV: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Generates a CSV template for importing products
+ * 
+ * @returns {Object} Result with CSV template
+ */
+function generateCSVTemplate() {
+  try {
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const exampleRows = [
+      ['EventPlanning', 'YOUR_FOLDER_ID_HERE', 'Event Planning Tool', 'TRUE', 'Organize events effortlessly'],
+      ['MailMerge', 'YOUR_FOLDER_ID_HERE', 'Mail Merge Pro', 'TRUE', 'Send personalized emails at scale']
+    ];
+    
+    const csvLines = [headers, ...exampleRows].map(row => {
+      return row.map(cell => {
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
+          return '"' + cellStr.replace(/"/g, '""') + '"';
+        }
+        return cellStr;
+      }).join(',');
+    });
+    
+    const csvContent = csvLines.join('\n');
+    
+    return {
+      success: true,
+      csv: csvContent,
+      filename: 'products_template.csv'
+    };
+  } catch (err) {
+    Logger.log('ERROR in generateCSVTemplate: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Bulk enable/disable products
+ * 
+ * @param {Array<string>} productNames - Array of product names to toggle
+ * @param {boolean} enabled - True to enable, false to disable
+ * @returns {Object} Result of bulk operation
+ */
+function bulkToggleProducts(productNames, enabled) {
+  try {
+    if (!Array.isArray(productNames) || productNames.length === 0) {
+      throw new Error('No products specified');
+    }
+    
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
+    const sheet = ss.getSheetByName('Products');
+    const data = sheet.getDataRange().getValues();
+    
+    let updatedCount = 0;
+    const errors = [];
+    
+    for (const productName of productNames) {
+      try {
+        // Find the product row
+        let rowIndex = -1;
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][0] === productName) {
+            rowIndex = i + 1;
+            break;
+          }
+        }
+        
+        if (rowIndex === -1) {
+          errors.push(`Product "${productName}" not found`);
+          continue;
+        }
+        
+        // Update enabled status
+        sheet.getRange(rowIndex, 4).setValue(enabled);
+        updatedCount++;
+      } catch (err) {
+        errors.push(`Error updating "${productName}": ${err.message}`);
+      }
+    }
+    
+    // Clear cache
+    clearConfigCache();
+    
+    Logger.log(`Bulk toggle: ${updatedCount} products ${enabled ? 'enabled' : 'disabled'}, ${errors.length} errors`);
+    
+    return {
+      success: true,
+      updated: updatedCount,
+      errors: errors,
+      message: `${updatedCount} product(s) ${enabled ? 'enabled' : 'disabled'}`
+    };
+  } catch (err) {
+    Logger.log('ERROR in bulkToggleProducts: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Bulk delete products
+ * 
+ * @param {Array<string>} productNames - Array of product names to delete
+ * @returns {Object} Result of bulk operation
+ */
+function bulkDeleteProducts(productNames) {
+  try {
+    if (!Array.isArray(productNames) || productNames.length === 0) {
+      throw new Error('No products specified');
+    }
+    
+    const configSheetId = getConfigSheetId();
+    const ss = SpreadsheetApp.openById(configSheetId);
+    const sheet = ss.getSheetByName('Products');
+    const data = sheet.getDataRange().getValues();
+    
+    // Collect row indices to delete (sort in reverse to delete from bottom up)
+    const rowsToDelete = [];
+    const errors = [];
+    
+    for (const productName of productNames) {
+      let rowIndex = -1;
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] === productName) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+      
+      if (rowIndex === -1) {
+        errors.push(`Product "${productName}" not found`);
+      } else {
+        rowsToDelete.push(rowIndex);
+      }
+    }
+    
+    // Sort in descending order to delete from bottom to top
+    rowsToDelete.sort((a, b) => b - a);
+    
+    // Delete rows
+    for (const rowIndex of rowsToDelete) {
+      sheet.deleteRow(rowIndex);
+    }
+    
+    // Clear cache
+    clearConfigCache();
+    
+    Logger.log(`Bulk delete: ${rowsToDelete.length} products deleted, ${errors.length} errors`);
+    
+    return {
+      success: true,
+      deleted: rowsToDelete.length,
+      errors: errors,
+      message: `${rowsToDelete.length} product(s) deleted`
+    };
+  } catch (err) {
+    Logger.log('ERROR in bulkDeleteProducts: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * ============================================================================
  * INCLUDE HTML HELPER
  * ============================================================================
  */
