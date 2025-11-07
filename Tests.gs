@@ -172,18 +172,19 @@ function test_SetupWizardFlow() {
   Logger.log('=== TEST: Setup Wizard Flow ===');
   Logger.log('⚠️  WARNING: This will create a new test spreadsheet');
   
-  // Store original ID outside try block so finally can access it
-  const scriptProps = PropertiesService.getScriptProperties();
-  const originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
+  let scriptProps;
+  let originalId;
   
   try {
+    // Get Script Properties and store original ID
+    scriptProps = PropertiesService.getScriptProperties();
+    originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
+    
     Logger.log(`Original CONFIG_SHEET_ID: ${originalId || '(not set)'}`);
     
-    // Temporarily clear the property to simulate fresh setup
-    if (originalId) {
-      Logger.log('Temporarily clearing CONFIG_SHEET_ID to simulate fresh setup...');
-      scriptProps.deleteProperty('CONFIG_SHEET_ID');
-    }
+    // Always clear the property to simulate fresh setup
+    Logger.log('Clearing CONFIG_SHEET_ID to simulate fresh setup...');
+    scriptProps.deleteProperty('CONFIG_SHEET_ID');
     
     // Run setup
     Logger.log('Running setupCreateConfigSheet()...');
@@ -217,10 +218,17 @@ function test_SetupWizardFlow() {
     Logger.log('❌ ERROR: ' + err.message);
     return 'Test failed: ' + err.message;
   } finally {
-    // Always restore original ID if it existed, regardless of test outcome
-    if (originalId) {
-      Logger.log(`Restoring original CONFIG_SHEET_ID: ${originalId}`);
-      scriptProps.setProperty('CONFIG_SHEET_ID', originalId);
+    // Always restore system to original state
+    if (scriptProps) {
+      if (originalId) {
+        // Restore original value
+        Logger.log(`Restoring original CONFIG_SHEET_ID: ${originalId}`);
+        scriptProps.setProperty('CONFIG_SHEET_ID', originalId);
+      } else {
+        // Remove test value if no original existed
+        Logger.log('Removing test CONFIG_SHEET_ID (no original value)');
+        scriptProps.deleteProperty('CONFIG_SHEET_ID');
+      }
     }
   }
 }
