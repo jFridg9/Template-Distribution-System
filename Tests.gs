@@ -258,9 +258,9 @@ function test_GetRuntimeConfig() {
  * Note: Test 4 (Setup Wizard Flow) is skipped to avoid creating test sheets.
  */
 function runAllTests() {
-  Logger.log('╔══════════════════════════════════════════════════════════╗');
-  Logger.log('║     SCRIPT PROPERTIES TEST SUITE                         ║');
-  Logger.log('╚══════════════════════════════════════════════════════════╝');
+  Logger.log('=============================================================');
+  Logger.log('     SCRIPT PROPERTIES TEST SUITE                          ');
+  Logger.log('=============================================================');
   Logger.log('');
   
   // Run tests
@@ -281,9 +281,9 @@ function runAllTests() {
   Logger.log('(Run manually if you want to test sheet creation)');
   Logger.log('');
   
-  Logger.log('╔══════════════════════════════════════════════════════════╗');
-  Logger.log('║     ALL TESTS COMPLETE                                   ║');
-  Logger.log('╚══════════════════════════════════════════════════════════╝');
+  Logger.log('=============================================================');
+  Logger.log('     ALL TESTS COMPLETE                                    ');
+  Logger.log('=============================================================');
   
   return 'All tests completed. Check execution log for results.';
 }
