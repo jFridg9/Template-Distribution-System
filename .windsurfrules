@@ -1,0 +1,48 @@
+# Windsurf AI Rules - Template Distribution System
+
+This is a Google Apps Script web application for distributing versioned file templates via permanent URLs.
+
+## Quick Context
+- **Business Model**: Configuration-driven - products managed via Google Sheet, not code
+- **Deployment**: Dual-mode (`full` = landing page, `simple` = direct redirect only)
+- **Tech**: Apps Script V8, Drive API, Picker API, HtmlService, PropertiesService
+
+## Development Rules
+
+### Always Do
+✅ Read `.github/copilot-instructions.md` for full architecture  
+✅ Use Git commits (never `clasp push` directly)  
+✅ Test with `validateConfiguration()` after changes  
+✅ Log detailed errors to `Logger.log()`  
+✅ Show generic errors to users (no stack traces)  
+✅ Remember 5-minute cache when testing config  
+✅ Support ANY file type (not just Google Sheets)  
+
+### Never Do
+❌ Hardcode configuration in code  
+❌ Break simple mode when adding full-mode features  
+❌ Skip documentation updates  
+❌ Expose technical errors to users  
+❌ Assume templates are only Google Sheets  
+
+### Code Patterns
+- **Configuration**: `PropertiesService.getScriptProperties()` for runtime config
+- **Caching**: `CacheService` with 5-minute TTL
+- **HTML**: Server-side scriptlets `<?= ?>` and `<? ?>`
+- **Client-Server**: `google.script.run.withSuccessHandler().withFailureHandler()`
+- **Error Handling**: Try-catch with user-friendly messages
+
+### File Structure
+- `Code.gs` - Web app routing and redirect logic
+- `Config.gs` - Configuration loading with cache
+- `Admin.gs` - Admin panel and CRUD operations
+- `AdminPanel.html` / `SetupWizard.html` - UI templates
+
+### Key Features
+- Drive Picker for file selection (extracts parent folder server-side)
+- Script Properties for runtime configuration
+- Setup wizard for first-time users
+- Product management via web UI
+- Version detection by file creation date
+
+See ARCHITECTURE.md and copilot-instructions.md for deep technical details.
