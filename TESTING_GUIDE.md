@@ -204,6 +204,15 @@ Testing the automated first-time setup experience.
    - Click "Go to Admin Panel"
    - Expected: Redirects to admin panel with your product listed
 
+7. **Verify Script Properties (Optional)**:
+   - Open Apps Script editor: Script Settings → Script Properties
+   - Expected: See property `CONFIG_SHEET_ID` with the created sheet ID
+   - Or run this in Apps Script editor:
+     ```javascript
+     Logger.log(getRuntimeConfig());
+     ```
+   - Expected: Shows `CONFIG_SHEET_ID` property
+
 ### Verification
 
 ✅ Configuration sheet created  
@@ -211,6 +220,7 @@ Testing the automated first-time setup experience.
 ✅ Drive Picker worked without manual ID entry  
 ✅ Product added successfully  
 ✅ Admin panel shows product  
+✅ Script Properties contain CONFIG_SHEET_ID  
 
 ---
 
