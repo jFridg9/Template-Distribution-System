@@ -125,7 +125,7 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     
     // Set up headers
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Format header row
@@ -212,7 +212,9 @@ function addProduct(productData) {
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
     sheet.appendRow(newRow);
@@ -273,15 +275,24 @@ function updateProduct(productName, productData) {
     }
     
     // Update row
+    // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
+    const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
       productData.name || productName,
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+    // Validate column count matches expected
+    if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
+      Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
+    }
+    
+    sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     
     // Clear cache
     clearConfigCache();
