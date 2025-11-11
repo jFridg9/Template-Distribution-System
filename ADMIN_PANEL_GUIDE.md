@@ -210,6 +210,54 @@ The admin panel provides a complete web-based interface for managing templates:
 
 ---
 
+### Analytics Dashboard ⭐ NEW
+
+**Path:** Admin Panel → Click "📊 Analytics" tab
+
+**Purpose:** Track template usage and understand user behavior
+
+**Features:**
+
+**Summary Cards:**
+- Total Products
+- Total Accesses
+- Active Products  
+- Last Updated Time
+
+**Product Statistics Table:**
+- Product name and display name
+- Total accesses per product
+- Latest version requests (count and percentage)
+- Specific version requests (count and percentage)
+- Visual popularity bars
+
+**Actions:**
+- 🔄 **Refresh Analytics** - Reload current data
+- 📊 **Setup Analytics Sheet** - Create detailed logging sheet (optional)
+- 📥 **Export to CSV** - Download analytics data for analysis
+
+**What's Tracked:**
+- ✅ Product access counts
+- ✅ Version request types (latest vs specific)
+- ✅ Timestamps
+- ✅ File names accessed
+
+**What's NOT Tracked:**
+- ❌ User email addresses
+- ❌ IP addresses
+- ❌ Personal information
+- ❌ Session IDs
+
+**Privacy:**
+- All data is anonymous
+- No personally identifiable information (PII)
+- Admin-only access
+- Privacy-conscious implementation
+
+**See Also:** ANALYTICS_GUIDE.md for comprehensive analytics documentation
+
+---
+
 ## 🔒 Security & Access
 
 ### Who Can Access Admin Panel?
@@ -374,16 +422,20 @@ If you need to transfer admin access:
 - Review enabled products
 - Check for disabled products to re-enable
 - Add new versions of templates to folders
+- **Review analytics** - Check which templates are most popular
 
 **Monthly:**
 - Review folder permissions
 - Clean up old template versions
 - Check landing page displays correctly
+- **Export analytics** - Download CSV for trend analysis
+- **Clean up analytics logs** - Keep last 10,000 entries
 
 **As Needed:**
 - Add new products
 - Update descriptions
 - Clear cache after bulk changes
+- **Setup analytics sheet** - For detailed usage tracking
 
 ### Validation
 
