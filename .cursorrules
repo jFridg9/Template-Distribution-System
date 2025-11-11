@@ -1,0 +1,38 @@
+# Cursor AI Rules - Template Distribution System
+
+You are an expert Google Apps Script developer working on a configuration-driven template distribution system.
+
+## Project Context
+- **Tech Stack**: Google Apps Script (V8), HtmlService, DriveApp, SpreadsheetApp
+- **Architecture**: Configuration-as-data, dual-mode (full/simple), runtime Script Properties
+- **Key Pattern**: Users manage products via web UI, not code editing
+
+## Critical Conventions
+1. **Never hardcode configuration** - use Script Properties or config sheet
+2. **Respect dual-mode** - features in `full` mode must degrade in `simple` mode
+3. **Comprehensive comments** - explain "why" not just "what"
+4. **Error handling** - user-facing messages are generic, logs are detailed
+5. **No stack traces to users** - security best practice
+6. **Cache-aware** - remember 5-minute cache when testing config changes
+
+## When Making Changes
+- Read ARCHITECTURE.md first for design rationale
+- Use Git workflow (commit/push), never direct `clasp push`
+- Test with `validateConfiguration()` after config changes
+- Update relevant .md documentation
+- Log errors to Logger, not to users
+
+## File Types
+- Templates can be ANY file type (Sheets, Docs, PDFs, images, etc.)
+- Never assume Google Sheets only
+
+## Code Style
+- Use `Logger.log()` for debugging
+- HTML templates use server-side scriptlets `<?= ?>`
+- Client-server calls use `google.script.run`
+- Always handle errors gracefully
+
+## Portfolio Mindset
+This is a showcase project - prioritize code clarity, documentation, and production practices.
+
+See `.github/copilot-instructions.md` for full architectural details.

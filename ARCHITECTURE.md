@@ -213,6 +213,32 @@ Request → Check CacheService
 - Reduces Sheets API quota usage
 - Can be overridden with clearConfigCache()
 
+**Configuration Priority System:**
+
+The system uses a three-tier configuration priority to enable autonomous setup:
+
+```
+1. Script Properties (Runtime)
+   ↓ (if not set)
+2. CONFIG.configSheetId (Hardcoded)
+   ↓ (if not set)
+3. CONFIG.fallbackFolderId (Single-folder mode)
+```
+
+**Script Properties Integration:**
+- Stored via `PropertiesService.getScriptProperties()`
+- Set automatically by setup wizard when creating config sheet
+- Property key: `CONFIG_SHEET_ID`
+- Enables zero-code-edit setup experience
+- Functions: `getConfigSheetId()`, `setConfigSheetId()`, `getRuntimeConfig()`
+
+**Benefits:**
+- **Setup Wizard Autonomy:** Creates and links config sheet automatically
+- **No Manual Code Editing:** Configuration survives code redeployments
+- **Backward Compatibility:** Existing deployments with hardcoded IDs still work
+- **Easy Override:** Admin panel can update at runtime
+- **Clear Fallback Chain:** Predictable behavior when sources unavailable
+
 ---
 
 ## 🔄 Configuration Schema
