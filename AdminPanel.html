@@ -552,6 +552,18 @@
         </div>
         
         <div class="form-group">
+          <label for="category">Category</label>
+          <input type="text" id="category" placeholder="e.g., Event Planning, Communication, Finance">
+          <small>Group products by category on the landing page</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="tags">Tags (comma-separated)</label>
+          <input type="text" id="tags" placeholder="e.g., planning, calendar, scheduling">
+          <small>Add tags for easier searching and filtering</small>
+        </div>
+        
+        <div class="form-group">
           <div class="checkbox-group">
             <input type="checkbox" id="enabled" checked>
             <label for="enabled">Enable this product</label>
@@ -648,6 +660,7 @@
         <tr>
           <td><strong>${product.name}</strong></td>
           <td>${product.displayName}</td>
+          <td><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
           <td>
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
@@ -693,6 +706,15 @@
       document.getElementById('displayName').value = product.displayName;
       document.getElementById('folderId').value = product.folderId;
       document.getElementById('description').value = product.description || '';
+      document.getElementById('category').value = product.category || '';
+      
+      // Format tags for display: convert array to comma-separated string
+      let tagsValue = '';
+      if (product.tags) {
+        tagsValue = Array.isArray(product.tags) ? product.tags.join(', ') : product.tags;
+      }
+      document.getElementById('tags').value = tagsValue;
+      
       document.getElementById('enabled').checked = product.enabled;
       document.getElementById('productModal').classList.add('active');
       
@@ -708,11 +730,17 @@
     function saveProduct(event) {
       event.preventDefault();
       
+      // Parse tags from comma-separated input
+      const tagsInput = document.getElementById('tags').value;
+      const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+      
       const productData = {
         name: document.getElementById('productName').value,
         displayName: document.getElementById('displayName').value,
         folderId: document.getElementById('folderId').value,
         description: document.getElementById('description').value,
+        category: document.getElementById('category').value || 'Uncategorized',
+        tags: tags,
         enabled: document.getElementById('enabled').checked
       };
       
