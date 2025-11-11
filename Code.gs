@@ -232,6 +232,9 @@ function handleProductRedirect(productName, version) {
   // Log the redirect (useful for analytics)
   Logger.log(`Redirecting to: ${product.displayName} - ${selectedFile.getName()}`);
   
+  // Track analytics (non-blocking - errors won't affect redirect)
+  trackProductAccess(productName, version, selectedFile.getName());
+  
   // Return redirect HTML
   return createRedirect(copyUrl);
 }
