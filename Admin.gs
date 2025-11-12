@@ -142,7 +142,11 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     Logger.log('setupCreateConfigSheet: Sheet renamed to "Products"');
     
+<<<<<<< HEAD
     // Set up headers
+=======
+    // Set up headers (including category and tags from main branch)
+>>>>>>> efe0f31 (Rebase: Applied error handling improvements to Admin.gs with categories/tags support from main)
     const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
@@ -283,7 +287,7 @@ function addProduct(productData) {
       }
     }
     
-    // Add new row
+    // Add new row (including category and tags from main branch)
     Logger.log('addProduct: Adding product to sheet');
     const newRow = [
       productData.name,
@@ -414,7 +418,7 @@ function updateProduct(productName, productData) {
       }
     }
     
-    // Update row
+    // Update row (including category and tags from main branch)
     Logger.log('updateProduct: Updating product data');
     // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
     const EXPECTED_COLUMN_COUNT = 7;
@@ -432,7 +436,11 @@ function updateProduct(productName, productData) {
     if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
       Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> efe0f31 (Rebase: Applied error handling improvements to Admin.gs with categories/tags support from main)
     try {
       sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     } catch (err) {
