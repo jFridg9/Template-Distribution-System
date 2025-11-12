@@ -314,7 +314,7 @@ clearConfigCache()
 
 ## 🧪 Testing
 
-### Automated Testing ⭐ NEW
+### Automated Testing ⭐ UPDATED
 
 The system includes a comprehensive automated test suite in `Test.gs`:
 
@@ -338,6 +338,13 @@ runQuickTests()
 - ✅ Error handling
 - ✅ Mode switching
 - ✅ HTML rendering
+- ✅ **Analytics tracking** ⭐ NEW
+- ✅ **Categories/tags filtering** ⭐ NEW
+
+**19 test functions** covering all core functionality including the latest features:
+- Analytics tracking and data retrieval
+- Product categories and tags
+- Filtering by category or tag
 
 **See:** `docs/AUTOMATED_TESTING.md` for complete testing guide
 

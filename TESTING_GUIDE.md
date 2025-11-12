@@ -26,6 +26,8 @@ The system includes a comprehensive automated test suite in `Test.gs` that cover
 - ✅ Mode switching (full vs simple)
 - ✅ HTML rendering
 - ✅ Script properties management
+- ✅ **Analytics tracking** ⭐ NEW
+- ✅ **Categories and tags filtering** ⭐ NEW
 
 ### Running Automated Tests
 
@@ -80,6 +82,7 @@ To run specific test functions:
 **Available test functions:**
 - `testGetMostRecentFile()` - Version detection logic
 - `testFindFileByVersion()` - Version matching
+- `testListAvailableVersions()` - Version extraction
 - `testCaching()` - Configuration caching
 - `testLoadConfigFromSheet()` - Config loading
 - `testFallbackConfig()` - Fallback configuration
@@ -91,6 +94,11 @@ To run specific test functions:
 - `testHTMLRendering()` - HTML output
 - `testScriptProperties()` - Script properties
 - `testConfigurationIntegration()` - End-to-end config
+- `testAnalyticsTracking()` - Analytics tracking ⭐ NEW
+- `testAnalyticsRetrieval()` - Analytics data retrieval ⭐ NEW
+- `testCategoriesAndTags()` - Categories/tags support ⭐ NEW
+- `testCategoryFiltering()` - Category filtering ⭐ NEW
+- `testTagFiltering()` - Tag filtering ⭐ NEW
 
 ### Understanding Test Results
 

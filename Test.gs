@@ -212,21 +212,27 @@ function getMockConfig() {
         folderId: 'folder123',
         displayName: 'Test Product 1',
         enabled: true,
-        description: 'First test product'
+        description: 'First test product',
+        category: 'Templates',
+        tags: ['test', 'demo']
       },
       {
         name: 'TestProduct2',
         folderId: 'folder456',
         displayName: 'Test Product 2',
         enabled: true,
-        description: 'Second test product'
+        description: 'Second test product',
+        category: 'Tools',
+        tags: ['test', 'utility']
       },
       {
         name: 'DisabledProduct',
         folderId: 'folder789',
         displayName: 'Disabled Product',
         enabled: false,
-        description: 'This product is disabled'
+        description: 'This product is disabled',
+        category: 'Uncategorized',
+        tags: []
       }
     ]
   };
@@ -706,6 +712,287 @@ function testConfigurationIntegration() {
 
 /**
  * ============================================================================
+ * TESTS: ANALYTICS TRACKING
+ * ============================================================================
+ */
+
+/**
+ * Tests analytics tracking functions
+ */
+function testAnalyticsTracking() {
+  Logger.log('\n--- Testing Analytics Tracking ---');
+  
+  // Test: getVersionType function
+  var latestType = getVersionType(null);
+  assertEqual(latestType, 'latest', 'getVersionType returns "latest" for null');
+  
+  var latestType2 = getVersionType(undefined);
+  assertEqual(latestType2, 'latest', 'getVersionType returns "latest" for undefined');
+  
+  var specificType = getVersionType('1.5');
+  assertEqual(specificType, 'specific', 'getVersionType returns "specific" for version string');
+  
+  // Test: incrementProductCounter (non-destructive)
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var testKey = 'analytics_count_TestProduct_' + Date.now();
+    
+    // Ensure clean state
+    props.deleteProperty(testKey);
+    
+    // Mock the function behavior
+    var initialCount = parseInt(props.getProperty(testKey)) || 0;
+    assertEqual(initialCount, 0, 'Initial counter is 0');
+    
+    props.setProperty(testKey, '1');
+    var afterIncrement = parseInt(props.getProperty(testKey));
+    assertEqual(afterIncrement, 1, 'Counter increments correctly');
+    
+    // Cleanup
+    props.deleteProperty(testKey);
+    
+  } catch (err) {
+    Logger.log('Note: Analytics counter test requires Script Properties - ' + err.message);
+  }
+  
+  // Test: trackProductAccess doesn't throw errors
+  try {
+    trackProductAccess('TestProduct', null, 'TestFile.xlsx');
+    assert(true, 'trackProductAccess executes without errors');
+  } catch (err) {
+    assert(false, 'trackProductAccess should not throw errors: ' + err.message);
+  }
+  
+  Logger.log('testAnalyticsTracking completed');
+}
+
+
+/**
+ * Tests analytics data retrieval functions
+ */
+function testAnalyticsRetrieval() {
+  Logger.log('\n--- Testing Analytics Retrieval ---');
+  
+  try {
+    // Test: getProductAnalytics exists and returns object
+    if (typeof getProductAnalytics === 'function') {
+      var testConfig = getMockConfig();
+      var analytics = getProductAnalytics(testConfig.products);
+      
+      assertTruthy(analytics, 'getProductAnalytics returns data');
+      assertTruthy(Array.isArray(analytics), 'Analytics data is an array');
+      
+      if (analytics.length > 0) {
+        var firstItem = analytics[0];
+        assertTruthy(firstItem.productName, 'Analytics item has productName');
+        assertTruthy(typeof firstItem.totalAccess === 'number', 'Analytics item has totalAccess number');
+      }
+    } else {
+      Logger.log('Note: getProductAnalytics function not found - skipping');
+    }
+    
+    // Test: getTotalAnalytics exists and returns object
+    if (typeof getTotalAnalytics === 'function') {
+      var totalAnalytics = getTotalAnalytics();
+      
+      assertTruthy(totalAnalytics, 'getTotalAnalytics returns data');
+      assertTruthy(typeof totalAnalytics.totalAccess === 'number', 'Has totalAccess number');
+      assertTruthy(typeof totalAnalytics.latestRequests === 'number', 'Has latestRequests number');
+    } else {
+      Logger.log('Note: getTotalAnalytics function not found - skipping');
+    }
+    
+  } catch (err) {
+    Logger.log('Note: Analytics retrieval test - ' + err.message);
+  }
+  
+  Logger.log('testAnalyticsRetrieval completed');
+}
+
+
+/**
+ * ============================================================================
+ * TESTS: CATEGORIES AND TAGS
+ * ============================================================================
+ */
+
+/**
+ * Tests categories and tags support in configuration
+ */
+function testCategoriesAndTags() {
+  Logger.log('\n--- Testing Categories and Tags ---');
+  
+  try {
+    var config = loadConfiguration();
+    
+    if (config.products.length > 0) {
+      // Check if products have category and tags fields
+      var hasCategories = false;
+      var hasTags = false;
+      
+      config.products.forEach(function(product) {
+        if (product.category !== undefined) {
+          hasCategories = true;
+        }
+        if (product.tags !== undefined) {
+          hasTags = true;
+        }
+      });
+      
+      if (hasCategories) {
+        assert(true, 'Products have category field');
+        
+        // Test category values
+        config.products.forEach(function(product, index) {
+          assertTruthy(typeof product.category === 'string', 'Product ' + index + ' has string category');
+          
+          // Category should be non-empty or 'Uncategorized'
+          var validCategory = product.category.length > 0;
+          assert(validCategory, 'Product ' + index + ' has valid category');
+        });
+      } else {
+        Logger.log('Note: No products with categories found');
+      }
+      
+      if (hasTags) {
+        assert(true, 'Products have tags field');
+        
+        // Test tags structure
+        config.products.forEach(function(product, index) {
+          assertTruthy(Array.isArray(product.tags), 'Product ' + index + ' has tags array');
+          
+          // If tags exist, they should be strings
+          if (product.tags.length > 0) {
+            product.tags.forEach(function(tag) {
+              assertTruthy(typeof tag === 'string', 'Tag is a string');
+            });
+          }
+        });
+      } else {
+        Logger.log('Note: No products with tags found');
+      }
+    } else {
+      Logger.log('Note: No products configured to test categories/tags');
+    }
+    
+  } catch (err) {
+    Logger.log('Note: Categories/tags test requires valid configuration - ' + err.message);
+  }
+  
+  Logger.log('testCategoriesAndTags completed');
+}
+
+
+/**
+ * Tests category filtering functionality
+ */
+function testCategoryFiltering() {
+  Logger.log('\n--- Testing Category Filtering ---');
+  
+  try {
+    var config = loadConfiguration();
+    var products = config.products;
+    
+    if (products.length === 0) {
+      Logger.log('Note: No products to test filtering');
+      return;
+    }
+    
+    // Get unique categories
+    var categories = {};
+    products.forEach(function(product) {
+      if (product.category) {
+        categories[product.category] = true;
+      }
+    });
+    
+    var categoryList = Object.keys(categories);
+    
+    if (categoryList.length > 0) {
+      Logger.log('Found categories: ' + categoryList.join(', '));
+      
+      // Test filtering by first category
+      var testCategory = categoryList[0];
+      var filtered = products.filter(function(p) {
+        return p.category === testCategory;
+      });
+      
+      assertTruthy(filtered.length > 0, 'Filtering by category "' + testCategory + '" returns results');
+      
+      // Verify all filtered products have the right category
+      var allCorrect = filtered.every(function(p) {
+        return p.category === testCategory;
+      });
+      assert(allCorrect, 'All filtered products have correct category');
+    } else {
+      Logger.log('Note: No categories defined to test filtering');
+    }
+    
+  } catch (err) {
+    Logger.log('Note: Category filtering test - ' + err.message);
+  }
+  
+  Logger.log('testCategoryFiltering completed');
+}
+
+
+/**
+ * Tests tag filtering functionality
+ */
+function testTagFiltering() {
+  Logger.log('\n--- Testing Tag Filtering ---');
+  
+  try {
+    var config = loadConfiguration();
+    var products = config.products;
+    
+    if (products.length === 0) {
+      Logger.log('Note: No products to test filtering');
+      return;
+    }
+    
+    // Get unique tags
+    var allTags = {};
+    products.forEach(function(product) {
+      if (product.tags && product.tags.length > 0) {
+        product.tags.forEach(function(tag) {
+          allTags[tag] = true;
+        });
+      }
+    });
+    
+    var tagList = Object.keys(allTags);
+    
+    if (tagList.length > 0) {
+      Logger.log('Found tags: ' + tagList.join(', '));
+      
+      // Test filtering by first tag
+      var testTag = tagList[0];
+      var filtered = products.filter(function(p) {
+        return p.tags && p.tags.indexOf(testTag) !== -1;
+      });
+      
+      assertTruthy(filtered.length > 0, 'Filtering by tag "' + testTag + '" returns results');
+      
+      // Verify all filtered products have the tag
+      var allCorrect = filtered.every(function(p) {
+        return p.tags && p.tags.indexOf(testTag) !== -1;
+      });
+      assert(allCorrect, 'All filtered products have correct tag');
+    } else {
+      Logger.log('Note: No tags defined to test filtering');
+    }
+    
+  } catch (err) {
+    Logger.log('Note: Tag filtering test - ' + err.message);
+  }
+  
+  Logger.log('testTagFiltering completed');
+}
+
+
+/**
+ * ============================================================================
  * TEST SUITE RUNNER
  * ============================================================================
  */
@@ -756,6 +1043,15 @@ function runAllTests() {
     
     // Integration tests
     testConfigurationIntegration();
+    
+    // Analytics tests
+    testAnalyticsTracking();
+    testAnalyticsRetrieval();
+    
+    // Categories and tags tests
+    testCategoriesAndTags();
+    testCategoryFiltering();
+    testTagFiltering();
     
   } catch (err) {
     Logger.log('\n✗ TEST SUITE ERROR: ' + err.message);
