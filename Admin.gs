@@ -125,7 +125,7 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     
     // Set up headers
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Format header row
@@ -212,7 +212,9 @@ function addProduct(productData) {
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
     sheet.appendRow(newRow);
@@ -273,15 +275,24 @@ function updateProduct(productName, productData) {
     }
     
     // Update row
+    // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
+    const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
       productData.name || productName,
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+    // Validate column count matches expected
+    if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
+      Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
+    }
+    
+    sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     
     // Clear cache
     clearConfigCache();
@@ -641,6 +652,86 @@ function pickerKeyDiagnostics() {
     const out = { success: false, error: err.message };
     try { Logger.log('pickerKeyDiagnostics error: %s', JSON.stringify(out)); } catch (e) {}
     return out;
+  }
+}
+
+
+/**
+ * ============================================================================
+ * ANALYTICS ADMIN FUNCTIONS
+ * ============================================================================
+ */
+
+/**
+ * Gets analytics summary for admin panel display.
+ * Wraps the Analytics.gs function with admin-specific formatting.
+ * 
+ * @returns {Object} Analytics summary
+ */
+function getAnalyticsForAdmin() {
+  try {
+    return getAnalyticsSummary();
+  } catch (err) {
+    Logger.log('ERROR in getAnalyticsForAdmin: ' + err.message);
+    return {
+      error: err.message,
+      totalAccesses: 0,
+      products: []
+    };
+  }
+}
+
+
+/**
+ * Gets filtered access logs for admin panel.
+ * 
+ * @param {Object} options - Filter options
+ * @returns {Object} Access logs
+ */
+function getAccessLogsForAdmin(options) {
+  try {
+    return getAccessLogs(options);
+  } catch (err) {
+    Logger.log('ERROR in getAccessLogsForAdmin: ' + err.message);
+    return {
+      success: false,
+      error: err.message,
+      logs: []
+    };
+  }
+}
+
+
+/**
+ * Creates the analytics sheet from admin panel.
+ * 
+ * @returns {Object} Result with sheet info
+ */
+function adminCreateAnalyticsSheet() {
+  try {
+    return createAnalyticsSheet();
+  } catch (err) {
+    Logger.log('ERROR in adminCreateAnalyticsSheet: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * Exports analytics to CSV for download.
+ * 
+ * @param {Object} options - Export options
+ * @returns {string} CSV data
+ */
+function adminExportAnalytics(options) {
+  try {
+    return exportAnalyticsToCSV(options);
+  } catch (err) {
+    Logger.log('ERROR in adminExportAnalytics: ' + err.message);
+    return 'Error: ' + err.message;
   }
 }
 
