@@ -274,161 +274,142 @@
       opacity: 0.3;
     }
     
-    /* Toast Notification Styles */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 10000;
+    /* Tab Navigation */
+    .tabs {
       display: flex;
-      flex-direction: column;
       gap: 10px;
-      max-width: 400px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0;
     }
     
-    .toast {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      animation: slideIn 0.3s ease-out;
-      border-left: 4px solid #666;
-    }
-    
-    .toast.success {
-      border-left-color: #4caf50;
-    }
-    
-    .toast.error {
-      border-left-color: #f44336;
-    }
-    
-    .toast.warning {
-      border-left-color: #ff9800;
-    }
-    
-    .toast.info {
-      border-left-color: #2196f3;
-    }
-    
-    .toast-icon {
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-    
-    .toast-content {
-      flex: 1;
-    }
-    
-    .toast-title {
+    .tab {
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
       font-weight: 600;
-      margin-bottom: 4px;
-      color: #333;
+      font-size: 1em;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
     }
     
-    .toast-message {
+    .tab:hover {
+      color: #667eea;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Analytics Styles */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .analytics-card {
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .analytics-card h3 {
+      font-size: 0.9em;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    
+    .analytics-card .value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .analytics-table th,
+    .analytics-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .analytics-table th {
+      background: #f5f5f5;
+      font-weight: 600;
       color: #666;
       font-size: 0.9em;
     }
     
-    .toast-close {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #999;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+    .analytics-table tr:hover {
+      background: #f9f9f9;
     }
     
-    .toast-close:hover {
-      color: #333;
+    .progress-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
     }
     
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    
-    @keyframes slideOut {
-      from {
-        transform: translateX(0);
-        opacity: 1;
-      }
-      to {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-    }
-    
-    .toast.hiding {
-      animation: slideOut 0.3s ease-out forwards;
-    }
-    
-    /* Loading overlay for operations */
-    .loading-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
+    .progress-fill {
       height: 100%;
-      background: rgba(0,0,0,0.3);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s;
     }
     
-    .loading-overlay.active {
+    .filter-controls {
       display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: end;
     }
     
-    .loading-spinner {
-      background: white;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      text-align: center;
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
     }
     
-    .loading-spinner .loading {
-      width: 40px;
-      height: 40px;
-      margin-bottom: 15px;
-    }
-    
-    .loading-text {
-      color: #666;
+    .filter-group label {
+      display: block;
+      margin-bottom: 5px;
       font-weight: 600;
+      color: #555;
+      font-size: 0.9em;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
     }
   </style>
 </head>
 <body>
-  <!-- Toast notification container -->
-  <div id="toastContainer" class="toast-container"></div>
-  
-  <!-- Loading overlay -->
-  <div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-spinner">
-      <div class="loading"></div>
-      <div class="loading-text" id="loadingText">Loading...</div>
-    </div>
-  </div>
-  
   <div class="container">
     <header>
       <h1>🛠️ Admin Panel</h1>
@@ -443,49 +424,88 @@
     <div class="content">
       <div id="alertContainer"></div>
       
-      <div class="actions">
-        <button class="btn btn-primary" onclick="openAddProductModal()">
-          ➕ Add New Product
+      <!-- Tab Navigation -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('products', this)">
+          📦 Products
         </button>
-        <button class="btn btn-secondary" onclick="refreshProducts()">
-          🔄 Refresh
-        </button>
-        <button class="btn btn-secondary" onclick="clearCache()">
-          🗑️ Clear Cache
-        </button>
-        <button class="btn btn-secondary" onclick="window.location.href = detectBaseFromLocation()">
-          🏠 View Landing Page
-        </button>
-        <button class="btn btn-secondary" onclick="configurePublicUrl()">
-          ⚙️ Set Public URL
+        <button class="tab" onclick="switchTab('analytics', this)">
+          📊 Analytics
         </button>
       </div>
       
-      <div id="productsContainer">
-        <? if (products.length === 0) { ?>
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
-            <h2>No Products Yet</h2>
-            <p>Click "Add New Product" to get started</p>
+      <!-- Products Tab -->
+      <div id="productsTab" class="tab-content active">
+        <div class="actions">
+          <button class="btn btn-primary" onclick="openAddProductModal()">
+            ➕ Add New Product
+          </button>
+          <button class="btn btn-secondary" onclick="refreshProducts()">
+            🔄 Refresh
+          </button>
+          <button class="btn btn-secondary" onclick="clearCache()">
+            🗑️ Clear Cache
+          </button>
+          <button class="btn btn-secondary" onclick="window.location.href = detectBaseFromLocation()">
+            🏠 View Landing Page
+          </button>
+          <button class="btn btn-secondary" onclick="configurePublicUrl()">
+            ⚙️ Set Public URL
+          </button>
+        </div>
+        
+        <div id="productsContainer">
+          <? if (products.length === 0) { ?>
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              <h2>No Products Yet</h2>
+              <p>Click "Add New Product" to get started</p>
+            </div>
+          <? } else { ?>
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Display Name</th>
+                  <th>Status</th>
+                  <th>Files</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <!-- Products will be loaded here -->
+              </tbody>
+            </table>
+          <? } ?>
+        </div>
+      </div>
+      
+      <!-- Analytics Tab -->
+      <div id="analyticsTab" class="tab-content">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="loadAnalytics()">
+            🔄 Refresh Analytics
+          </button>
+          <button class="btn btn-secondary" onclick="setupAnalyticsSheet()">
+            📊 Setup Analytics Sheet
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalytics()">
+            📥 Export to CSV
+          </button>
+        </div>
+        
+        <div id="analyticsContainer">
+          <div id="analyticsSummary">
+            <!-- Summary cards will be loaded here -->
           </div>
-        <? } else { ?>
-          <table class="products-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Display Name</th>
-                <th>Status</th>
-                <th>Files</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="productsTableBody">
-              <!-- Products will be loaded here -->
-            </tbody>
-          </table>
-        <? } ?>
+          
+          <h3 style="margin-top: 30px; margin-bottom: 15px;">Product Access Statistics</h3>
+          <div id="analyticsDetails">
+            <!-- Detailed analytics table will be loaded here -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -529,6 +549,18 @@
         <div class="form-group">
           <label for="description">Description</label>
           <textarea id="description" placeholder="Brief description for landing page"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="category">Category</label>
+          <input type="text" id="category" placeholder="e.g., Event Planning, Communication, Finance">
+          <small>Group products by category on the landing page</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="tags">Tags (comma-separated)</label>
+          <input type="text" id="tags" placeholder="e.g., planning, calendar, scheduling">
+          <small>Add tags for easier searching and filtering</small>
         </div>
         
         <div class="form-group">
@@ -596,95 +628,6 @@
       }
     }
     
-    // Toast notification system
-    const toastQueue = [];
-    let toastIdCounter = 0;
-    
-    /**
-     * Shows a toast notification
-     * @param {string} message - Message to display
-     * @param {string} type - Type: 'success', 'error', 'warning', 'info'
-     * @param {number} duration - Duration in ms (0 = don't auto-close)
-     * @param {string} title - Optional title
-     */
-    function showToast(message, type, duration, title) {
-      type = type || 'info';
-      duration = duration !== undefined ? duration : 5000;
-      
-      const toastId = 'toast-' + (toastIdCounter++);
-      const container = document.getElementById('toastContainer');
-      
-      const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠',
-        info: 'ℹ'
-      };
-      
-      const titles = {
-        success: title || 'Success',
-        error: title || 'Error',
-        warning: title || 'Warning',
-        info: title || 'Info'
-      };
-      
-      const toast = document.createElement('div');
-      toast.className = 'toast ' + type;
-      toast.id = toastId;
-      toast.innerHTML = `
-        <div class="toast-icon">${icons[type] || icons.info}</div>
-        <div class="toast-content">
-          <div class="toast-title">${titles[type]}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close" onclick="closeToast('${toastId}')" aria-label="Close">×</button>
-      `;
-      
-      container.appendChild(toast);
-      
-      // Auto-close after duration
-      if (duration > 0) {
-        setTimeout(function() {
-          closeToast(toastId);
-        }, duration);
-      }
-      
-      return toastId;
-    }
-    
-    /**
-     * Closes a toast notification
-     * @param {string} toastId - ID of toast to close
-     */
-    function closeToast(toastId) {
-      const toast = document.getElementById(toastId);
-      if (!toast) return;
-      
-      toast.classList.add('hiding');
-      setTimeout(function() {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
-    }
-    
-    /**
-     * Shows/hides loading overlay
-     * @param {boolean} show - Whether to show overlay
-     * @param {string} text - Loading text
-     */
-    function showLoading(show, text) {
-      const overlay = document.getElementById('loadingOverlay');
-      const textEl = document.getElementById('loadingText');
-      
-      if (show) {
-        if (text) textEl.textContent = text;
-        overlay.classList.add('active');
-      } else {
-        overlay.classList.remove('active');
-      }
-    }
-    
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       loadProducts();
@@ -717,6 +660,7 @@
         <tr>
           <td><strong>${product.name}</strong></td>
           <td>${product.displayName}</td>
+          <td><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
           <td>
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
@@ -762,6 +706,15 @@
       document.getElementById('displayName').value = product.displayName;
       document.getElementById('folderId').value = product.folderId;
       document.getElementById('description').value = product.description || '';
+      document.getElementById('category').value = product.category || '';
+      
+      // Format tags for display: convert array to comma-separated string
+      let tagsValue = '';
+      if (product.tags) {
+        tagsValue = Array.isArray(product.tags) ? product.tags.join(', ') : product.tags;
+      }
+      document.getElementById('tags').value = tagsValue;
+      
       document.getElementById('enabled').checked = product.enabled;
       document.getElementById('productModal').classList.add('active');
       
@@ -777,25 +730,29 @@
     function saveProduct(event) {
       event.preventDefault();
       
+      // Parse tags from comma-separated input
+      const tagsInput = document.getElementById('tags').value;
+      const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+      
       const productData = {
         name: document.getElementById('productName').value,
         displayName: document.getElementById('displayName').value,
         folderId: document.getElementById('folderId').value,
         description: document.getElementById('description').value,
+        category: document.getElementById('category').value || 'Uncategorized',
+        tags: tags,
         enabled: document.getElementById('enabled').checked
       };
       
-      showLoading(true, editingProduct ? 'Updating product...' : 'Adding product...');
+      showAlert('Saving...', 'info');
       
       const functionName = editingProduct ? 'updateProduct' : 'addProduct';
       const args = editingProduct ? [editingProduct, productData] : [productData];
       
       runServerCall(functionName, args, 'saveProduct', {
         success: function(result) {
-          showLoading(false);
-          
           if (result.success) {
-            showToast(result.message, 'success');
+            showAlert(result.message, 'success');
             closeModal();
             // Update local products array and re-render instead of full reload
             if (editingProduct) {
@@ -812,27 +769,21 @@
             }
             loadProducts();
           } else {
-            showToast(result.error, 'error', 7000);
+            showAlert('Error: ' + result.error, 'error');
           }
         },
         failure: function(error) {
-          showLoading(false);
-          const errorMsg = error && error.message ? error.message : String(error);
-          showToast('Failed to save product: ' + errorMsg, 'error', 7000);
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
         }
       });
     }
     
     // Toggle product
     function toggleProduct(productName) {
-      showLoading(true, 'Updating product status...');
-      
       runServerCall('toggleProductEnabled', [productName], 'toggleProduct', {
         success: function(result) {
-          showLoading(false);
-          
           if (result.success) {
-            showToast(result.message, 'success');
+            showAlert(result.message, 'success');
             // Update local products array and re-render without a full reload
             products = products.map(function(p) {
               if (p.name === productName) {
@@ -842,42 +793,34 @@
             });
             loadProducts();
           } else {
-            showToast(result.error, 'error', 7000);
+            showAlert('Error: ' + result.error, 'error');
           }
         },
         failure: function(error) {
-          showLoading(false);
-          const errorMsg = error && error.message ? error.message : String(error);
-          showToast('Failed to update product: ' + errorMsg, 'error', 7000);
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
         }
       });
     }
     
     // Delete product
     function deleteProduct_confirm(productName) {
-      if (!confirm(`Are you sure you want to permanently delete "${productName}"?\n\nThis action cannot be undone.`)) {
+      if (!confirm(`Are you sure you want to delete "${productName}"?`)) {
         return;
       }
       
-      showLoading(true, 'Deleting product...');
-      
       runServerCall('deleteProduct', [productName], 'deleteProduct', {
         success: function(result) {
-          showLoading(false);
-          
           if (result.success) {
-            showToast(result.message, 'success');
             // Remove from local products array and re-render
             products = products.filter(function(p) { return p.name !== productName; });
             loadProducts();
+            showAlert(result.message, 'success');
           } else {
-            showToast(result.error, 'error', 7000);
+            showAlert('Error: ' + result.error, 'error');
           }
         },
         failure: function(error) {
-          showLoading(false);
-          const errorMsg = error && error.message ? error.message : String(error);
-          showToast('Failed to delete product: ' + errorMsg, 'error', 7000);
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
         }
       });
     }
@@ -895,18 +838,9 @@
     
     // Clear cache
     function clearCache() {
-      showLoading(true, 'Clearing cache...');
-      
       runServerCall('clearConfigCache', [], 'clearCache', {
-        success: function() {
-          showLoading(false);
-          showToast('Cache cleared successfully', 'success');
-        },
-        failure: function(error) {
-          showLoading(false);
-          const errorMsg = error && error.message ? error.message : String(error);
-          showToast('Failed to clear cache: ' + errorMsg, 'error', 7000);
-        }
+        success: function() { showAlert('Cache cleared successfully', 'success'); },
+        failure: function(error) { showAlert('Error: ' + (error && error.message ? error.message : error), 'error'); }
       });
     }
     
@@ -921,17 +855,14 @@
           if (result.success) {
             folderInfo.innerHTML = `
               ✅ <strong>${result.name}</strong><br>
-              📊 Contains ${result.fileCount} file(s)
+              📊 Contains ${result.fileCount} Google Sheets file(s)
             `;
           } else {
             folderInfo.innerHTML = `❌ ${result.error}`;
-            showToast(result.error, 'warning', 5000);
           }
         },
         failure: function(error) {
-          const errorMsg = error && error.message ? error.message : String(error);
-          folderInfo.innerHTML = `❌ ${errorMsg}`;
-          showToast('Failed to validate folder: ' + errorMsg, 'error', 5000);
+          folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
         }
       });
     }
@@ -1049,16 +980,12 @@ function openDrivePicker() {
                 📊 Contains ${result.fileCount} file(s)<br>
                 <small style="color: #666;">Selected from: ${file.name}</small>
               `;
-              showToast('Folder selected successfully', 'success', 3000);
             } else {
               folderInfo.innerHTML = `❌ ${result.error}`;
-              showToast(result.error, 'error', 7000);
             }
           },
           failure: function(error) {
-            const errorMsg = error && error.message ? error.message : String(error);
-            folderInfo.innerHTML = `❌ ${errorMsg}`;
-            showToast('Failed to get folder: ' + errorMsg, 'error', 7000);
+            folderInfo.innerHTML = `❌ ${error && error.message ? error.message : error}`;
           }
         });
       }
@@ -1092,12 +1019,12 @@ function openDrivePicker() {
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
           copyToClipboard(url).then(function() {
-            showToast('Product link copied to clipboard', 'success', 3000);
+            showAlert('Product link copied to clipboard', 'success');
             uiLog('copyProductLink success', { url });
           }).catch(function(err) {
             // Fallback: show prompt
-            prompt('Copy the product link below', url);
-            uiLog('copyProductLink fallback prompt', { result: url });
+            const fallback = prompt('Copy the product link below', url);
+            uiLog('copyProductLink fallback prompt', { result: fallback });
           });
         },
         failure: function(err) {
@@ -1107,7 +1034,7 @@ function openDrivePicker() {
           if (!url.endsWith('/exec') && !url.endsWith('/dev') && !url.endsWith('/')) url += '/';
           url += '?product=' + encodeURIComponent(productName);
           copyToClipboard(url).then(function() {
-            showToast('Product link copied to clipboard', 'success', 3000);
+            showAlert('Product link copied to clipboard', 'success');
           }).catch(function() {
             prompt('Copy the product link below', url);
           });
@@ -1141,134 +1068,273 @@ function openDrivePicker() {
           const hint = current && current.length ? current : detectBaseFromLocation();
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
           if (val === null) return; // cancelled
-          
-          showLoading(true, 'Validating URL...');
-          
           // Validate the provided URL (best-effort) before saving
           runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
             success: function(validation) {
               if (validation && validation.success) {
                 // Verified redirect to Apps Script — save it
-                showLoading(true, 'Saving URL...');
                 runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                  success: function(res) {
-                    showLoading(false);
-                    if (res && res.success) {
-                      showToast('Public URL saved and verified', 'success');
-                    } else {
-                      showToast('Saved but could not verify: ' + (res && res.error ? res.error : ''), 'warning', 7000);
-                    }
-                  },
-                  failure: function(err) {
-                    showLoading(false);
-                    showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
-                  }
+                  success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify: ' + (res && res.error ? res.error : ''), 'error'); },
+                  failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
                 });
               } else {
-                showLoading(false);
                 // Show warning and let admin choose to save anyway
                 const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
                 if (confirm(msg + '\n\nSave this URL anyway?')) {
-                  showLoading(true, 'Saving URL...');
                   runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                    success: function(res) {
-                      showLoading(false);
-                      if (res && res.success) {
-                        showToast('Public URL saved', 'success');
-                      } else {
-                        showToast('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error', 7000);
-                      }
-                    },
-                    failure: function(err) {
-                      showLoading(false);
-                      showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
-                    }
+                    success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error'); },
+                    failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
                   });
                 } else {
-                  showToast('Public URL not saved', 'info', 3000);
+                  showAlert('Public URL not saved', 'info');
                 }
               }
             },
-            failure: function(err) {
-              showLoading(false);
-              showToast('Validation error: ' + (err && err.message ? err.message : err), 'error', 7000);
-            }
+            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
           });
         },
         failure: function(err) {
           uiLog('getPublicWebAppUrl failed', err);
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', detectBaseFromLocation());
           if (val === null) return;
-          
-          showLoading(true, 'Validating URL...');
-          
           // Validate when fallback path used
           runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
             success: function(validation) {
               if (validation && validation.success) {
-                showLoading(true, 'Saving URL...');
-                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                  success: function(res) {
-                    showLoading(false);
-                    if (res && res.success) {
-                      showToast('Public URL saved and verified', 'success');
-                    } else {
-                      showToast('Saved but could not verify', 'warning', 5000);
-                    }
-                  },
-                  failure: function(err) {
-                    showLoading(false);
-                    showToast('Error saving public URL: ' + (err && err.message ? err.message : err), 'error', 7000);
-                  }
-                });
+                runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved and verified', 'success'); else showAlert('Saved but could not verify', 'error'); }, failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); } });
               } else {
-                showLoading(false);
                 const msg = (validation && validation.warning) ? validation.warning : (validation && validation.error ? validation.error : 'Validation failed');
                 if (confirm(msg + '\n\nSave this URL anyway?')) {
-                  showLoading(true, 'Saving URL...');
-                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', {
-                    success: function(res) {
-                      showLoading(false);
-                      if (res && res.success) {
-                        showToast('Public URL saved', 'success');
-                      } else {
-                        showToast('Error saving public URL', 'error', 5000);
-                      }
-                    },
-                    failure: function(err) {
-                      showLoading(false);
-                      showToast('Error: ' + (err && err.message ? err.message : err), 'error', 7000);
-                    }
-                  });
-                } else {
-                  showToast('Public URL not saved', 'info', 3000);
-                }
+                  runServerCall('setPublicWebAppUrl', [val || ''], 'setPublicWebAppUrl', { success: function(res) { if (res && res.success) showAlert('Public URL saved', 'success'); else showAlert('Error saving public URL', 'error'); }, failure: function(err) { showAlert('Error: ' + (err && err.message ? err.message : err), 'error'); } });
+                } else { showAlert('Public URL not saved', 'info'); }
               }
             },
-            failure: function(err) {
-              showLoading(false);
-              showToast('Validation error: ' + (err && err.message ? err.message : err), 'error', 7000);
-            }
+            failure: function(err) { showAlert('Validation error: ' + (err && err.message ? err.message : err), 'error'); }
           });
         }
       });
     }
 
     
-
-    // Alert helper (backward compatibility - uses toast system)
-    function showAlert(message, type) {
-      // Map old alert types to toast types
-      const typeMap = {
-        'success': 'success',
-        'error': 'error',
-        'info': 'info',
-        'warning': 'warning'
-      };
+    // ========================================================================
+    // ANALYTICS FUNCTIONS
+    // ========================================================================
+    
+    /**
+     * Switches between tabs in the admin panel
+     */
+    function switchTab(tabName, clickedElement) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
       
-      const toastType = typeMap[type] || 'info';
-      showToast(message, toastType, 5000);
+      if (clickedElement) {
+        clickedElement.classList.add('active');
+      }
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      if (tabName === 'products') {
+        document.getElementById('productsTab').classList.add('active');
+      } else if (tabName === 'analytics') {
+        document.getElementById('analyticsTab').classList.add('active');
+        // Load analytics when tab is opened
+        loadAnalytics();
+      }
+    }
+    
+    /**
+     * Loads analytics data and displays it
+     */
+    function loadAnalytics() {
+      showAlert('Loading analytics...', 'info');
+      
+      runServerCall('getAnalyticsForAdmin', [], 'getAnalytics', {
+        success: function(data) {
+          displayAnalyticsSummary(data);
+          displayAnalyticsDetails(data);
+          showAlert('Analytics loaded', 'success');
+        },
+        failure: function(error) {
+          showAlert('Error loading analytics: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    /**
+     * Displays analytics summary cards
+     */
+    function displayAnalyticsSummary(data) {
+      const summaryContainer = document.getElementById('analyticsSummary');
+      
+      if (data.error) {
+        summaryContainer.innerHTML = `
+          <div class="alert alert-error">
+            Error loading analytics: ${data.error}
+          </div>
+        `;
+        return;
+      }
+      
+      const totalProducts = data.products ? data.products.length : 0;
+      const totalAccesses = data.totalAccesses || 0;
+      const enabledProducts = data.products ? data.products.filter(p => p.enabled).length : 0;
+      
+      summaryContainer.innerHTML = `
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>Total Products</h3>
+            <div class="value">${totalProducts}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Total Accesses</h3>
+            <div class="value">${totalAccesses}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Active Products</h3>
+            <div class="value">${enabledProducts}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Last Updated</h3>
+            <div class="value" style="font-size: 1.2em;">${data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    /**
+     * Displays detailed analytics table
+     */
+    function displayAnalyticsDetails(data) {
+      const detailsContainer = document.getElementById('analyticsDetails');
+      
+      if (!data.products || data.products.length === 0) {
+        detailsContainer.innerHTML = `
+          <div class="empty-state">
+            <p>No analytics data available yet. Analytics will be collected as users access templates.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Calculate max accesses for progress bar scaling
+      const maxAccesses = Math.max(...data.products.map(p => p.totalAccesses), 1);
+      
+      const rows = data.products.map(product => {
+        const percentage = (product.totalAccesses / maxAccesses * 100).toFixed(1);
+        const latestPercent = product.totalAccesses > 0 
+          ? (product.latestRequests / product.totalAccesses * 100).toFixed(0)
+          : 0;
+        const specificPercent = product.totalAccesses > 0 
+          ? (product.specificRequests / product.totalAccesses * 100).toFixed(0)
+          : 0;
+        
+        return `
+          <tr>
+            <td><strong>${product.displayName}</strong></td>
+            <td>${product.totalAccesses}</td>
+            <td>
+              ${product.latestRequests} (${latestPercent}%)
+            </td>
+            <td>
+              ${product.specificRequests} (${specificPercent}%)
+            </td>
+            <td>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      detailsContainer.innerHTML = `
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Total Accesses</th>
+              <th>Latest Version</th>
+              <th>Specific Version</th>
+              <th>Popularity</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    /**
+     * Sets up analytics sheet
+     */
+    function setupAnalyticsSheet() {
+      if (!confirm('This will create a new Google Sheet for detailed analytics logging. Continue?')) {
+        return;
+      }
+      
+      showAlert('Creating analytics sheet...', 'info');
+      
+      runServerCall('adminCreateAnalyticsSheet', [], 'setupAnalytics', {
+        success: function(result) {
+          if (result.success) {
+            showAlert('Analytics sheet created successfully! You can view it at: ' + result.sheetUrl, 'success');
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    /**
+     * Exports analytics to CSV
+     */
+    function exportAnalytics() {
+      showAlert('Exporting analytics...', 'info');
+      
+      runServerCall('adminExportAnalytics', [{}], 'exportAnalytics', {
+        success: function(csvData) {
+          // Create download link
+          const blob = new Blob([csvData], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'analytics-' + new Date().toISOString().split('T')[0] + '.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          
+          showAlert('Analytics exported successfully', 'success');
+        },
+        failure: function(error) {
+          showAlert('Error exporting analytics: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+
+    // Alert helper
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `
+        <div class="alert alert-${type === 'error' ? 'error' : 'success'}">
+          ${message}
+        </div>
+      `;
+      
+      setTimeout(function() {
+        container.innerHTML = '';
+      }, 5000);
     }
   </script>
+
 </body>
 </html>
