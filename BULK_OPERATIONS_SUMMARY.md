@@ -1,7 +1,7 @@
 # Bulk Operations & CSV Import/Export - Implementation Summary
 
 ## Overview
-This document summarizes the bulk operations and CSV import/export features added to the Template Distribution System's admin panel.
+This document summarizes the bulk operations and CSV import/export features added to the Template Distribution System's admin panel, including support for category and tags fields.
 
 ## Features Implemented
 
@@ -10,7 +10,7 @@ This document summarizes the bulk operations and CSV import/export features adde
 
 **Functionality:**
 - Exports all products to CSV format
-- Includes all fields: name, folderId, displayName, enabled, description
+- Includes all fields: name, folderId, displayName, enabled, description, category, tags
 - Proper CSV escaping (quotes, commas, newlines)
 - Auto-generated filename with timestamp: `products_export_YYYY-MM-DD_HHMMSS.csv`
 - Browser download triggered automatically
@@ -26,7 +26,7 @@ This document summarizes the bulk operations and CSV import/export features adde
 
 **Functionality:**
 - Downloads sample CSV with example products
-- Shows correct column headers and format
+- Shows correct column headers and format (including category and tags)
 - Includes helpful example data
 - Filename: `products_template.csv`
 
@@ -48,6 +48,7 @@ This document summarizes the bulk operations and CSV import/export features adde
 - Visual indicators (new vs. update)
 - Folder accessibility verification
 - Atomic import with error handling
+- Parses category and tags fields
 
 **Validation Checks:**
 - Required columns present (name, folderId)
@@ -188,6 +189,8 @@ This document summarizes the bulk operations and CSV import/export features adde
 - `displayName` - User-facing name (defaults to name if missing)
 - `enabled` - TRUE or FALSE (defaults to TRUE if missing)
 - `description` - Brief description (defaults to empty string)
+- `category` - Product category (defaults to 'Uncategorized' if missing)
+- `tags` - Comma-separated tags (defaults to empty if missing)
 
 ### Format Rules
 - Standard CSV with comma separators
@@ -197,13 +200,14 @@ This document summarizes the bulk operations and CSV import/export features adde
 - Line endings: Windows (`\r\n`), Unix (`\n`), or Mac (`\r`) supported
 - Encoding: UTF-8 recommended
 - Empty rows skipped
+- Tags should be comma-separated within the cell (quotes recommended if multiple tags)
 
 ### Example CSV
 ```csv
-name,folderId,displayName,enabled,description
-EventPlanning,abc123def456,Event Planning Tool,TRUE,Organize events effortlessly
-MailMerge,xyz789ghi012,Mail Merge Pro,TRUE,Send personalized emails at scale
-InvoiceTracker,mno345pqr678,Invoice Tracker,FALSE,Coming soon!
+name,folderId,displayName,enabled,description,category,tags
+EventPlanning,abc123def456,Event Planning Tool,TRUE,Organize events effortlessly,Event Management,"planning, calendar, events"
+MailMerge,xyz789ghi012,Mail Merge Pro,TRUE,Send personalized emails at scale,Communication,"email, automation, outreach"
+InvoiceTracker,mno345pqr678,Invoice Tracker,FALSE,Coming soon!,Finance,"invoicing, billing"
 ```
 
 ## Security Considerations
