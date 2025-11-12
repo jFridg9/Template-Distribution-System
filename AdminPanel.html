@@ -274,6 +274,141 @@
       opacity: 0.3;
     }
     
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1em;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      color: #667eea;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Analytics Styles */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .analytics-card {
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .analytics-card h3 {
+      font-size: 0.9em;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    
+    .analytics-card .value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .analytics-table th,
+    .analytics-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .analytics-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    .analytics-table tr:hover {
+      background: #f9f9f9;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s;
+    }
+    
+    .filter-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+    
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .filter-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9em;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    
+    /* Bulk Operations Styles */
     .bulk-actions-bar {
       display: none;
       padding: 15px;
@@ -372,82 +507,122 @@
     <div class="content">
       <div id="alertContainer"></div>
       
-      <div class="actions">
-        <button class="btn btn-primary" onclick="openAddProductModal()">
-          ➕ Add New Product
+      <!-- Tab Navigation -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('products', this)">
+          📦 Products
         </button>
-        <button class="btn btn-secondary" onclick="refreshProducts()">
-          🔄 Refresh
+        <button class="tab" onclick="switchTab('analytics', this)">
+          📊 Analytics
         </button>
-        <button class="btn btn-secondary" onclick="clearCache()">
-          🗑️ Clear Cache
-        </button>
-        <button class="btn btn-secondary" onclick="window.location.href = detectBaseFromLocation()">
-          🏠 View Landing Page
-        </button>
-        <button class="btn btn-secondary" onclick="configurePublicUrl()">
-          ⚙️ Set Public URL
-        </button>
+      </div>
+      
+      <!-- Products Tab -->
+      <div id="productsTab" class="tab-content active">
+        <div class="actions">
+          <button class="btn btn-primary" onclick="openAddProductModal()">
+            ➕ Add New Product
+          </button>
+          <button class="btn btn-secondary" onclick="refreshProducts()">
+            🔄 Refresh
+          </button>
+          <button class="btn btn-secondary" onclick="clearCache()">
+            🗑️ Clear Cache
+          </button>
+          <button class="btn btn-secondary" onclick="window.location.href = detectBaseFromLocation()">
+            🏠 View Landing Page
+          </button>
+          <button class="btn btn-secondary" onclick="configurePublicUrl()">
+            ⚙️ Set Public URL
+          </button>
+          
+          <div class="import-export-section">
+            <button class="btn btn-secondary" onclick="exportToCSV()">
+              📥 Export CSV
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('csvFileInput').click()">
+              📤 Import CSV
+            </button>
+            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
+            <button class="btn btn-secondary" onclick="downloadCSVTemplate()">
+              📋 CSV Template
+            </button>
+          </div>
+        </div>
         
-        <div class="import-export-section">
-          <button class="btn btn-secondary" onclick="exportToCSV()">
-            📥 Export CSV
+        <!-- Bulk Actions Bar -->
+        <div id="bulkActionsBar" class="bulk-actions-bar">
+          <span id="selectedCount">0 products selected</span>
+          <select id="bulkActionSelect">
+            <option value="">-- Select Action --</option>
+            <option value="enable">Enable Selected</option>
+            <option value="disable">Disable Selected</option>
+            <option value="delete">Delete Selected</option>
+          </select>
+          <button class="btn btn-primary" onclick="executeBulkAction()">
+            Apply
           </button>
-          <button class="btn btn-secondary" onclick="document.getElementById('csvFileInput').click()">
-            📤 Import CSV
+          <button class="btn btn-secondary" onclick="clearSelection()">
+            Clear Selection
           </button>
-          <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
-          <button class="btn btn-secondary" onclick="downloadCSVTemplate()">
-            📋 CSV Template
-          </button>
+        </div>
+        
+        <div id="productsContainer">
+          <? if (products.length === 0) { ?>
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              <h2>No Products Yet</h2>
+              <p>Click "Add New Product" to get started</p>
+            </div>
+          <? } else { ?>
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
+                  </th>
+                  <th>Product Name</th>
+                  <th>Display Name</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Files</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <!-- Products will be loaded here -->
+              </tbody>
+            </table>
+          <? } ?>
         </div>
       </div>
       
-      <!-- Bulk Actions Bar -->
-      <div id="bulkActionsBar" class="bulk-actions-bar">
-        <span id="selectedCount">0 products selected</span>
-        <select id="bulkActionSelect">
-          <option value="">-- Select Action --</option>
-          <option value="enable">Enable Selected</option>
-          <option value="disable">Disable Selected</option>
-          <option value="delete">Delete Selected</option>
-        </select>
-        <button class="btn btn-primary" onclick="executeBulkAction()">
-          Apply
-        </button>
-        <button class="btn btn-secondary" onclick="clearSelection()">
-          Clear Selection
-        </button>
-      </div>
-      
-      <div id="productsContainer">
-        <? if (products.length === 0) { ?>
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
-            <h2>No Products Yet</h2>
-            <p>Click "Add New Product" to get started</p>
+      <!-- Analytics Tab -->
+      <div id="analyticsTab" class="tab-content">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="loadAnalytics()">
+            🔄 Refresh Analytics
+          </button>
+          <button class="btn btn-secondary" onclick="setupAnalyticsSheet()">
+            📊 Setup Analytics Sheet
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalytics()">
+            📥 Export to CSV
+          </button>
+        </div>
+        
+        <div id="analyticsContainer">
+          <div id="analyticsSummary">
+            <!-- Summary cards will be loaded here -->
           </div>
-        <? } else { ?>
-          <table class="products-table">
-            <thead>
-              <tr>
-                <th style="width: 40px;">
-                  <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
-                </th>
-                <th>Product Name</th>
-                <th>Display Name</th>
-                <th>Status</th>
-                <th>Files</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="productsTableBody">
-              <!-- Products will be loaded here -->
-            </tbody>
-          </table>
-        <? } ?>
+          
+          <h3 style="margin-top: 30px; margin-bottom: 15px;">Product Access Statistics</h3>
+          <div id="analyticsDetails">
+            <!-- Detailed analytics table will be loaded here -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -494,6 +669,18 @@
         </div>
         
         <div class="form-group">
+          <label for="category">Category</label>
+          <input type="text" id="category" placeholder="e.g., Event Planning, Communication, Finance">
+          <small>Group products by category on the landing page</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="tags">Tags (comma-separated)</label>
+          <input type="text" id="tags" placeholder="e.g., planning, calendar, scheduling">
+          <small>Add tags for easier searching and filtering</small>
+        </div>
+        
+        <div class="form-group">
           <div class="checkbox-group">
             <input type="checkbox" id="enabled" checked>
             <label for="enabled">Enable this product</label>
@@ -532,6 +719,7 @@
         </button>
       </div>
     </div>
+  </div>
   </div>
 
   <script>
@@ -617,6 +805,7 @@
           </td>
           <td><strong>${product.name}</strong></td>
           <td>${product.displayName}</td>
+          <td><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
           <td>
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
@@ -665,6 +854,15 @@
       document.getElementById('displayName').value = product.displayName;
       document.getElementById('folderId').value = product.folderId;
       document.getElementById('description').value = product.description || '';
+      document.getElementById('category').value = product.category || '';
+      
+      // Format tags for display: convert array to comma-separated string
+      let tagsValue = '';
+      if (product.tags) {
+        tagsValue = Array.isArray(product.tags) ? product.tags.join(', ') : product.tags;
+      }
+      document.getElementById('tags').value = tagsValue;
+      
       document.getElementById('enabled').checked = product.enabled;
       document.getElementById('productModal').classList.add('active');
       
@@ -680,11 +878,17 @@
     function saveProduct(event) {
       event.preventDefault();
       
+      // Parse tags from comma-separated input
+      const tagsInput = document.getElementById('tags').value;
+      const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+      
       const productData = {
         name: document.getElementById('productName').value,
         displayName: document.getElementById('displayName').value,
         folderId: document.getElementById('folderId').value,
         description: document.getElementById('description').value,
+        category: document.getElementById('category').value || 'Uncategorized',
+        tags: tags,
         enabled: document.getElementById('enabled').checked
       };
       
@@ -1061,6 +1265,212 @@ function openDrivePicker() {
 
     
     // ========================================================================
+    // ANALYTICS FUNCTIONS
+    // ========================================================================
+    
+    /**
+     * Switches between tabs in the admin panel
+     */
+    function switchTab(tabName, clickedElement) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      if (clickedElement) {
+        clickedElement.classList.add('active');
+      }
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      if (tabName === 'products') {
+        document.getElementById('productsTab').classList.add('active');
+      } else if (tabName === 'analytics') {
+        document.getElementById('analyticsTab').classList.add('active');
+        // Load analytics when tab is opened
+        loadAnalytics();
+      }
+    }
+    
+    /**
+     * Loads analytics data and displays it
+     */
+    function loadAnalytics() {
+      showAlert('Loading analytics...', 'info');
+      
+      runServerCall('getAnalyticsForAdmin', [], 'getAnalytics', {
+        success: function(data) {
+          displayAnalyticsSummary(data);
+          displayAnalyticsDetails(data);
+          showAlert('Analytics loaded', 'success');
+        },
+        failure: function(error) {
+          showAlert('Error loading analytics: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    /**
+     * Displays analytics summary cards
+     */
+    function displayAnalyticsSummary(data) {
+      const summaryContainer = document.getElementById('analyticsSummary');
+      
+      if (data.error) {
+        summaryContainer.innerHTML = `
+          <div class="alert alert-error">
+            Error loading analytics: ${data.error}
+          </div>
+        `;
+        return;
+      }
+      
+      const totalProducts = data.products ? data.products.length : 0;
+      const totalAccesses = data.totalAccesses || 0;
+      const enabledProducts = data.products ? data.products.filter(p => p.enabled).length : 0;
+      
+      summaryContainer.innerHTML = `
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>Total Products</h3>
+            <div class="value">${totalProducts}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Total Accesses</h3>
+            <div class="value">${totalAccesses}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Active Products</h3>
+            <div class="value">${enabledProducts}</div>
+          </div>
+          <div class="analytics-card">
+            <h3>Last Updated</h3>
+            <div class="value" style="font-size: 1.2em;">${data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    /**
+     * Displays detailed analytics table
+     */
+    function displayAnalyticsDetails(data) {
+      const detailsContainer = document.getElementById('analyticsDetails');
+      
+      if (!data.products || data.products.length === 0) {
+        detailsContainer.innerHTML = `
+          <div class="empty-state">
+            <p>No analytics data available yet. Analytics will be collected as users access templates.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Calculate max accesses for progress bar scaling
+      const maxAccesses = Math.max(...data.products.map(p => p.totalAccesses), 1);
+      
+      const rows = data.products.map(product => {
+        const percentage = (product.totalAccesses / maxAccesses * 100).toFixed(1);
+        const latestPercent = product.totalAccesses > 0 
+          ? (product.latestRequests / product.totalAccesses * 100).toFixed(0)
+          : 0;
+        const specificPercent = product.totalAccesses > 0 
+          ? (product.specificRequests / product.totalAccesses * 100).toFixed(0)
+          : 0;
+        
+        return `
+          <tr>
+            <td><strong>${product.displayName}</strong></td>
+            <td>${product.totalAccesses}</td>
+            <td>
+              ${product.latestRequests} (${latestPercent}%)
+            </td>
+            <td>
+              ${product.specificRequests} (${specificPercent}%)
+            </td>
+            <td>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      detailsContainer.innerHTML = `
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Total Accesses</th>
+              <th>Latest Version</th>
+              <th>Specific Version</th>
+              <th>Popularity</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    /**
+     * Sets up analytics sheet
+     */
+    function setupAnalyticsSheet() {
+      if (!confirm('This will create a new Google Sheet for detailed analytics logging. Continue?')) {
+        return;
+      }
+      
+      showAlert('Creating analytics sheet...', 'info');
+      
+      runServerCall('adminCreateAnalyticsSheet', [], 'setupAnalytics', {
+        success: function(result) {
+          if (result.success) {
+            showAlert('Analytics sheet created successfully! You can view it at: ' + result.sheetUrl, 'success');
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    /**
+     * Exports analytics to CSV
+     */
+    function exportAnalytics() {
+      showAlert('Exporting analytics...', 'info');
+      
+      runServerCall('adminExportAnalytics', [{}], 'exportAnalytics', {
+        success: function(csvData) {
+          // Create download link
+          const blob = new Blob([csvData], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'analytics-' + new Date().toISOString().split('T')[0] + '.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          
+          showAlert('Analytics exported successfully', 'success');
+        },
+        failure: function(error) {
+          showAlert('Error exporting analytics: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+
+    
+    // ========================================================================
     // BULK OPERATIONS
     // ========================================================================
     
@@ -1343,18 +1753,20 @@ function openDrivePicker() {
       // Show product preview
       html += '<h3>Products to Import</h3>';
       html += '<table class="preview-table">';
-      html += '<thead><tr><th>Action</th><th>Name</th><th>Display Name</th><th>Enabled</th><th>Folder ID</th></tr></thead>';
+      html += '<thead><tr><th>Action</th><th>Name</th><th>Display Name</th><th>Category</th><th>Enabled</th><th>Tags</th></tr></thead>';
       html += '<tbody>';
       
       validation.products.forEach(function(product) {
         const rowClass = product.isUpdate ? 'preview-update' : 'preview-new';
         const action = product.isUpdate ? '🔄 Update' : '➕ New';
+        const tagsDisplay = product.tags && product.tags.length > 0 ? product.tags.join(', ') : '-';
         html += '<tr class="' + rowClass + '">';
         html += '<td>' + action + '</td>';
         html += '<td><strong>' + product.name + '</strong></td>';
         html += '<td>' + product.displayName + '</td>';
+        html += '<td>' + (product.category || 'Uncategorized') + '</td>';
         html += '<td>' + (product.enabled ? '✅ Yes' : '❌ No') + '</td>';
-        html += '<td style="font-size: 0.8em; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">' + product.folderId + '</td>';
+        html += '<td style="font-size: 0.85em;">' + tagsDisplay + '</td>';
         html += '</tr>';
       });
       
@@ -1418,5 +1830,6 @@ function openDrivePicker() {
       }, 5000);
     }
   </script>
+
 </body>
 </html>

@@ -125,7 +125,7 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     
     // Set up headers
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Format header row
@@ -212,7 +212,9 @@ function addProduct(productData) {
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
     sheet.appendRow(newRow);
@@ -273,15 +275,24 @@ function updateProduct(productName, productData) {
     }
     
     // Update row
+    // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
+    const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
       productData.name || productName,
       productData.folderId,
       productData.displayName || productData.name,
       productData.enabled !== false,
-      productData.description || ''
+      productData.description || '',
+      productData.category || 'Uncategorized',
+      productData.tags ? (Array.isArray(productData.tags) ? productData.tags.join(', ') : productData.tags) : ''
     ];
     
-    sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+    // Validate column count matches expected
+    if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
+      Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
+    }
+    
+    sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     
     // Clear cache
     clearConfigCache();
@@ -647,12 +658,77 @@ function pickerKeyDiagnostics() {
 
 /**
  * ============================================================================
+ * ANALYTICS ADMIN FUNCTIONS
+ * ============================================================================
+ */
+
+/**
+ * Gets analytics summary for admin panel display.
+ * Wraps the Analytics.gs function with admin-specific formatting.
+ * 
+ * @returns {Object} Analytics summary
+ */
+function getAnalyticsForAdmin() {
+  try {
+    return getAnalyticsSummary();
+  } catch (err) {
+    Logger.log('ERROR in getAnalyticsForAdmin: ' + err.message);
+    return {
+      error: err.message,
+      totalAccesses: 0,
+      products: []
+    };
+  }
+}
+
+
+/**
+ * Gets filtered access logs for admin panel.
+ * 
+ * @param {Object} options - Filter options
+ * @returns {Object} Access logs
+ */
+function getAccessLogsForAdmin(options) {
+  try {
+    return getAccessLogs(options);
+  } catch (err) {
+    Logger.log('ERROR in getAccessLogsForAdmin: ' + err.message);
+    return {
+      success: false,
+      error: err.message,
+      logs: []
+    };
+  }
+}
+
+
+/**
+ * Creates the analytics sheet from admin panel.
+ * 
+ * @returns {Object} Result with sheet info
+ */
+function adminCreateAnalyticsSheet() {
+  try {
+    return createAnalyticsSheet();
+  } catch (err) {
+    Logger.log('ERROR in adminCreateAnalyticsSheet: ' + err.message);
+    return {
+      success: false,
+      error: err.message
+    };
+  }
+}
+
+
+/**
+ * ============================================================================
  * BULK OPERATIONS & CSV IMPORT/EXPORT
  * ============================================================================
  */
 
 /**
  * Exports all products to CSV format
+ * Includes all columns: name, folderId, displayName, enabled, description, category, tags
  * 
  * @returns {Object} Result with CSV content
  */
@@ -700,6 +776,7 @@ function exportProductsToCSV() {
 
 /**
  * Validates CSV data before import
+ * Supports all product fields including category and tags
  * 
  * @param {string} csvContent - CSV content to validate
  * @returns {Object} Validation result with parsed data and warnings
@@ -734,6 +811,8 @@ function validateCSVImport(csvContent) {
     const displayNameIdx = normalizedHeaders.indexOf('displayname');
     const enabledIdx = normalizedHeaders.indexOf('enabled');
     const descIdx = normalizedHeaders.indexOf('description');
+    const categoryIdx = normalizedHeaders.indexOf('category');
+    const tagsIdx = normalizedHeaders.indexOf('tags');
     
     // Parse data rows
     const parsedProducts = [];
@@ -770,12 +849,20 @@ function validateCSVImport(csvContent) {
         warnings.push(`Row ${i + 1}: "${name}" has suspiciously short folder ID`);
       }
       
+      // Parse tags from CSV (comma-separated string to array)
+      let tags = [];
+      if (tagsIdx !== -1 && cells[tagsIdx]) {
+        tags = cells[tagsIdx].toString().split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      }
+      
       parsedProducts.push({
         name: name,
         folderId: folderId,
         displayName: displayNameIdx !== -1 && cells[displayNameIdx] ? cells[displayNameIdx].trim() : name,
         enabled: enabledIdx !== -1 && cells[enabledIdx] ? (cells[enabledIdx].toString().toUpperCase() === 'TRUE') : true,
         description: descIdx !== -1 && cells[descIdx] ? cells[descIdx].trim() : '',
+        category: categoryIdx !== -1 && cells[categoryIdx] ? cells[categoryIdx].trim() : 'Uncategorized',
+        tags: tags,
         isUpdate: isUpdate
       });
     }
@@ -851,6 +938,7 @@ function parseCSVLine(line) {
 
 /**
  * Imports products from CSV with validation
+ * Updates all product fields including category and tags
  * 
  * @param {string} csvContent - CSV content to import
  * @returns {Object} Result of import operation
@@ -884,6 +972,9 @@ function importProductsFromCSV(csvContent) {
           continue;
         }
         
+        // Convert tags array to comma-separated string for sheet storage
+        const tagsString = product.tags ? product.tags.join(', ') : '';
+        
         if (product.isUpdate) {
           // Update existing product
           let rowIndex = -1;
@@ -900,9 +991,11 @@ function importProductsFromCSV(csvContent) {
               product.folderId,
               product.displayName,
               product.enabled,
-              product.description
+              product.description,
+              product.category || 'Uncategorized',
+              tagsString
             ];
-            sheet.getRange(rowIndex, 1, 1, 5).setValues([updatedRow]);
+            sheet.getRange(rowIndex, 1, 1, 7).setValues([updatedRow]);
             updatedCount++;
           }
         } else {
@@ -912,7 +1005,9 @@ function importProductsFromCSV(csvContent) {
             product.folderId,
             product.displayName,
             product.enabled,
-            product.description
+            product.description,
+            product.category || 'Uncategorized',
+            tagsString
           ];
           sheet.appendRow(newRow);
           addedCount++;
@@ -946,15 +1041,16 @@ function importProductsFromCSV(csvContent) {
 
 /**
  * Generates a CSV template for importing products
+ * Includes all columns: name, folderId, displayName, enabled, description, category, tags
  * 
  * @returns {Object} Result with CSV template
  */
 function generateCSVTemplate() {
   try {
-    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description'];
+    const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     const exampleRows = [
-      ['EventPlanning', 'YOUR_FOLDER_ID_HERE', 'Event Planning Tool', 'TRUE', 'Organize events effortlessly'],
-      ['MailMerge', 'YOUR_FOLDER_ID_HERE', 'Mail Merge Pro', 'TRUE', 'Send personalized emails at scale']
+      ['EventPlanning', 'YOUR_FOLDER_ID_HERE', 'Event Planning Tool', 'TRUE', 'Organize events effortlessly', 'Event Management', 'planning, calendar, events'],
+      ['MailMerge', 'YOUR_FOLDER_ID_HERE', 'Mail Merge Pro', 'TRUE', 'Send personalized emails at scale', 'Communication', 'email, automation, outreach']
     ];
     
     const csvLines = [headers, ...exampleRows].map(row => {
@@ -1021,7 +1117,7 @@ function bulkToggleProducts(productNames, enabled) {
           continue;
         }
         
-        // Update enabled status
+        // Update enabled status (column 4)
         sheet.getRange(rowIndex, 4).setValue(enabled);
         updatedCount++;
       } catch (err) {
@@ -1112,6 +1208,22 @@ function bulkDeleteProducts(productNames) {
       success: false,
       error: err.message
     };
+  }
+}
+
+
+/**
+ * Exports analytics to CSV for download.
+ * 
+ * @param {Object} options - Export options
+ * @returns {string} CSV data
+ */
+function adminExportAnalytics(options) {
+  try {
+    return exportAnalyticsToCSV(options);
+  } catch (err) {
+    Logger.log('ERROR in adminExportAnalytics: ' + err.message);
+    return 'Error: ' + err.message;
   }
 }
 
