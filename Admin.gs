@@ -249,12 +249,9 @@ function addProduct(productData) {
     
     // Check if product name already exists
     Logger.log('addProduct: Checking for duplicate product names');
-    Logger.log('addProduct: Checking for duplicate product names');
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productData.name) {
-        Logger.log(`addProduct: Duplicate product name found: ${productData.name}`);
-        throw new Error(`A product named "${productData.name}" already exists. Please choose a different name.`);
         Logger.log(`addProduct: Duplicate product name found: ${productData.name}`);
         throw new Error(`A product named "${productData.name}" already exists. Please choose a different name.`);
       }
@@ -304,13 +301,6 @@ function addProduct(productData) {
     }
     
     // Clear cache
-    Logger.log('addProduct: Clearing configuration cache');
-    try {
-      clearConfigCache();
-    } catch (err) {
-      Logger.log(`WARNING in addProduct: Failed to clear cache - ${err.message}`);
-      // Non-critical error, continue
-    }
     Logger.log('addProduct: Clearing configuration cache');
     try {
       clearConfigCache();
@@ -386,7 +376,6 @@ function updateProduct(productName, productData) {
     
     // Find the product row
     Logger.log('updateProduct: Finding product row');
-    Logger.log('updateProduct: Finding product row');
     let rowIndex = -1;
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === productName) {
@@ -398,11 +387,8 @@ function updateProduct(productName, productData) {
     if (rowIndex === -1) {
       Logger.log(`updateProduct: Product not found: ${productName}`);
       throw new Error(`Product "${productName}" not found. It may have been deleted.`);
-      Logger.log(`updateProduct: Product not found: ${productName}`);
-      throw new Error(`Product "${productName}" not found. It may have been deleted.`);
     }
     
-    // Verify folder is accessible if changed with retry logic
     // Verify folder is accessible if changed with retry logic
     if (productData.folderId !== data[rowIndex - 1][1]) {
       // Folder verification loop handled above; no duplicate block
@@ -429,9 +415,6 @@ function updateProduct(productName, productData) {
       }
     }
     
-    // Update row (including category and tags from main branch)
-    Logger.log('updateProduct: Updating product data');
-    // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
     // Update row (including category and tags from main branch)
     Logger.log('updateProduct: Updating product data');
     // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
@@ -464,12 +447,6 @@ function updateProduct(productName, productData) {
     } catch (err) {
       Logger.log(`WARNING in updateProduct: Failed to clear cache - ${err.message}`);
     }
-    Logger.log('updateProduct: Clearing configuration cache');
-    try {
-      clearConfigCache();
-    } catch (err) {
-      Logger.log(`WARNING in updateProduct: Failed to clear cache - ${err.message}`);
-    }
     
     Logger.log(`SUCCESS: Product "${productName}" updated successfully`);
 
@@ -491,7 +468,6 @@ function updateProduct(productName, productData) {
 
 /**
  * Deletes a product from configuration
- * DESTRUCTIVE OPERATION - includes validation
  * DESTRUCTIVE OPERATION - includes validation
  * 
  * @param {string} productName - Name of product to delete
@@ -542,8 +518,6 @@ function deleteProduct(productName) {
     }
     
     if (rowIndex === -1) {
-      Logger.log(`deleteProduct: Product not found: ${productName}`);
-      throw new Error(`Product "${productName}" not found. It may have already been deleted.`);
       Logger.log(`deleteProduct: Product not found: ${productName}`);
       throw new Error(`Product "${productName}" not found. It may have already been deleted.`);
     }
@@ -892,7 +866,6 @@ function getParentFolderFromFile(fileId) {
     return {
       success: true,
       folderId: folderId,
-      folderName: folderName,
       folderName: folderName,
       folderUrl: folder.getUrl(),
       fileCount: fileCount
