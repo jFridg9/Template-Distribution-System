@@ -155,14 +155,8 @@ function setupCreateConfigSheet() {
   try {
     // Create the config sheet
     Logger.log('setupCreateConfigSheet: Creating new spreadsheet');
-    Logger.log('setupCreateConfigSheet: Creating new spreadsheet');
     const ss = SpreadsheetApp.create('Template Distribution - Configuration');
     const sheet = ss.getSheetByName('Sheet1');
-    
-    if (!sheet) {
-      throw new Error('Failed to access default sheet in new spreadsheet');
-    }
-    
     
     if (!sheet) {
       throw new Error('Failed to access default sheet in new spreadsheet');
@@ -172,11 +166,7 @@ function setupCreateConfigSheet() {
     Logger.log('setupCreateConfigSheet: Sheet renamed to "Products"');
     Logger.log('setupCreateConfigSheet: Sheet renamed to "Products"');
     
-<<<<<<< HEAD
-    // Set up headers
-=======
-    // Set up headers (including category and tags from main branch)
->>>>>>> efe0f31 (Rebase: Applied error handling improvements to Admin.gs with categories/tags support from main)
+  // Set up headers (including category and tags from main branch)
     const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
@@ -632,11 +622,6 @@ function updateProduct(productName, productData) {
     if (updatedRow.length !== EXPECTED_COLUMN_COUNT) {
       Logger.log(`WARNING: Expected ${EXPECTED_COLUMN_COUNT} columns but got ${updatedRow.length}`);
     }
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> efe0f31 (Rebase: Applied error handling improvements to Admin.gs with categories/tags support from main)
     try {
       sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
     } catch (err) {
