@@ -924,8 +924,8 @@ function renderLandingPage() {
                         const execIndex = href.indexOf('/exec');
                         const devIndex = href.indexOf('/dev');
                         const userCodeIndex = href.indexOf('/userCodeAppPanel');
-                        // Prefer to return the current execution path so navigation occurs within the frame
-                        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/userCodeAppPanel';
+                        // Prefer to redirect to the canonical /exec path to ensure query params are passed
+                        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/exec';
                         if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
                         if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
                         return (window.location.origin + window.location.pathname).replace(/\/$/, '');

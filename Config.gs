@@ -380,13 +380,19 @@ function getPublicWebAppUrl() {
  */
 function setPublicWebAppUrl(url) {
   try {
+    // Allow clearing by passing blank string -> delete property
+    const scriptProps = PropertiesService.getScriptProperties();
+    if (url === '' || url === null) {
+      scriptProps.deleteProperty('PUBLIC_WEBAPP_URL');
+      Logger.log('PUBLIC_WEBAPP_URL cleared');
+      return { success: true, message: 'Public web app URL cleared' };
+    }
     if (!url || typeof url !== 'string') throw new Error('Invalid URL');
     // Basic sanity check
     if (!(url.indexOf('http://') === 0 || url.indexOf('https://') === 0)) {
       throw new Error('URL must start with http:// or https://');
     }
 
-    const scriptProps = PropertiesService.getScriptProperties();
     const normalized = normalizePublicWebAppUrl(url);
     scriptProps.setProperty('PUBLIC_WEBAPP_URL', normalized);
 

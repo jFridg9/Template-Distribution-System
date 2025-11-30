@@ -967,6 +967,9 @@
           <button class="btn btn-secondary" onclick="configurePublicUrl()">
             ⚙️ Set Public URL
           </button>
+          <button class="btn btn-secondary" onclick="setCurrentAsPublicUrl()">
+            🧭 Use Current URL as Public
+          </button>
  
 
           <div class="import-export-section">
@@ -1310,6 +1313,16 @@
           const url = base;
           try { window.location.href = url; } catch (err) { try { window.top.location.href = url; } catch (_) {} }
         }
+      });
+    }
+
+    // Set the current detected base URL as the canonical public web app URL
+    function setCurrentAsPublicUrl() {
+      const base = detectBaseFromLocation();
+      if (!confirm('Set the current URL as the canonical public web app URL?\n\n' + base)) return;
+      runServerCall('setPublicWebAppUrl', [base || ''], 'setPublicWebAppUrl', {
+        success: function(res) { if (res && res.success) showAlert('Public URL saved: ' + base, 'success'); else showAlert('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error'); },
+        failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
       });
     }
     
@@ -1679,7 +1692,7 @@ function openDrivePicker() {
         const execIndex = href.indexOf('/exec');
         const devIndex = href.indexOf('/dev');
         const userCodeIndex = href.indexOf('/userCodeAppPanel');
-        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/userCodeAppPanel';
+        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/exec';
         if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
         if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
         // Fallback to origin + pathname (without trailing slash)
@@ -1751,6 +1764,14 @@ function openDrivePicker() {
           const hint = current && current.length ? current : detectBaseFromLocation();
           const val = prompt('Set the canonical public web app URL (leave blank to clear):', hint);
           if (val === null) return; // cancelled
+          if (val === '') {
+            // Directly clear without validation
+            runServerCall('setPublicWebAppUrl', [''], 'setPublicWebAppUrl', {
+              success: function(res) { if (res && res.success) showAlert('Public URL cleared', 'success'); else showAlert('Error clearing public URL: ' + (res && res.error ? res.error : ''), 'error'); },
+              failure: function(err) { showAlert('Error clearing public URL: ' + (err && err.message ? err.message : err), 'error'); }
+            });
+            return;
+          }
           // Validate the provided URL (best-effort) before saving
           runServerCall('validatePublicWebAppUrl', [val || ''], 'validatePublicWebAppUrl', {
             success: function(validation) {
