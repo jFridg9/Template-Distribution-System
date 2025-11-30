@@ -261,7 +261,7 @@ function addProduct(productData) {
     Logger.log(`addProduct: Verifying folder access (ID: ${productData.folderId})`);
     let folder;
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     
     while (retryCount < maxRetries) {
       try {
@@ -732,7 +732,7 @@ function getFolderDetails(folderId) {
     // Retry logic for folder access
     let folder;
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     let lastError;
     
     while (retryCount < maxRetries) {
@@ -745,7 +745,7 @@ function getFolderDetails(folderId) {
         Logger.log(`getFolderDetails: Access attempt ${retryCount} failed - ${err.message}`);
         
         if (retryCount < maxRetries) {
-          Utilities.sleep(500);
+          Utilities.sleep(1000);
         }
       }
     }
@@ -820,7 +820,7 @@ function getParentFolderFromFile(fileId) {
         Logger.log(`getParentFolderFromFile: File access attempt ${retryCount} failed - ${err.message}`);
         
         if (retryCount < maxRetries) {
-          Utilities.sleep(500);
+          Utilities.sleep(1000);
         }
       }
     }
@@ -843,7 +843,7 @@ function getParentFolderFromFile(fileId) {
         lastError = err;
         retryCount++;
         Logger.log(`getParentFolderFromFile: getParents attempt ${retryCount} failed - ${err.message}`);
-        if (retryCount < maxRetries) Utilities.sleep(500);
+        if (retryCount < maxRetries) Utilities.sleep(1000);
       }
     }
     if (!parents) {
@@ -886,7 +886,7 @@ function getParentFolderFromFile(fileId) {
         lastError = err;
         retryCount++;
         Logger.log(`getParentFolderFromFile: folder.getFiles attempt ${retryCount} failed - ${err.message}`);
-        if (retryCount < maxRetries) Utilities.sleep(500);
+        if (retryCount < maxRetries) Utilities.sleep(1000);
       }
     }
     if (retryCount >= maxRetries) {
