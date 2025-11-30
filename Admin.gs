@@ -261,7 +261,7 @@ function addProduct(productData) {
     Logger.log(`addProduct: Verifying folder access (ID: ${productData.folderId})`);
     let folder;
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     
     while (retryCount < maxRetries) {
       try {
@@ -732,7 +732,7 @@ function getFolderDetails(folderId) {
     // Retry logic for folder access
     let folder;
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     let lastError;
     
     while (retryCount < maxRetries) {
@@ -745,7 +745,7 @@ function getFolderDetails(folderId) {
         Logger.log(`getFolderDetails: Access attempt ${retryCount} failed - ${err.message}`);
         
         if (retryCount < maxRetries) {
-          Utilities.sleep(500);
+          Utilities.sleep(1000);
         }
       }
     }
@@ -820,7 +820,7 @@ function getParentFolderFromFile(fileId) {
         Logger.log(`getParentFolderFromFile: File access attempt ${retryCount} failed - ${err.message}`);
         
         if (retryCount < maxRetries) {
-          Utilities.sleep(500);
+          Utilities.sleep(1000);
         }
       }
     }
@@ -832,7 +832,23 @@ function getParentFolderFromFile(fileId) {
       Logger.log(`getParentFolderFromFile: File accessed - Name: ${file.getName()}`);
     
     // Get parent folders (files can have multiple parents, but we'll use the first)
-    const parents = file.getParents();
+    let parents;
+    retryCount = 0;
+    lastError = null;
+    while (retryCount < maxRetries) {
+      try {
+        parents = file.getParents();
+        break;
+      } catch (err) {
+        lastError = err;
+        retryCount++;
+        Logger.log(`getParentFolderFromFile: getParents attempt ${retryCount} failed - ${err.message}`);
+        if (retryCount < maxRetries) Utilities.sleep(1000);
+      }
+    }
+    if (!parents) {
+      throw lastError || new Error('Unable to retrieve parent folders');
+    }
     
     if (!parents.hasNext()) {
       Logger.log('getParentFolderFromFile: File has no parent folder');
@@ -844,30 +860,55 @@ function getParentFolderFromFile(fileId) {
     
     const folder = parents.next();
     const folderId = folder.getId();
-    const folderName = folder.getName();
+    let folderName = '';
+    try {
+      folderName = folder.getName();
+    } catch (err) {
+      Logger.log(`Warning: getParentFolderFromFile: getName failed - ${err.message}`);
+      folderName = '(Unknown)';
+    }
     
     Logger.log(`getParentFolderFromFile: Parent folder found - ${folderName}`);
     
     // Count all files in the folder (templates can be any type)
     let fileCount = 0;
-    try {
-      const files = folder.getFiles();
-      while (files.hasNext()) {
-        files.next();
-        fileCount++;
+    retryCount = 0;
+    lastError = null;
+    while (retryCount < maxRetries) {
+      try {
+        const files = folder.getFiles();
+        while (files.hasNext()) {
+          files.next();
+          fileCount++;
+        }
+        break;
+      } catch (err) {
+        lastError = err;
+        retryCount++;
+        Logger.log(`getParentFolderFromFile: folder.getFiles attempt ${retryCount} failed - ${err.message}`);
+        if (retryCount < maxRetries) Utilities.sleep(1000);
       }
-    } catch (err) {
-      Logger.log(`WARNING in getParentFolderFromFile: Failed to count files - ${err.message}`);
+    }
+    if (retryCount >= maxRetries) {
+      Logger.log(`WARNING in getParentFolderFromFile: Failed to count files after ${maxRetries} attempts - ${lastError && lastError.message}`);
       // Continue with fileCount = 0
     }
     
     Logger.log(`getParentFolderFromFile: Success - Folder "${folderName}" with ${fileCount} files`);
     
+    let folderUrl = '';
+    try {
+      folderUrl = folder.getUrl();
+    } catch (err) {
+      Logger.log(`Warning: getParentFolderFromFile: folder.getUrl failed - ${err.message}`);
+      folderUrl = '';
+    }
+
     return {
       success: true,
       folderId: folderId,
       folderName: folderName,
-      folderUrl: folder.getUrl(),
+      folderUrl: folderUrl,
       fileCount: fileCount
     };
     
@@ -875,9 +916,10 @@ function getParentFolderFromFile(fileId) {
     Logger.log(`ERROR in getParentFolderFromFile: ${err.message}`);
     Logger.log(`ERROR stack: ${err.stack || 'No stack trace available'}`);
     
+    Logger.log(`getParentFolderFromFile: Final error -> ${err.message}`);
     return {
       success: false,
-      error: 'Unable to access the selected file or its parent folder. Please verify your permissions.'
+      error: 'Cannot access file or folder: ' + (err && err.message ? err.message : 'Unknown error')
     };
   }
 }
