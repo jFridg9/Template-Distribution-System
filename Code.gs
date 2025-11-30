@@ -938,20 +938,38 @@ function renderLandingPage() {
                     document.addEventListener('DOMContentLoaded', function() {
                       const adminLink = document.getElementById('adminLink');
                       if (adminLink) {
+                        // Set the href using server override when available
+                        try {
+                          if (google && google.script && google.script.run) {
+                            google.script.run.withSuccessHandler(function(override) {
+                              const base = override && override.length ? override : detectBaseFromLocation();
+                              const href = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
+                              adminLink.href = href;
+                            }).getPublicWebAppUrl();
+                          }
+                        } catch (e) { /* ignore */ }
+
                         adminLink.addEventListener('click', function(e) {
-                                      e.preventDefault();
-                                      const base = detectBaseFromLocation();
-                                      const url = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
-                                      // Use the current frame navigation instead of attempting top navigation
-                                      // to avoid cross-origin SecurityError in the Apps Script editor iframe.
-                                      try {
-                                        window.location.href = url;
-                                        console.log('Admin link clicked; navigating (frame) to:', url);
-                                      } catch (err) {
-                                        console.warn('frame navigation failed, falling back to top navigation:', err && err.message);
-                                        try { window.top.location.href = url; } catch (err2) { console.error('top navigation failed too:', err2 && err2.message); }
-                                      }
-                                    });
+                          e.preventDefault();
+                          // Prefer to use the computed href if present
+                          const targetHref = adminLink.href || (detectBaseFromLocation() + (detectBaseFromLocation().indexOf('?') === -1 ? '?admin=true' : '&admin=true'));
+                          try {
+                            // If running inside the Apps Script editor host, fetch admin HTML directly
+                            if (google && google.script && google.script.host && google.script.host.origin && google.script.host.origin.indexOf('script.google.com') !== -1) {
+                              google.script.run.withSuccessHandler(function(content) {
+                                try {
+                                  document.open(); document.write(content); document.close();
+                                } catch (err) { window.location.href = targetHref; }
+                              }).getAdminPanelHtml();
+                            } else {
+                              window.location.href = targetHref;
+                            }
+                            console.log('Admin link clicked; navigation attempted to:', targetHref);
+                          } catch (err) {
+                            // Fallback navigate
+                            try { window.location.href = targetHref; } catch (_) { try { window.top.location.href = targetHref; } catch (_) {} }
+                          }
+                        });
                       }
                     });
           // Filter functionality
@@ -1018,6 +1036,19 @@ function renderLandingPage() {
           if (searchInput) {
             searchInput.addEventListener('input', applyFilters);
           }
+          // Update Admin link href using PUBLIC_WEBAPP_URL when available
+          (function updateAdminLinkFromServer() {
+            try {
+              if (google && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(function(override) {
+                  const adminLinkEl = document.getElementById('adminLink');
+                  if (!adminLinkEl) return;
+                  const base = override && override.length ? override : detectBaseFromLocation();
+                  adminLinkEl.href = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
+                }).getPublicWebAppUrl();
+              }
+            } catch (e) { /* ignore */ }
+          })();
         </script>
       </body>
     </html>

@@ -64,6 +64,19 @@ function renderAdminPanel() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/**
+ * Returns the Admin Panel HTML as a string for client-side insertion
+ * Useful for the Apps Script editor preview where the `?admin` query
+ * parameter may not reach `doGet` in the normal navigation flow.
+ */
+function getAdminPanelHtml() {
+  Logger.log('DEBUG: getAdminPanelHtml called');
+  const template = HtmlService.createTemplateFromFile('AdminPanel');
+  template.config = CONFIG;
+  template.products = loadConfiguration().products;
+  return template.evaluate().getContent();
+}
+
 
 /**
  * Checks if system needs initial setup

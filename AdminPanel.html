@@ -970,6 +970,9 @@
           <button class="btn btn-secondary" onclick="setCurrentAsPublicUrl()">
             🧭 Use Current URL as Public
           </button>
+          <button class="btn btn-secondary" onclick="openAdminInNewTab()">
+            🌐 Open Admin (new tab)
+          </button>
  
 
           <div class="import-export-section">
@@ -1323,6 +1326,21 @@
       runServerCall('setPublicWebAppUrl', [base || ''], 'setPublicWebAppUrl', {
         success: function(res) { if (res && res.success) showAlert('Public URL saved: ' + base, 'success'); else showAlert('Error saving public URL: ' + (res && res.error ? res.error : ''), 'error'); },
         failure: function(err) { showAlert('Error saving public URL: ' + (err && err.message ? err.message : err), 'error'); }
+      });
+    }
+
+    function openAdminInNewTab() {
+      runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
+        success: function(override) {
+          const base = override && override.length ? override : detectBaseFromLocation();
+          const url = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
+          try { window.open(url, '_blank'); } catch (err) { showAlert('Failed to open new tab: ' + (err && err.message ? err.message : err), 'error'); }
+        },
+        failure: function() {
+          const base = detectBaseFromLocation();
+          const url = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
+          try { window.open(url, '_blank'); } catch (err) { showAlert('Failed to open new tab: ' + (err && err.message ? err.message : err), 'error'); }
+        }
       });
     }
     
