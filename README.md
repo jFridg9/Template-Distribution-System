@@ -100,6 +100,9 @@ This system provides **one permanent URL** that always points to the latest vers
 ---
 
 ## 🏗️ Architecture Overview
+### Branch Protection
+This repository enforces branch protection on `main`. Merges require passing PR checks (ESLint) and at least one approving review. This helps maintain code quality and prevents accidental deployments.
+
 
 ```
 ┌─────────────────────────────────────┐
