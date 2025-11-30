@@ -958,8 +958,51 @@ function renderLandingPage() {
                             if (google && google.script && google.script.host && google.script.host.origin && google.script.host.origin.indexOf('script.google.com') !== -1) {
                               google.script.run.withSuccessHandler(function(content) {
                                 try {
-                                  document.open(); document.write(content); document.close();
-                                } catch (err) { window.location.href = targetHref; }
+                                  // Insert admin content into the body safely to avoid breaking the
+                                  // Apps Script editor's wrapper which uses document.write internally.
+                                  const rootId = '__admin_panel_root__';
+                                  let root = document.getElementById(rootId);
+                                  if (!root) {
+                                    // Clear the body so the landing page markup is removed cleanly
+                                    document.body.innerHTML = '';
+                                    root = document.createElement('div');
+                                    root.id = rootId;
+                                    document.body.appendChild(root);
+                                  }
+
+                                  // Use a temporary container to parse out scripts so we can re-execute them
+                                  const tmp = document.createElement('div');
+                                  tmp.innerHTML = content || '';
+
+                                  // Remove script tags from the HTML content we will set as innerHTML
+                                  const scripts = Array.from(tmp.querySelectorAll('script'));
+                                  scripts.forEach(s => s.parentNode && s.parentNode.removeChild(s));
+
+                                  // Set the HTML body content
+                                  root.innerHTML = tmp.innerHTML || '';
+
+                                  // Re-insert and execute script tags from the original content
+                                  scripts.forEach(s => {
+                                    const script = document.createElement('script');
+                                    if (s.src) {
+                                      script.src = s.src;
+                                      // Preserve type and async attributes
+                                      if (s.type) script.type = s.type;
+                                      if (s.async) script.async = true;
+                                    } else {
+                                      script.textContent = s.textContent;
+                                    }
+                                    document.body.appendChild(script);
+                                  });
+                                  // Call any initialization that normally runs on DOMContentLoaded
+                                  try {
+                                    if (typeof loadProducts === 'function') loadProducts();
+                                    if (typeof loadGooglePicker === 'function') loadGooglePicker();
+                                  } catch (err) { /* ignore */ }
+                                } catch (err) {
+                                  // Fall back to navigating to the public webapp URL when insertion fails
+                                  window.location.href = targetHref;
+                                }
                               }).getAdminPanelHtml();
                             } else {
                               window.location.href = targetHref;

@@ -74,7 +74,17 @@ function getAdminPanelHtml() {
   const template = HtmlService.createTemplateFromFile('AdminPanel');
   template.config = CONFIG;
   template.products = loadConfiguration().products;
-  return template.evaluate().getContent();
+  const fullHtml = template.evaluate().getContent();
+  // Extract only the body innerHTML to avoid sending a full HTML document
+  // which can break the editor's wrapper when injected via client scripts.
+  try {
+    const match = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if (match && match[1]) return match[1];
+  } catch (err) {
+    Logger.log(`ERROR in getAdminPanelHtml: ${err.message}`);
+  }
+  // Fallback to returning the full HTML if no body tag was found
+  return fullHtml;
 }
 
 

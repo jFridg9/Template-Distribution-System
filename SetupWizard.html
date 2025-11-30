@@ -899,9 +899,13 @@
     let pickerAppId = null;
 
     function loadGooglePicker() {
-      gapi.load('picker', function() {
-        pickerApiLoaded = true;
-      });
+      if (typeof gapi !== 'undefined' && gapi && typeof gapi.load === 'function') {
+        gapi.load('picker', function() {
+          pickerApiLoaded = true;
+        });
+      } else {
+        console.warn('Google API (gapi) not loaded in this environment; Google Picker will not be available.');
+      }
       
       runServerCall('getOAuthToken', [], 'getOAuthToken', {
         success: function(token) { oauthToken = token; uiLog('oauthToken retrieved', { hasToken: !!token }); },
