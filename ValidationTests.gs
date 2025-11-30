@@ -325,6 +325,15 @@ function runAllValidationTests() {
     Logger.log('');
   }
   
+  // Optional: Run admin CRUD integration tests (will be skipped if no valid CONFIG/folder present)
+  try {
+    results.push(runAdminCrudIntegrationTests());
+    Logger.log('');
+  } catch (err) {
+    results.push('Admin CRUD tests error: ' + err.message);
+    Logger.log('');
+  }
+  
   // Summary
   Logger.log('╔═══════════════════════════════════════════════════════════╗');
   Logger.log('║  TEST SUMMARY                                             ║');
