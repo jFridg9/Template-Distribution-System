@@ -842,8 +842,8 @@ function renderLandingPage() {
             <h1>${CONFIG.branding.organizationName}</h1>
             <p class="tagline">${CONFIG.branding.tagline}</p>
             <div class="admin-link">
-              <!-- Use javascript navigation to ensure query param is always applied correctly across deploy contexts -->
-              <a href="?admin=true" id="adminLink" onclick="event.preventDefault(); window.location.search='?admin=true';">Admin</a>
+              <!-- Use robust JS navigation to ensure query param is always applied across deploys -->
+              <a href="?admin=true" id="adminLink" onclick="event.preventDefault(); window.location.href = (window.location.origin + window.location.pathname).replace(/\/$/, '') + '?admin=true';">Admin</a>
             </div>
           </header>
           
