@@ -361,6 +361,9 @@ function renderLandingPage() {
     .sort((a, b) => tagFrequency[b] - tagFrequency[a])
     .slice(0, CONFIG.landingPage.tagCloudLimit);
   
+  // Fetch optional override for public webapp URL
+  const publicWebAppUrl = typeof getPublicWebAppUrl === 'function' ? getPublicWebAppUrl() : '';
+
   // Build product cards HTML with category and tags
   const productCards = products.map(product => {
     const categoryBadge = `<span class="category-badge">${product.category || 'Uncategorized'}</span>`;
@@ -847,8 +850,8 @@ function renderLandingPage() {
             <h1>${CONFIG.branding.organizationName}</h1>
             <p class="tagline">${CONFIG.branding.tagline}</p>
             <div class="admin-link">
-              <!-- Use robust JS navigation to ensure query param is always applied across deploys -->
-              <a href="?admin=true" id="adminLink">Admin</a>
+              <!-- Use absolute public URL if provided; fall back to relative query param when unknown -->
+              <a href="${publicWebAppUrl ? publicWebAppUrl + '?admin=true' : '?admin=true'}" id="adminLink">Admin</a>
             </div>
           </header>
           
