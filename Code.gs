@@ -125,7 +125,8 @@ function doGet(e) {
     // ========================================================================
     // ROUTE: Admin panel
     // ========================================================================
-    if (params.admin === 'true' || params.admin === '1') {
+    // Accept `?admin=true`, `?admin=1`, or presence of `?admin` as a flag
+    if (params.admin === 'true' || params.admin === '1' || Object.prototype.hasOwnProperty.call(params, 'admin')) {
       Logger.log('DEBUG: Admin panel route matched!');
       return renderAdminPanel();
     }
@@ -847,7 +848,7 @@ function renderLandingPage() {
             <p class="tagline">${CONFIG.branding.tagline}</p>
             <div class="admin-link">
               <!-- Use robust JS navigation to ensure query param is always applied across deploys -->
-              <a href="?admin=true" id="adminLink" onclick="event.preventDefault(); window.location.href = (window.location.origin + window.location.pathname).replace(/\/$/, '') + '?admin=true';">Admin</a>
+              <a href="?admin=true" id="adminLink">Admin</a>
             </div>
           </header>
           
@@ -902,6 +903,32 @@ function renderLandingPage() {
         </div>
         
         <script>
+                    // Detect base URL for public web app and redirect reliably to /exec or /dev
+                    function detectBaseFromLocation() {
+                      try {
+                        const href = window.location.href;
+                        const execIndex = href.indexOf('/exec');
+                        const devIndex = href.indexOf('/dev');
+                        const userCodeIndex = href.indexOf('/userCodeAppPanel');
+                        if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
+                        if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
+                        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/exec';
+                        return (window.location.origin + window.location.pathname).replace(/\/$/, '');
+                      } catch (e) {
+                        return window.location.origin;
+                      }
+                    }
+
+                    // Attach click handler to admin link to ensure it navigates to the public exec endpoint
+                    document.addEventListener('DOMContentLoaded', function() {
+                      const adminLink = document.getElementById('adminLink');
+                      if (adminLink) {
+                        adminLink.addEventListener('click', function(e) {
+                          e.preventDefault();
+                          window.location.href = detectBaseFromLocation() + '?admin=true';
+                        });
+                      }
+                    });
           // Filter functionality
           const categoryFilter = document.getElementById('categoryFilter');
           const searchInput = document.getElementById('searchInput');

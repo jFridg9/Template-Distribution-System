@@ -1,20 +1,10 @@
 <!DOCTYPE html>
 <html>
-        <tr>
-          <td data-label="Product Name"><strong>${product.name}</strong></td>
-          <td data-label="Display Name">${product.displayName}</td>
-          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
-          <td data-label="Status">
-        <tr>
-          <td>
-            <input type="checkbox" class="product-checkbox" data-product="${product.name}" onchange="updateSelection('${product.name}', this.checked)">
-          </td>
-          <td data-label="Product Name"><strong>${product.name}</strong></td>
-          <td data-label="Display Name">${product.displayName}</td>
-          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
-          <td data-label="Status"><span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">${product.enabled ? 'Enabled' : 'Disabled'}</span></td>
-      padding: 30px;
-    }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - Template Distribution System</title>
+  <style>
     
     header h1 {
       font-size: 2em;
