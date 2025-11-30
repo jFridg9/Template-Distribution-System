@@ -851,7 +851,36 @@ function getParentFolderFromFile(fileId) {
       }
     }
     if (!parents) {
-      throw lastError || new Error('Unable to retrieve parent folders');
+      Logger.log('getParentFolderFromFile: parents was not available from DriveApp; attempting advanced Drive API fallback');
+      // Try fallback using advanced Drive API (Drive.Files.get)
+      try {
+        // Drive advanced service must be enabled in Apps Script project
+        const df = Drive && Drive.Files && Drive.Files.get ? Drive.Files.get(fileId, { supportsAllDrives: true }) : null;
+        if (df && df.parents && df.parents.length > 0) {
+          const parentId = typeof df.parents[0] === 'string' ? df.parents[0] : (df.parents[0].id || df.parents[0].parentId || null);
+          if (parentId) {
+            Logger.log('getParentFolderFromFile: Advanced API found parent ID: ' + parentId);
+            // Get parent metadata
+            try {
+              const pr = Drive.Files.get(parentId, { supportsAllDrives: true });
+              // build minimal parents iterator replacement
+              parents = {
+                _iterator: [pr],
+                hasNext: function() { return this._iterator.length > 0; },
+                next: function() { return this._iterator.shift(); }
+              };
+            } catch (err) {
+              Logger.log('getParentFolderFromFile: Drive.Files.get(parent) failed - ' + err.message);
+            }
+          }
+        }
+      } catch (err) {
+        Logger.log('getParentFolderFromFile: Advanced Drive API fallback failed or not enabled - ' + (err && err.message));
+      }
+      
+      if (!parents) {
+        throw lastError || new Error('Unable to retrieve parent folders');
+      }
     }
     
     if (!parents.hasNext()) {
@@ -910,6 +939,21 @@ function getParentFolderFromFile(fileId) {
     } catch (err) {
       Logger.log(`Warning: getParentFolderFromFile: folder.getUrl failed - ${err.message}`);
       folderUrl = '';
+    }
+
+    // If we don't have fileCount (maybe folder.getFiles() failed) try advanced list for count
+    if (fileCount === 0) {
+      try {
+        if (typeof Drive !== 'undefined' && Drive && Drive.Files && Drive.Files.list) {
+          const listRes = Drive.Files.list({ q: `'${folderId}' in parents and trashed = false`, supportsAllDrives: true, includeItemsFromAllDrives: true, maxResults: 1000 });
+          if (listRes && (listRes.items || listRes.files)) {
+            fileCount = (listRes.items && listRes.items.length) || (listRes.files && listRes.files.length) || 0;
+            Logger.log(`getParentFolderFromFile: Advanced API list count = ${fileCount}`);
+          }
+        }
+      } catch (err) {
+        Logger.log('getParentFolderFromFile: Advanced Drive API list fallback failed - ' + (err && err.message));
+      }
     }
 
     return {
