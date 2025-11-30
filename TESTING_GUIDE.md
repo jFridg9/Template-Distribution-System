@@ -59,6 +59,15 @@ Testing the automated first-time setup experience.
    - Click "Go to Admin Panel"
    - Expected: Redirects to admin panel with your product listed
 
+7. **Verify Script Properties (Optional)**:
+   - Open Apps Script editor: Script Settings → Script Properties
+   - Expected: See property `CONFIG_SHEET_ID` with the created sheet ID
+   - Or run this in Apps Script editor:
+     ```javascript
+     Logger.log(getRuntimeConfig());
+     ```
+   - Expected: Shows `CONFIG_SHEET_ID` property
+
 ### Verification
 
 ✅ Configuration sheet created  
@@ -66,6 +75,7 @@ Testing the automated first-time setup experience.
 ✅ Drive Picker worked without manual ID entry  
 ✅ Product added successfully  
 ✅ Admin panel shows product  
+✅ Script Properties contain CONFIG_SHEET_ID  
 
 ---
 
@@ -334,3 +344,49 @@ Currently, testing is manual due to Google Apps Script limitations. Potential im
 3. **CI/CD Tests:** Run validation checks on deployment
 
 For now, manual testing via this guide ensures all features work correctly.
+
+---
+
+## Test 9: Admin CRUD Integration Tests (Automated Integration)
+
+### Purpose
+This optional integration test automates the most common admin panel flows against a real configuration sheet: create (add), update, toggle enabled state, and delete a product. It's intended for staging environments only and will abort/skip safely if no valid configuration is present.
+
+### Preconditions
+- Ensure `CONFIG.configSheetId` or Script Properties `CONFIG_SHEET_ID` points to a valid configuration spreadsheet, or set `CONFIG.fallbackFolderId` to a valid Drive folder ID.
+- Run tests on a staging configuration/sheet, not production.
+
+### How to run (Apps Script editor)
+1. Open the Apps Script editor for the project.  
+2. Select the function `runAdminCrudIntegrationTests` and click **Run**.  
+3. Check Execution log for a step-by-step output and the final result (PASS/SKIPPED/FAIL).  
+
+### How to run (clasp CLI)
+If you prefer the CLI and have `clasp` setup and authenticated:
+```pwsh
+# Push latest code
+clasp push
+
+# Run the integration test function
+clasp run runAdminCrudIntegrationTests
+``` 
+Note: `clasp run` will execute the script as the currently authenticated user; ensure that account has access to the configured sheet/folder.
+
+### Expected Results
+- The test creates a uniquely named test product, verifies the product was added, updates its metadata, toggles enabled/disabled, and finally deletes it.  
+- Each step logs results. On success: `PASS: add/update/toggle/delete flow succeeded`.  
+- The test cleans up the created product and clears the configuration cache between steps.
+
+### Test Skips & Safety
+- If no valid `CONFIG` or fallback folder is configured, the test will skip and log a message: `SKIPPED - No folder available`.
+- If a pre-existing product with the same test name exists (unlikely due to timestamp), the test will attempt to delete it before starting.
+- Clean-up is performed, but please verify the Products sheet post-run.
+
+### Verification
+- Review the Execution log for each step and final status.  
+- Validate the configuration sheet has no leftover test entries.  
+
+---
+
+Update: `runAllValidationTests()` will optionally invoke `runAdminCrudIntegrationTests()` when available; this means the main validation suite can include the integration flow when executed manually in a suitable environment.
+

@@ -1,22 +1,7 @@
-#!/usr/bin/env bash
-# Forge bootstrap helper - creates local memory files for you (run locally)
-set -e
-
-MEMDIR="${HOME}/.forge_memory"
-mkdir -p "${MEMDIR}"
-
-if [ ! -f "${MEMDIR}/project-cache.json" ]; then
-  echo "[]" > "${MEMDIR}/project-cache.json"
-  echo "Created ${MEMDIR}/project-cache.json"
-else
-  echo "${MEMDIR}/project-cache.json already exists; not overwriting."
-fi
-
-if [ ! -f "${MEMDIR}/vector-db.json" ]; then
-  echo "[]" > "${MEMDIR}/vector-db.json"
-  echo "Created ${MEMDIR}/vector-db.json"
-else
-  echo "${MEMDIR}/vector-db.json already exists; not overwriting."
-fi
-
-echo "Bootstrap complete. Review files in ${MEMDIR}."
+#!/bin/bash
+MEMORY_DIR="$HOME/.forge_memory"
+mkdir -p "$MEMORY_DIR"
+touch "$MEMORY_DIR/project-cache.json" "$MEMORY_DIR/vector-db.json"
+[ -f "$MEMORY_DIR/project-cache.json" ] && echo "$MEMORY_DIR/project-cache.json already exists; not overwriting."
+[ -f "$MEMORY_DIR/vector-db.json" ] && echo "$MEMORY_DIR/vector-db.json already exists; not overwriting."
+echo "Bootstrap complete. Review files in $MEMORY_DIR."

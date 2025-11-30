@@ -41,6 +41,14 @@ jobs:
           else
             echo "No package.json found; skipping npm install"
           fi
+
+      - name: Run lint (ESLint)
+        run: |
+          if [ -f package.json ]; then
+            npm run lint
+          else
+            echo "No lint step configured; skipping"
+          fi
       
       - name: Validate required secrets
         env:
@@ -50,6 +58,16 @@ jobs:
           if [ -z "${CLASPRC_JSON:-}" ]; then 
             echo "ERROR: CLASPRC_JSON secret is not set"
             exit 1
+          fi
+
+      - name: Validate optional deployment secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ env.UPDATE_DEPLOYMENT }}" = "true" ]; then
+            if [ -z "${{ secrets.DEPLOYMENT_ID }}" ]; then
+              echo "ERROR: DEPLOYMENT_ID secret is required when UPDATE_DEPLOYMENT=true"
+              exit 1
+            fi
           fi
       
       - name: Authenticate clasp
