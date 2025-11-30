@@ -112,9 +112,13 @@ const CONFIG = {
 function doGet(e) {
   try {
     const params = e.parameter || {};
+    const multiParams = e.parameters || {};
+    const queryString = e.queryString || '';
     
     // DEBUG: Log all parameters
     Logger.log('DEBUG: doGet called with params: ' + JSON.stringify(params));
+    Logger.log('DEBUG: doGet called with parameters (multi): ' + JSON.stringify(multiParams));
+    Logger.log('DEBUG: doGet called with queryString: ' + queryString);
     Logger.log('DEBUG: admin param value: ' + params.admin);
     Logger.log('DEBUG: admin param type: ' + typeof params.admin);
     
