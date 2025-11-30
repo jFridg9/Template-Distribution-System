@@ -51,7 +51,11 @@ This system provides **one permanent URL** that always points to the latest vers
 - **🎨 Product Management** - Add, edit, delete, enable/disable products via UI
 - **✅ Folder Validation** - Automatic checking of Drive folders and file counts
 - **🚫 No Code Editing** - All configuration through web interface (no sheet editing, no ID copying)
-- **📊 Analytics Dashboard** ⭐ NEW - Track template usage and access trends
+ - **📥📤 CSV Import/Export** - Bulk manage products with CSV files
+ - **⚡ Bulk Operations** - Enable, disable, or delete multiple products at once
+ - **🔄 Import Preview** - Review changes before applying CSV imports
+ - **📋 CSV Template** - Download sample CSV to get started quickly
+ - **📊 Analytics Dashboard** ⭐ NEW - Track template usage and access trends
 
 **What you DON'T need to do:**
 - ❌ Copy sheet IDs into code
@@ -59,8 +63,16 @@ This system provides **one permanent URL** that always points to the latest vers
 - ❌ Edit configuration sheets manually
 - ❌ Understand Apps Script
 - ❌ Make any code changes
+- ❌ Manage products one at a time
 
 **What you DO:** Visit `?admin=true` → Click buttons → Select folders → Done! (5 minutes)
+
+**Bulk Operations:**
+- ✅ Export all products to CSV for backup or documentation
+- ✅ Import products from CSV file with validation
+- ✅ Bulk enable/disable products with selection checkboxes
+- ✅ Bulk delete products with confirmation
+- ✅ Preview import changes before applying
 
 ### 📊 **Analytics & Usage Tracking** ⭐ NEW
 - **Track Product Access** - See which templates are most popular

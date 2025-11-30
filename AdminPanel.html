@@ -5,25 +5,14 @@
           <td data-label="Display Name">${product.displayName}</td>
           <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
           <td data-label="Status">
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-      color: #333;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    
-    header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+        <tr>
+          <td>
+            <input type="checkbox" class="product-checkbox" data-product="${product.name}" onchange="updateSelection('${product.name}', this.checked)">
+          </td>
+          <td data-label="Product Name"><strong>${product.name}</strong></td>
+          <td data-label="Display Name">${product.displayName}</td>
+          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
+          <td data-label="Status"><span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">${product.enabled ? 'Enabled' : 'Disabled'}</span></td>
       padding: 30px;
     }
     
@@ -361,6 +350,7 @@
     }
     
     .loading-text { color: #666; font-weight: 600; }
+ 
     /* Tab Navigation */
     .tabs {
       display: flex;
@@ -494,8 +484,89 @@
       border-radius: 6px;
       font-size: 1em;
     }
-<<<<<<< HEAD
+
+    /* Bulk Operations Styles */
+    .bulk-actions-bar {
+      display: none;
+      padding: 15px;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      align-items: center;
+      gap: 15px;
+    }
     
+    .bulk-actions-bar.active {
+      display: flex;
+    }
+    
+    .bulk-actions-bar select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    
+    .import-export-section {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9em;
+    }
+    
+    .preview-table th,
+    .preview-table td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .preview-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+    
+    .preview-new {
+      background: #e8f5e9;
+    }
+    
+    .preview-update {
+      background: #fff3e0;
+    }
+    
+    .summary-box {
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-box h3 {
+      margin-bottom: 10px;
+      color: #667eea;
+    }
+    
+    .warning-list {
+      margin: 15px 0;
+      padding: 15px;
+      background: #fff3cd;
+      border-radius: 6px;
+    }
+    
+    .warning-list ul {
+      margin: 10px 0 0 20px;
+    }
     /* ============================================================================
      * MOBILE RESPONSIVE STYLES
      * ============================================================================
@@ -845,6 +916,7 @@
       }
     }
  
+ 
   </style>
 </head>
 <body>
@@ -901,6 +973,89 @@
           <button class="btn btn-secondary" onclick="configurePublicUrl()">
             ⚙️ Set Public URL
           </button>
+
+          <div class="import-export-section">
+            <button class="btn btn-secondary" onclick="exportToCSV()">
+              📥 Export CSV
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('csvFileInput').click()">
+              📤 Import CSV
+            </button>
+            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
+            <button class="btn btn-secondary" onclick="downloadCSVTemplate()">
+              📋 CSV Template
+            </button>
+          </div>
+        </div>
+        
+        <!-- Bulk Actions Bar -->
+        <div id="bulkActionsBar" class="bulk-actions-bar">
+          <span id="selectedCount">0 products selected</span>
+          <select id="bulkActionSelect">
+            <option value="">-- Select Action --</option>
+            <option value="enable">Enable Selected</option>
+            <option value="disable">Disable Selected</option>
+            <option value="delete">Delete Selected</option>
+          </select>
+          <button class="btn btn-primary" onclick="executeBulkAction()">
+            Apply
+          </button>
+          <button class="btn btn-secondary" onclick="clearSelection()">
+            Clear Selection
+          </button>
+        </div>
+        
+        <div id="productsContainer">
+          <? if (products.length === 0) { ?>
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              <h2>No Products Yet</h2>
+              <p>Click "Add New Product" to get started</p>
+            </div>
+          <? } else { ?>
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
+                  </th>
+                  <th>Product Name</th>
+                  <th>Display Name</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Files</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <!-- Products will be loaded here -->
+              </tbody>
+            </table>
+          <? } ?>
+        </div>
+      </div>
+      
+      <!-- Analytics Tab -->
+      <div id="analyticsTab" class="tab-content">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="loadAnalytics()">
+            🔄 Refresh Analytics
+          </button>
+          <button class="btn btn-secondary" onclick="setupAnalyticsSheet()">
+            📊 Setup Analytics Sheet
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalytics()">
+            📥 Export to CSV
+          </button>
+        </div>
+        
+        <div id="analyticsContainer">
+          <div id="analyticsSummary">
+            <!-- Summary cards will be loaded here -->
+          </div>
+ 
         </div>
         
         <div id="productsContainer">
@@ -1031,6 +1186,28 @@
       </form>
     </div>
   </div>
+  
+  <!-- CSV Import Preview Modal -->
+  <div id="importPreviewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Import Preview</h2>
+      </div>
+      
+      <div id="importPreviewContent">
+        <!-- Preview content will be loaded here -->
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-primary" id="confirmImportBtn" onclick="confirmImport()">
+          ✅ Confirm Import
+        </button>
+        <button class="btn btn-secondary" onclick="closeImportPreview()">
+          ❌ Cancel
+        </button>
+      </div>
+    </div>
+  </div>
   </div>
 
   <script>
@@ -1041,6 +1218,8 @@
     let developerKey = null;
     let pickerAppId = null;
     let editingProduct = null;
+    let selectedProducts = new Set();
+    let pendingImportData = null;
 
     // Verbose UI logging helper
     const UI_DEBUG = true; // set to false to disable verbose client logging
@@ -1170,17 +1349,17 @@
       
       tbody.innerHTML = products.map(product => `
         <tr>
-<<<<<<< HEAD
+ 
+          <td>
+            <input type="checkbox" class="product-checkbox" data-product="${product.name}" 
+                   onchange="updateSelection('${product.name}', this.checked)">
+          </td>
+ 
+ 
           <td data-label="Product Name"><strong>${product.name}</strong></td>
           <td data-label="Display Name">${product.displayName}</td>
           <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
           <td data-label="Status">
-=======
-          <td><strong>${product.name}</strong></td>
-          <td>${product.displayName}</td>
-          <td><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
-          <td>
->>>>>>> origin/main
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
             </span>
@@ -1206,6 +1385,9 @@
           </td>
         </tr>
       `).join('');
+      
+      // Update selection state
+      updateSelectionUI();
     }
     
     // Modal functions
@@ -1764,6 +1946,7 @@ function openDrivePicker() {
         
         return `
           <tr>
+            
             <td data-label="Product"><strong>${product.displayName}</strong></td>
             <td data-label="Total Accesses">${product.totalAccesses}</td>
             <td data-label="Latest Version">
@@ -1848,6 +2031,352 @@ function openDrivePicker() {
           showAlert('Error exporting analytics: ' + (error && error.message ? error.message : error), 'error');
         }
       });
+      }
+    
+      // ========================================================================
+      // BULK OPERATIONS
+      // ========================================================================
+    
+    function updateSelection(productName, checked) {
+      if (checked) {
+        selectedProducts.add(productName);
+      } else {
+        selectedProducts.delete(productName);
+      }
+      updateSelectionUI();
+    }
+    
+    function toggleSelectAll(checked) {
+      selectedProducts.clear();
+      if (checked) {
+        products.forEach(p => selectedProducts.add(p.name));
+      }
+      
+      // Update checkboxes
+      document.querySelectorAll('.product-checkbox').forEach(cb => {
+        cb.checked = checked;
+      });
+      
+      updateSelectionUI();
+    }
+    
+    function updateSelectionUI() {
+      const count = selectedProducts.size;
+      const bar = document.getElementById('bulkActionsBar');
+      const countSpan = document.getElementById('selectedCount');
+      
+      if (count > 0) {
+        bar.classList.add('active');
+        countSpan.textContent = count + ' product' + (count > 1 ? 's' : '') + ' selected';
+      } else {
+        bar.classList.remove('active');
+      }
+      
+      // Update "select all" checkbox
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        selectAll.checked = count === products.length && count > 0;
+      }
+    }
+    
+    function clearSelection() {
+      selectedProducts.clear();
+      document.querySelectorAll('.product-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      updateSelectionUI();
+    }
+    
+    function executeBulkAction() {
+      const action = document.getElementById('bulkActionSelect').value;
+      
+      if (!action) {
+        alert('Please select an action');
+        return;
+      }
+      
+      if (selectedProducts.size === 0) {
+        alert('No products selected');
+        return;
+      }
+      
+      const productNames = Array.from(selectedProducts);
+      
+      if (action === 'delete') {
+        if (!confirm(`Are you sure you want to delete ${productNames.length} product(s)?\n\nThis action cannot be undone.`)) {
+          return;
+        }
+        
+        showAlert('Deleting products...', 'info');
+        
+        runServerCall('bulkDeleteProducts', [productNames], 'bulkDelete', {
+          success: function(result) {
+            if (result.success) {
+              showAlert(result.message, 'success');
+              
+              // Remove deleted products from local array
+              products = products.filter(p => !productNames.includes(p.name));
+              
+              // Clear selection
+              clearSelection();
+              
+              // Reload products
+              loadProducts();
+              
+              if (result.errors && result.errors.length > 0) {
+                console.warn('Bulk delete errors:', result.errors);
+              }
+            } else {
+              showAlert('Error: ' + result.error, 'error');
+            }
+          },
+          failure: function(error) {
+            showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          }
+        });
+      } else if (action === 'enable' || action === 'disable') {
+        const enabled = action === 'enable';
+        showAlert(`${enabled ? 'Enabling' : 'Disabling'} products...`, 'info');
+        
+        runServerCall('bulkToggleProducts', [productNames, enabled], 'bulkToggle', {
+          success: function(result) {
+            if (result.success) {
+              showAlert(result.message, 'success');
+              
+              // Update local products array
+              products = products.map(p => {
+                if (productNames.includes(p.name)) {
+                  p.enabled = enabled;
+                }
+                return p;
+              });
+              
+              // Clear selection
+              clearSelection();
+              
+              // Reload products
+              loadProducts();
+              
+              if (result.errors && result.errors.length > 0) {
+                console.warn('Bulk toggle errors:', result.errors);
+              }
+            } else {
+              showAlert('Error: ' + result.error, 'error');
+            }
+          },
+          failure: function(error) {
+            showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          }
+        });
+      }
+    }
+    
+    
+    // ========================================================================
+    // CSV IMPORT/EXPORT
+    // ========================================================================
+    
+    function exportToCSV() {
+      showAlert('Exporting products...', 'info');
+      
+      runServerCall('exportProductsToCSV', [], 'exportCSV', {
+        success: function(result) {
+          if (result.success) {
+            // Create download link
+            const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', result.filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('CSV exported successfully', 'success');
+          } else {
+            showAlert('Error exporting: ' + result.error, 'error');
+          }
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    function downloadCSVTemplate() {
+      runServerCall('generateCSVTemplate', [], 'csvTemplate', {
+        success: function(result) {
+          if (result.success) {
+            const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', result.filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('CSV template downloaded', 'success');
+          } else {
+            showAlert('Error: ' + result.error, 'error');
+          }
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+    }
+    
+    function handleCSVUpload(event) {
+      const file = event.target.files[0];
+      
+      if (!file) {
+        return;
+      }
+      
+      // Validate file extension
+      if (!file.name.endsWith('.csv')) {
+        alert('Please select a CSV file');
+        event.target.value = '';
+        return;
+      }
+      
+      // Validate MIME type for security
+      if (file.type && file.type !== 'text/csv' && file.type !== 'application/csv' && file.type !== 'text/plain') {
+        alert('Invalid file type. Please select a valid CSV file.');
+        event.target.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const csvContent = e.target.result;
+        
+        showAlert('Validating CSV...', 'info');
+        
+        runServerCall('validateCSVImport', [csvContent], 'validateCSV', {
+          success: function(result) {
+            if (result.success) {
+              // Store for later import
+              pendingImportData = csvContent;
+              
+              // Show preview
+              showImportPreview(result);
+            } else {
+              showAlert('CSV validation failed: ' + result.error, 'error');
+            }
+          },
+          failure: function(error) {
+            showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          }
+        });
+        
+        // Reset file input
+        event.target.value = '';
+      };
+      
+      reader.onerror = function() {
+        alert('Error reading file');
+        event.target.value = '';
+      };
+      
+      reader.readAsText(file);
+    }
+    
+    function showImportPreview(validation) {
+      const modal = document.getElementById('importPreviewModal');
+      const content = document.getElementById('importPreviewContent');
+      
+      let html = '<div class="summary-box">';
+      html += '<h3>Import Summary</h3>';
+      html += '<p><strong>Total products:</strong> ' + validation.summary.total + '</p>';
+      html += '<p><strong>New products:</strong> ' + validation.summary.new + '</p>';
+      html += '<p><strong>Updates:</strong> ' + validation.summary.updates + '</p>';
+      html += '</div>';
+      
+      // Show warnings if any
+      if (validation.warnings && validation.warnings.length > 0) {
+        html += '<div class="warning-list">';
+        html += '<h3>⚠️ Warnings (' + validation.warnings.length + ')</h3>';
+        html += '<ul>';
+        validation.warnings.forEach(function(warning) {
+          html += '<li>' + warning + '</li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+      }
+      
+      // Show product preview
+      html += '<h3>Products to Import</h3>';
+      html += '<table class="preview-table">';
+      html += '<thead><tr><th>Action</th><th>Name</th><th>Display Name</th><th>Category</th><th>Enabled</th><th>Tags</th></tr></thead>';
+      html += '<tbody>';
+      
+      validation.products.forEach(function(product) {
+        const rowClass = product.isUpdate ? 'preview-update' : 'preview-new';
+        const action = product.isUpdate ? '🔄 Update' : '➕ New';
+        const tagsDisplay = product.tags && product.tags.length > 0 ? product.tags.join(', ') : '-';
+        html += '<tr class="' + rowClass + '">';
+        html += '<td>' + action + '</td>';
+        html += '<td><strong>' + product.name + '</strong></td>';
+        html += '<td>' + product.displayName + '</td>';
+        html += '<td>' + (product.category || 'Uncategorized') + '</td>';
+        html += '<td>' + (product.enabled ? '✅ Yes' : '❌ No') + '</td>';
+        html += '<td style="font-size: 0.85em;">' + tagsDisplay + '</td>';
+        html += '</tr>';
+      });
+      
+      html += '</tbody></table>';
+      
+      content.innerHTML = html;
+      modal.classList.add('active');
+    }
+    
+    function closeImportPreview() {
+      document.getElementById('importPreviewModal').classList.remove('active');
+      pendingImportData = null;
+    }
+    
+    function confirmImport() {
+      if (!pendingImportData) {
+        alert('No import data available');
+        return;
+      }
+      
+      showAlert('Importing products...', 'info');
+      closeImportPreview();
+      
+      runServerCall('importProductsFromCSV', [pendingImportData], 'importCSV', {
+        success: function(result) {
+          if (result.success) {
+            let message = 'Import complete: ' + result.added + ' added, ' + result.updated + ' updated';
+            
+            if (result.errors && result.errors.length > 0) {
+              message += ' (' + result.errors.length + ' errors)';
+              console.warn('Import errors:', result.errors);
+            }
+            
+            showAlert(message, 'success');
+            
+            // Reload products after import completes
+            refreshProducts();
+          } else {
+            showAlert('Import failed: ' + result.error, 'error');
+          }
+        },
+        failure: function(error) {
+          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+        }
+      });
+      
+      pendingImportData = null;
     }
 
     // Alert helper
