@@ -1,0 +1,75 @@
+name: Integration Tests (Manual Dispatch)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-integration-tests:
+    name: Run Admin Integration Tests
+    runs-on: ubuntu-latest
+    environment:
+      name: Staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dev dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install --no-audit --prefer-offline
+          else
+            echo "No package.json found; skipping npm install"
+          fi
+
+      - name: Validate required staging secrets
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          TEST_CONFIG_SHEET_ID: ${{ secrets.TEST_CONFIG_SHEET_ID }}
+          TEST_FALLBACK_FOLDER_ID: ${{ secrets.TEST_FALLBACK_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          echo "Validating secrets..."
+          if [ -z "${CLASPRC_JSON:-}" ]; then
+            echo "ERROR: CLASPRC_JSON secret is not set"
+            exit 1
+          fi
+          if [ -z "${TEST_CONFIG_SHEET_ID:-}" -a -z "${TEST_FALLBACK_FOLDER_ID:-}" ]; then
+            echo "ERROR: At least one of TEST_CONFIG_SHEET_ID or TEST_FALLBACK_FOLDER_ID must be set for staraging tests"
+            exit 1
+          fi
+
+      - name: Authenticate clasp (staging)
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+          npx -y @google/clasp --version || clasp --version || true
+
+      - name: Set staging runtime config
+        run: |
+          set -euo pipefail
+          echo "Setting runtime config for test..."
+          if [ -n "${{ secrets.TEST_CONFIG_SHEET_ID }}" ]; then
+            # Save Script Property via clasp script run (call a small function to set it)
+            # Note: We cannot edit script properties from action without implementing a helper. This step is informational.
+            echo "TEST_CONFIG_SHEET_ID is present. Please ensure staging config sheet is set or set TEST_FALLBACK_FOLDER_ID."
+          fi
+
+      - name: Run Admin integration tests (staging)
+        run: |
+          set -euo pipefail
+          echo "Executing integration tests..."
+          # Run the Apps Script function that executes integration tests
+          npx -y @google/clasp run runAdminCrudIntegrationTests || clasp run runAdminCrudIntegrationTests
+
+      - name: Cleanup credentials
+        if: always()
+        run: |
+          rm -f ~/.clasprc.json || true
