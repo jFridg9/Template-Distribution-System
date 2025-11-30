@@ -807,7 +807,7 @@ function getParentFolderFromFile(fileId) {
     // Get the file with retry logic
     let file;
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     let lastError;
     
     while (retryCount < maxRetries) {
@@ -843,7 +843,11 @@ function getParentFolderFromFile(fileId) {
         lastError = err;
         retryCount++;
         Logger.log(`getParentFolderFromFile: getParents attempt ${retryCount} failed - ${err.message}`);
+<<<<<<< HEAD
         if (retryCount < maxRetries) Utilities.sleep(1000);
+=======
+        if (retryCount < maxRetries) Utilities.sleep(1000);
+>>>>>>> 3931486 (Admin: add retries and more granular logs for getParentFolderFromFile; include underlying error text in returned message)
       }
     }
     if (!parents) {
@@ -886,7 +890,11 @@ function getParentFolderFromFile(fileId) {
         lastError = err;
         retryCount++;
         Logger.log(`getParentFolderFromFile: folder.getFiles attempt ${retryCount} failed - ${err.message}`);
+<<<<<<< HEAD
         if (retryCount < maxRetries) Utilities.sleep(1000);
+=======
+        if (retryCount < maxRetries) Utilities.sleep(1000);
+>>>>>>> 3931486 (Admin: add retries and more granular logs for getParentFolderFromFile; include underlying error text in returned message)
       }
     }
     if (retryCount >= maxRetries) {
