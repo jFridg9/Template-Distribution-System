@@ -6,6 +6,12 @@
 
 ---
 
+<!-- CI Status Badges -->
+[![PR Checks](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/pr-checks.yml)
+[![Deploy](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/deploy.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/deploy.yml)
+[![Integration Tests](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/integration.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/integration.yml)
+
+
 ## 🎯 What This Solves
 
 ### The Problem
