@@ -125,6 +125,17 @@ function doGet(e) {
     // ========================================================================
     // ROUTE: Admin panel
     // ========================================================================
+    // Smoke test: if ?smokeTest=true provided, return JSON with params & queryString for diagnostics
+    if (params.smokeTest === 'true' || params.smokeTest === '1' || Object.prototype.hasOwnProperty.call(params, 'smokeTest')) {
+      const debugResponse = {
+        queryString: queryString,
+        params: params,
+        multiParams: multiParams,
+        url: (e && e.parameter && e.parameter._url) ? e.parameter._url : ''
+      };
+      Logger.log('DEBUG: smokeTest - ' + JSON.stringify(debugResponse));
+      return ContentService.createTextOutput(JSON.stringify(debugResponse)).setMimeType(ContentService.MimeType.JSON);
+    }
     // Accept `?admin=true`, `?admin=1`, or presence of `?admin` as a flag
     if (params.admin === 'true' || params.admin === '1' || Object.prototype.hasOwnProperty.call(params, 'admin')) {
       Logger.log('DEBUG: Admin panel route matched!');
@@ -850,8 +861,8 @@ function renderLandingPage() {
             <h1>${CONFIG.branding.organizationName}</h1>
             <p class="tagline">${CONFIG.branding.tagline}</p>
             <div class="admin-link">
-              <!-- Use absolute public URL if provided; fall back to relative query param when unknown -->
-              <a href="${publicWebAppUrl ? publicWebAppUrl + '?admin=true' : '?admin=true'}" id="adminLink">Admin</a>
+              <!-- Use absolute public URL if provided; fall back to relative query param when unknown. Use top-level target to avoid iframe behavior -->
+              <a href="${publicWebAppUrl ? publicWebAppUrl + '?admin=true' : '?admin=true'}" id="adminLink" target="_top" rel="noopener noreferrer">Admin</a>
             </div>
           </header>
           
@@ -913,9 +924,10 @@ function renderLandingPage() {
                         const execIndex = href.indexOf('/exec');
                         const devIndex = href.indexOf('/dev');
                         const userCodeIndex = href.indexOf('/userCodeAppPanel');
+                        // Prefer to return the current execution path so navigation occurs within the frame
+                        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/userCodeAppPanel';
                         if (execIndex !== -1) return href.substring(0, execIndex) + '/exec';
                         if (devIndex !== -1) return href.substring(0, devIndex) + '/dev';
-                        if (userCodeIndex !== -1) return href.substring(0, userCodeIndex) + '/exec';
                         return (window.location.origin + window.location.pathname).replace(/\/$/, '');
                       } catch (e) {
                         return window.location.origin;
@@ -927,9 +939,19 @@ function renderLandingPage() {
                       const adminLink = document.getElementById('adminLink');
                       if (adminLink) {
                         adminLink.addEventListener('click', function(e) {
-                          e.preventDefault();
-                          window.location.href = detectBaseFromLocation() + '?admin=true';
-                        });
+                                      e.preventDefault();
+                                      const base = detectBaseFromLocation();
+                                      const url = base + (base.indexOf('?') === -1 ? '?admin=true' : '&admin=true');
+                                      // Use the current frame navigation instead of attempting top navigation
+                                      // to avoid cross-origin SecurityError in the Apps Script editor iframe.
+                                      try {
+                                        window.location.href = url;
+                                        console.log('Admin link clicked; navigating (frame) to:', url);
+                                      } catch (err) {
+                                        console.warn('frame navigation failed, falling back to top navigation:', err && err.message);
+                                        try { window.top.location.href = url; } catch (err2) { console.error('top navigation failed too:', err2 && err2.message); }
+                                      }
+                                    });
                       }
                     });
           // Filter functionality

@@ -366,7 +366,8 @@ function getPickerAppId() {
  */
 function getPublicWebAppUrl() {
   const scriptProps = PropertiesService.getScriptProperties();
-  return scriptProps.getProperty('PUBLIC_WEBAPP_URL') || '';
+  const raw = scriptProps.getProperty('PUBLIC_WEBAPP_URL') || '';
+  return normalizePublicWebAppUrl(raw);
 }
 
 
@@ -386,13 +387,53 @@ function setPublicWebAppUrl(url) {
     }
 
     const scriptProps = PropertiesService.getScriptProperties();
-    scriptProps.setProperty('PUBLIC_WEBAPP_URL', url);
+    const normalized = normalizePublicWebAppUrl(url);
+    scriptProps.setProperty('PUBLIC_WEBAPP_URL', normalized);
 
-    Logger.log('PUBLIC_WEBAPP_URL set to: ' + url);
-    return { success: true, message: 'Public web app URL saved' };
+    if (normalized !== url) {
+      Logger.log('PUBLIC_WEBAPP_URL normalized and set to: ' + normalized + ' (from: ' + url + ')');
+      return { success: true, message: 'Public web app URL saved (normalized): ' + normalized };
+    } else {
+      Logger.log('PUBLIC_WEBAPP_URL set to: ' + normalized);
+      return { success: true, message: 'Public web app URL saved: ' + normalized };
+    }
   } catch (err) {
     Logger.log('ERROR in setPublicWebAppUrl: ' + err.message);
     return { success: false, error: err.message };
+  }
+}
+
+
+/**
+ * Attempts to normalize a public webapp URL so it points at the canonical /exec
+ * or /dev endpoints instead of the Apps Script editor preview path. This is
+ * a best-effort normalizer and does not guarantee the value will work.
+ *
+ * Examples:
+ * - https://.../userCodeAppPanel -> https://.../exec
+ * - https://script.google.com/macros/s/AAA/exec -> unchanged
+ */
+function normalizePublicWebAppUrl(url) {
+  try {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    // Convert userCodeAppPanel preview to /exec
+    if (trimmed.indexOf('/userCodeAppPanel') !== -1) {
+      return trimmed.replace(/\/userCodeAppPanel(\/)?$/, '/exec');
+    }
+    // Ensure script.googleusercontent.com preview becomes exec when possible
+    if (trimmed.indexOf('/userCodeAppPanel') !== -1) {
+      return trimmed.replace('/userCodeAppPanel', '/exec');
+    }
+    // If it already looks like /dev or /exec, return as-is
+    if (trimmed.indexOf('/exec') !== -1 || trimmed.indexOf('/dev') !== -1) {
+      return trimmed;
+    }
+    // For script.google.com/macros/s/<id>, keep as-is
+    return trimmed;
+  } catch (err) {
+    Logger.log('ERROR in normalizePublicWebAppUrl: ' + err.message);
+    return url || '';
   }
 }
 
