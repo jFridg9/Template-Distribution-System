@@ -1311,20 +1311,66 @@
       runServerCall('getPublicWebAppUrl', [], 'getPublicWebAppUrl', {
         success: function(override) {
           const base = override && override.length ? override : detectBaseFromLocation();
-          // Ensure single param if none
-          const url = base + (base.indexOf('?') === -1 ? '' : '') ;
-          try {
-            window.location.href = url;
-            uiLog('openLandingPage navigated to (frame):', url);
-          } catch (err) {
-            uiLog('openLandingPage frame navigation failed, trying top:', err && err.message);
-            try { window.top.location.href = url; } catch (err2) { uiLog('openLandingPage top navigation failed:', err2 && err2.message); }
-          }
+          const url = base + (base.indexOf('?') === -1 ? '' : '');
+
+          // Validate the URL before navigating so we can warn the user if it looks inaccessible
+          runServerCall('validatePublicWebAppUrl', [url], 'validatePublicWebAppUrl', {
+            success: function(valid) {
+              const proceed = function() {
+                try {
+                  // If we're embedded in the Apps Script editor, prefer opening a new tab
+                  if (window.top !== window) {
+                    try {
+                      window.top.location.href = url; // prefer top nav
+                      uiLog('openLandingPage navigated to (top):', url);
+                      return;
+                    } catch (e) {
+                      // top navigation may be blocked; open a new tab instead
+                      try {
+                        window.open(url, '_blank');
+                        uiLog('openLandingPage opened new tab:', url);
+                        return;
+                      } catch (e2) {
+                        uiLog('openLandingPage failed to open new tab:', e2 && e2.message);
+                      }
+                    }
+                  }
+                  // Not inside an iframe — just navigate
+                  window.location.href = url;
+                  uiLog('openLandingPage navigated to (self):', url);
+                } catch (errNav) {
+                  uiLog('openLandingPage navigation failed:', errNav && errNav.message);
+                }
+              };
+
+              // If validation returned a 403 or warning, ask for confirmation before navigating
+              if (valid) {
+                if (valid.success) { proceed(); return; }
+                // If server gave a code of 403 or other warning, ask the user to confirm
+                if (valid.code === 403 || valid.warning || valid.error) {
+                  const msg = (valid.error || valid.warning || 'The web app may be inaccessible. You might see an Access Denied page. Open anyway?');
+                  if (confirm(msg + '\n\nURL: ' + url)) proceed();
+                  else uiLog('openLandingPage navigation canceled by user');
+                  return;
+                }
+                // Unknown response — proceed conservatively
+                proceed();
+              } else {
+                // Fallback: proceed
+                proceed();
+              }
+            },
+            failure: function(_err) {
+              // If the validation service failed, still attempt to navigate
+              uiLog('validatePublicWebAppUrl call failed — navigating anyway');
+              try { window.open(url, '_blank'); } catch (e) { try { window.top.location.href = url; } catch (_) { window.location.href = url; } }
+            }
+          });
         },
         failure: function(err) {
           const base = detectBaseFromLocation();
           const url = base;
-          try { window.location.href = url; } catch (err) { try { window.top.location.href = url; } catch (_) {} }
+          try { window.open(url, '_blank'); } catch (err) { try { window.top.location.href = url; } catch (_) { window.location.href = url; } }
         }
       });
     }
