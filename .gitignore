@@ -11,6 +11,9 @@ package-lock.json
 
 # Note: .clasp.json SHOULD be committed (contains scriptId, not secret)
 
+# Forge MCP local state (DO NOT COMMIT)
+.forge_initialized
+
 # GitHub secrets setup (contains credentials - for local reference only)
 GITHUB_SECRETS_SETUP.md
 
@@ -44,3 +47,5 @@ TROUBLESHOOTING_CI.md
 CI_CD_STATUS.md
 GITHUB_SECRETS_SETUP.md
 set-github-secrets.ps1
+# Ignore test files
+/tmp/

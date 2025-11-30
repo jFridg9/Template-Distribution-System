@@ -1,36 +1,18 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <base target="_top">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Panel</title>
-  
-  <!-- Google Drive Picker API -->
-  <script src="https://apis.google.com/js/api.js"></script>
-  
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-      color: #333;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    
-    header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+        <tr>
+          <td data-label="Product Name"><strong>${product.name}</strong></td>
+          <td data-label="Display Name">${product.displayName}</td>
+          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
+          <td data-label="Status">
+        <tr>
+          <td>
+            <input type="checkbox" class="product-checkbox" data-product="${product.name}" onchange="updateSelection('${product.name}', this.checked)">
+          </td>
+          <td data-label="Product Name"><strong>${product.name}</strong></td>
+          <td data-label="Display Name">${product.displayName}</td>
+          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
+          <td data-label="Status"><span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">${product.enabled ? 'Enabled' : 'Disabled'}</span></td>
       padding: 30px;
     }
     
@@ -273,7 +255,102 @@
       margin-bottom: 20px;
       opacity: 0.3;
     }
+
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+    }
     
+    .toast {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+      border-left: 4px solid #666;
+    }
+    
+    .toast.success { border-left-color: #4caf50; }
+    .toast.error { border-left-color: #f44336; }
+    .toast.warning { border-left-color: #ff9800; }
+    .toast.info { border-left-color: #2196f3; }
+    
+    .toast-icon { font-size: 24px; flex-shrink: 0; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 600; margin-bottom: 4px; color: #333; }
+    .toast-message { color: #666; font-size: 0.9em; }
+    
+    .toast-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .toast-close:hover { color: #333; }
+    
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+    
+    .toast.hiding { animation: slideOut 0.3s ease-out forwards; }
+    
+    /* Loading overlay */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-overlay.active { display: flex; }
+    
+    .loading-spinner {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    
+    .loading-spinner .loading {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 15px;
+    }
+    
+    .loading-text { color: #666; font-weight: 600; }
+ 
     /* Tab Navigation */
     .tabs {
       display: flex;
@@ -407,7 +484,7 @@
       border-radius: 6px;
       font-size: 1em;
     }
-    
+
     /* Bulk Operations Styles */
     .bulk-actions-bar {
       display: none;
@@ -490,9 +567,370 @@
     .warning-list ul {
       margin: 10px 0 0 20px;
     }
+    /* ============================================================================
+     * MOBILE RESPONSIVE STYLES
+     * ============================================================================
+     * Optimizations for mobile devices (phones and tablets)
+     * Includes responsive design for tabs, analytics, and product management
+     * Breakpoints: 320px (small phones), 480px (phones), 768px (tablets)
+     * ========================================================================== */
+    
+    /* All phones - shared styles (320px to 767px) */
+    @media (max-width: 767px) {
+      /* Convert table to card layout on all phones */
+      .products-table,
+      .analytics-table {
+        display: block;
+      }
+      
+      .products-table thead,
+      .analytics-table thead {
+        display: none;
+      }
+      
+      .products-table tbody,
+      .analytics-table tbody {
+        display: block;
+      }
+      
+      .products-table tr,
+      .analytics-table tr {
+        display: block;
+        margin-bottom: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+      }
+      
+      .products-table td,
+      .analytics-table td {
+        display: block;
+        text-align: left;
+        border: none;
+        padding: 8px 0;
+      }
+      
+      .products-table td::before,
+      .analytics-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #666;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.85em;
+        text-transform: uppercase;
+      }
+      
+      /* Touch-friendly buttons */
+      .btn {
+        min-height: 44px;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+      
+      /* Tabs optimization for mobile */
+      .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+      
+      .tab {
+        white-space: nowrap;
+        min-height: 44px;
+        padding: 12px 20px;
+      }
+      
+      /* Analytics grid stacks on mobile */
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      /* Filter controls stack on mobile */
+      .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .filter-group {
+        width: 100%;
+        min-width: unset;
+      }
+    }
+    
+    /* Small phones (iPhone SE, etc) - 320px to 479px */
+    @media (max-width: 479px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        border-radius: 0;
+        box-shadow: none;
+      }
+      
+      header {
+        padding: 20px 15px;
+      }
+      
+      header h1 {
+        font-size: 1.5em;
+      }
+      
+      header p {
+        font-size: 0.9em;
+      }
+      
+      .content {
+        padding: 15px;
+      }
+      
+      /* Stack action buttons vertically on very small screens */
+      .actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .actions .btn {
+        width: 100%;
+        text-align: center;
+      }
+      
+      .btn {
+        padding: 14px 20px;
+        font-size: 0.95em;
+      }
+      
+      /* Stack action buttons in table rows */
+      .products-table td button,
+      .analytics-table td button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        min-height: 44px;
+      }
+      
+      /* Modal optimizations for mobile */
+      .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 95vh;
+        padding: 20px 15px;
+        border-radius: 8px 8px 0 0;
+        margin: auto auto 0 auto;
+      }
+      
+      .modal-header h2 {
+        font-size: 1.3em;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        min-height: 44px;
+      }
+      
+      .folder-picker {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .folder-picker input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      
+      .folder-picker .btn {
+        width: 100%;
+      }
+      
+      /* Analytics cards full width */
+      .analytics-card .value {
+        font-size: 2em;
+      }
+      
+      /* Tab text smaller on very small screens */
+      .tab {
+        font-size: 0.9em;
+        padding: 10px 16px;
+      }
+    }
+    
+    /* Phones in portrait - 480px to 767px */
+    @media (min-width: 480px) and (max-width: 767px) {
+      body {
+        padding: 15px;
+      }
+      
+      header {
+        padding: 25px 20px;
+      }
+      
+      header h1 {
+        font-size: 1.8em;
+      }
+      
+      .content {
+        padding: 20px;
+      }
+      
+      /* Wrap action buttons but keep some on same line */
+      .actions {
+        gap: 12px;
+      }
+      
+      .btn {
+        padding: 12px 20px;
+      }
+      
+      /* Horizontal button layout for actions in cards */
+      .products-table td button,
+      .analytics-table td button {
+        display: inline-block;
+        width: auto;
+        margin: 5px 5px 5px 0;
+        min-height: 44px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 25px 20px;
+      }
+    }
+    
+    /* Tablets - 768px to 1023px */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .container {
+        max-width: 100%;
+      }
+      
+      header {
+        padding: 30px 25px;
+      }
+      
+      .content {
+        padding: 25px;
+      }
+      
+      /* Keep table but optimize spacing */
+      .products-table th,
+      .products-table td,
+      .analytics-table th,
+      .analytics-table td {
+        padding: 12px 10px;
+        font-size: 0.95em;
+      }
+      
+      /* Ensure buttons are touch-friendly */
+      .btn {
+        min-height: 44px;
+      }
+      
+      .products-table td button,
+      .analytics-table td button {
+        padding: 8px 12px;
+        font-size: 0.85em;
+        min-height: 44px;
+      }
+      
+      .modal-content {
+        width: 90%;
+        max-width: 600px;
+      }
+      
+      /* Analytics grid adapts to tablet */
+      .analytics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    /* Touch device optimizations (all mobile devices) */
+    @media (hover: none) and (pointer: coarse) {
+      /* Increase touch targets */
+      .btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      .tab {
+        min-height: 44px;
+      }
+      
+      /* Remove hover effects on touch devices */
+      .btn-primary:hover {
+        background: #667eea;
+      }
+      
+      .btn-secondary:hover {
+        background: #e0e0e0;
+      }
+      
+      .btn-danger:hover {
+        background: #f44336;
+      }
+      
+      .products-table tr:hover,
+      .analytics-table tr:hover {
+        background: white;
+      }
+      
+      .tab:hover {
+        color: #666;
+      }
+      
+      .product-card:hover {
+        transform: none;
+      }
+      
+      /* Add active state for touch feedback */
+      .btn:active {
+        opacity: 0.8;
+        transform: scale(0.98);
+      }
+      
+      .tab:active {
+        opacity: 0.7;
+      }
+    }
+    
+    /* Landscape orientation handling */
+    @media (max-width: 767px) and (orientation: landscape) {
+      header {
+        padding: 15px 20px;
+      }
+      
+      header h1 {
+        font-size: 1.4em;
+      }
+      
+      .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      .tabs {
+        padding-bottom: 5px;
+      }
+    }
+ 
+ 
   </style>
 </head>
 <body>
+  <!-- Toast notification container -->
+  <div id="toastContainer" class="toast-container"></div>
+  
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="loading"></div>
+      <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+  </div>
+  
   <div class="container">
     <header>
       <h1>🛠️ Admin Panel</h1>
@@ -535,7 +973,7 @@
           <button class="btn btn-secondary" onclick="configurePublicUrl()">
             ⚙️ Set Public URL
           </button>
-          
+
           <div class="import-export-section">
             <button class="btn btn-secondary" onclick="exportToCSV()">
               📥 Export CSV
@@ -583,6 +1021,56 @@
                   <th style="width: 40px;">
                     <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
                   </th>
+                  <th>Product Name</th>
+                  <th>Display Name</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Files</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <!-- Products will be loaded here -->
+              </tbody>
+            </table>
+          <? } ?>
+        </div>
+      </div>
+      
+      <!-- Analytics Tab -->
+      <div id="analyticsTab" class="tab-content">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="loadAnalytics()">
+            🔄 Refresh Analytics
+          </button>
+          <button class="btn btn-secondary" onclick="setupAnalyticsSheet()">
+            📊 Setup Analytics Sheet
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalytics()">
+            📥 Export to CSV
+          </button>
+        </div>
+        
+        <div id="analyticsContainer">
+          <div id="analyticsSummary">
+            <!-- Summary cards will be loaded here -->
+          </div>
+ 
+        </div>
+        
+        <div id="productsContainer">
+          <? if (products.length === 0) { ?>
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              <h2>No Products Yet</h2>
+              <p>Click "Add New Product" to get started</p>
+            </div>
+          <? } else { ?>
+            <table class="products-table">
+              <thead>
+                <tr>
                   <th>Product Name</th>
                   <th>Display Name</th>
                   <th>Category</th>
@@ -769,6 +1257,68 @@
       }
     }
     
+    // Toast notification system
+    const toastQueue = [];
+    let toastIdCounter = 0;
+    
+    function showToast(message, type, duration, title) {
+      type = type || 'info';
+      duration = duration !== undefined ? duration : 5000;
+      
+      const toastId = 'toast-' + (toastIdCounter++);
+      const container = document.getElementById('toastContainer');
+      
+      const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+      const titles = {
+        success: title || 'Success',
+        error: title || 'Error',
+        warning: title || 'Warning',
+        info: title || 'Info'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.id = toastId;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-content">
+          <div class="toast-title">${titles[type]}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="closeToast('${toastId}')" aria-label="Close">×</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      if (duration > 0) {
+        setTimeout(function() { closeToast(toastId); }, duration);
+      }
+      
+      return toastId;
+    }
+    
+    function closeToast(toastId) {
+      const toast = document.getElementById(toastId);
+      if (!toast) return;
+      
+      toast.classList.add('hiding');
+      setTimeout(function() {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    }
+    
+    function showLoading(show, text) {
+      const overlay = document.getElementById('loadingOverlay');
+      const textEl = document.getElementById('loadingText');
+      
+      if (show) {
+        if (text) textEl.textContent = text;
+        overlay.classList.add('active');
+      } else {
+        overlay.classList.remove('active');
+      }
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       loadProducts();
@@ -799,24 +1349,27 @@
       
       tbody.innerHTML = products.map(product => `
         <tr>
+ 
           <td>
             <input type="checkbox" class="product-checkbox" data-product="${product.name}" 
                    onchange="updateSelection('${product.name}', this.checked)">
           </td>
-          <td><strong>${product.name}</strong></td>
-          <td>${product.displayName}</td>
-          <td><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
-          <td>
+ 
+ 
+          <td data-label="Product Name"><strong>${product.name}</strong></td>
+          <td data-label="Display Name">${product.displayName}</td>
+          <td data-label="Category"><span style="padding: 4px 8px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em;">${product.category || 'Uncategorized'}</span></td>
+          <td data-label="Status">
             <span class="status-badge ${product.enabled ? 'status-enabled' : 'status-disabled'}">
               ${product.enabled ? 'Enabled' : 'Disabled'}
             </span>
           </td>
-          <td>
+          <td data-label="Files">
             <a href="https://drive.google.com/drive/folders/${product.folderId}" target="_blank">
               View Folder →
             </a>
           </td>
-          <td>
+          <td data-label="Actions">
             <button class="btn btn-secondary" onclick='editProduct(${JSON.stringify(product)})' style="padding: 6px 12px; font-size: 0.9em;">
               ✏️ Edit
             </button>
@@ -892,15 +1445,17 @@
         enabled: document.getElementById('enabled').checked
       };
       
-      showAlert('Saving...', 'info');
+      showLoading(true, editingProduct ? 'Updating product...' : 'Adding product...');
       
       const functionName = editingProduct ? 'updateProduct' : 'addProduct';
       const args = editingProduct ? [editingProduct, productData] : [productData];
       
       runServerCall(functionName, args, 'saveProduct', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
-            showAlert(result.message, 'success');
+            showToast(result.message || 'Product saved successfully', 'success');
             closeModal();
             // Update local products array and re-render instead of full reload
             if (editingProduct) {
@@ -917,21 +1472,27 @@
             }
             loadProducts();
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to save product: ' + errorMsg, 'error', 7000);
         }
       });
     }
     
     // Toggle product
     function toggleProduct(productName) {
+      showLoading(true, 'Updating product status...');
+      
       runServerCall('toggleProductEnabled', [productName], 'toggleProduct', {
         success: function(result) {
+          showLoading(false);
+          
           if (result.success) {
-            showAlert(result.message, 'success');
+            showToast(result.message || 'Product status updated', 'success');
             // Update local products array and re-render without a full reload
             products = products.map(function(p) {
               if (p.name === productName) {
@@ -941,11 +1502,13 @@
             });
             loadProducts();
           } else {
-            showAlert('Error: ' + result.error, 'error');
+            showToast(result.error, 'error', 7000);
           }
         },
         failure: function(error) {
-          showAlert('Error: ' + (error && error.message ? error.message : error), 'error');
+          showLoading(false);
+          const errorMsg = error && error.message ? error.message : String(error);
+          showToast('Failed to update product: ' + errorMsg, 'error', 7000);
         }
       });
     }
@@ -1383,15 +1946,16 @@ function openDrivePicker() {
         
         return `
           <tr>
-            <td><strong>${product.displayName}</strong></td>
-            <td>${product.totalAccesses}</td>
-            <td>
+            
+            <td data-label="Product"><strong>${product.displayName}</strong></td>
+            <td data-label="Total Accesses">${product.totalAccesses}</td>
+            <td data-label="Latest Version">
               ${product.latestRequests} (${latestPercent}%)
             </td>
-            <td>
+            <td data-label="Specific Version">
               ${product.specificRequests} (${specificPercent}%)
             </td>
-            <td>
+            <td data-label="Popularity">
               <div class="progress-bar">
                 <div class="progress-fill" style="width: ${percentage}%"></div>
               </div>
@@ -1467,12 +2031,11 @@ function openDrivePicker() {
           showAlert('Error exporting analytics: ' + (error && error.message ? error.message : error), 'error');
         }
       });
-    }
-
+      }
     
-    // ========================================================================
-    // BULK OPERATIONS
-    // ========================================================================
+      // ========================================================================
+      // BULK OPERATIONS
+      // ========================================================================
     
     function updateSelection(productName, checked) {
       if (checked) {

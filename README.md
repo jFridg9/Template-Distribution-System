@@ -6,6 +6,12 @@
 
 ---
 
+<!-- CI Status Badges -->
+[![PR Checks](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/pr-checks.yml)
+[![Deploy](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/deploy.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/deploy.yml)
+[![Integration Tests](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/integration.yml/badge.svg)](https://github.com/jFridg9/Template-Distribution-System/actions/workflows/integration.yml)
+
+
 ## 🎯 What This Solves
 
 ### The Problem
@@ -45,10 +51,11 @@ This system provides **one permanent URL** that always points to the latest vers
 - **🎨 Product Management** - Add, edit, delete, enable/disable products via UI
 - **✅ Folder Validation** - Automatic checking of Drive folders and file counts
 - **🚫 No Code Editing** - All configuration through web interface (no sheet editing, no ID copying)
-- **📥📤 CSV Import/Export** - Bulk manage products with CSV files
-- **⚡ Bulk Operations** - Enable, disable, or delete multiple products at once
-- **🔄 Import Preview** - Review changes before applying CSV imports
-- **📋 CSV Template** - Download sample CSV to get started quickly
+ - **📥📤 CSV Import/Export** - Bulk manage products with CSV files
+ - **⚡ Bulk Operations** - Enable, disable, or delete multiple products at once
+ - **🔄 Import Preview** - Review changes before applying CSV imports
+ - **📋 CSV Template** - Download sample CSV to get started quickly
+ - **📊 Analytics Dashboard** ⭐ NEW - Track template usage and access trends
 
 **What you DON'T need to do:**
 - ❌ Copy sheet IDs into code
@@ -66,6 +73,22 @@ This system provides **one permanent URL** that always points to the latest vers
 - ✅ Bulk enable/disable products with selection checkboxes
 - ✅ Bulk delete products with confirmation
 - ✅ Preview import changes before applying
+
+### 📊 **Analytics & Usage Tracking** ⭐ NEW
+- **Track Product Access** - See which templates are most popular
+- **Version Analytics** - Understand latest vs. specific version requests
+- **Visual Dashboard** - Beautiful charts and statistics in admin panel
+- **CSV Export** - Export analytics data for deeper analysis
+- **Privacy-Conscious** - No PII collection, anonymous usage data only
+- **Non-Blocking** - Analytics never slow down template redirects
+
+**Analytics Features:**
+- Real-time access counters
+- Product popularity rankings
+- Latest vs. specific version breakdowns
+- Visual progress bars and charts
+- One-click CSV export
+- Automated data cleanup (keeps last 10,000 entries)
 
 ### 🔧 **Dual Deployment Modes**
 
@@ -89,6 +112,9 @@ This system provides **one permanent URL** that always points to the latest vers
 ---
 
 ## 🏗️ Architecture Overview
+### Branch Protection
+This repository enforces branch protection on `main`. Merges require passing PR checks (ESLint) and at least one approving review. This helps maintain code quality and prevents accidental deployments.
+
 
 ```
 ┌─────────────────────────────────────┐
@@ -319,6 +345,23 @@ Checks:
 - Configuration sheet format
 - Folder accessibility
 - File counts per product
+
+**Test Script Properties implementation:**
+```javascript
+// Run individual tests
+test_ScriptPropertiesPriority()
+test_SetConfigSheetId()
+test_LoadConfigurationWithScriptProperties()
+
+// Or run all tests at once
+runAllTests()
+```
+
+See `Tests.gs` for detailed test suite that verifies:
+- Script Properties priority system
+- Configuration loading with runtime values
+- Setup wizard automation
+- All runtime configuration functions
 
 ### Cache Management
 

@@ -293,6 +293,263 @@
       font-weight: bold;
       font-size: 1.2em;
     }
+    
+    /* ============================================================================
+     * MOBILE RESPONSIVE STYLES
+     * ============================================================================
+     * Optimizations for mobile devices (phones and tablets)
+     * Breakpoints: 320px (small phones), 480px (phones), 768px (tablets)
+     * ========================================================================== */
+    
+    /* Small phones (iPhone SE, etc) - 320px to 479px */
+    @media (max-width: 479px) {
+      body {
+        padding: 10px;
+      }
+      
+      .wizard-container {
+        border-radius: 8px;
+      }
+      
+      .wizard-header {
+        padding: 25px 20px;
+        position: relative;
+      }
+      
+      .wizard-header h1 {
+        font-size: 1.5em;
+        margin-bottom: 8px;
+      }
+      
+      .wizard-header p {
+        font-size: 0.9em;
+      }
+      
+      /* Move Set Public URL button to better position */
+      .wizard-header > div[style*="position:absolute"] {
+        position: relative !important;
+        right: auto !important;
+        top: auto !important;
+        margin-top: 15px;
+      }
+      
+      .wizard-header > div[style*="position:absolute"] .btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.9em;
+      }
+      
+      /* Optimize progress bar for mobile */
+      .progress-bar {
+        padding: 20px 10px;
+        overflow-x: auto;
+      }
+      
+      .progress-step {
+        min-width: 70px;
+      }
+      
+      .progress-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9em;
+      }
+      
+      .progress-label {
+        font-size: 0.75em;
+        margin-top: 6px;
+      }
+      
+      /* Content area adjustments */
+      .wizard-content {
+        padding: 25px 20px;
+        min-height: 300px;
+      }
+      
+      .step h2 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+      }
+      
+      .step p {
+        font-size: 0.95em;
+        margin-bottom: 15px;
+      }
+      
+      /* Form optimizations */
+      .form-group {
+        margin-bottom: 20px;
+      }
+      
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+        padding: 10px;
+      }
+      
+      .folder-picker {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .folder-picker input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      
+      .folder-picker .btn {
+        width: 100%;
+      }
+      
+      /* Touch-friendly buttons */
+      .btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 0.95em;
+      }
+      
+      /* Action buttons */
+      .wizard-actions {
+        padding: 20px 15px;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .wizard-actions .btn {
+        width: 100%;
+        order: 2;
+      }
+      
+      #backBtn {
+        order: 1;
+      }
+      
+      /* Feature list adjustments */
+      .feature-list {
+        margin: 15px 0;
+      }
+      
+      .feature-list li {
+        padding: 10px 0 10px 30px;
+        font-size: 0.95em;
+      }
+      
+      .feature-list li::before {
+        font-size: 1em;
+      }
+      
+      /* Success icon */
+      .success-icon {
+        font-size: 60px;
+        margin-bottom: 15px;
+      }
+    }
+    
+    /* Phones in portrait - 480px to 767px */
+    @media (min-width: 480px) and (max-width: 767px) {
+      body {
+        padding: 15px;
+      }
+      
+      .wizard-header {
+        padding: 30px 25px;
+      }
+      
+      .wizard-header h1 {
+        font-size: 1.8em;
+      }
+      
+      .wizard-content {
+        padding: 30px 25px;
+      }
+      
+      .step h2 {
+        font-size: 1.4em;
+      }
+      
+      /* Form inputs */
+      .form-group input,
+      .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+      
+      .btn {
+        min-height: 44px;
+      }
+      
+      /* Keep horizontal button layout on larger phones */
+      .wizard-actions {
+        padding: 25px 20px;
+      }
+    }
+    
+    /* Tablets - 768px to 1023px */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .wizard-container {
+        max-width: 90%;
+      }
+      
+      .wizard-content {
+        padding: 35px;
+      }
+      
+      .btn {
+        min-height: 44px;
+      }
+    }
+    
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+      /* Increase touch targets */
+      .btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      /* Remove hover effects on touch devices */
+      .btn-primary:hover {
+        background: #667eea;
+      }
+      
+      .btn-secondary:hover {
+        background: #e0e0e0;
+      }
+      
+      /* Add active state for touch feedback */
+      .btn:active {
+        opacity: 0.8;
+        transform: scale(0.98);
+      }
+      
+      .progress-circle {
+        transition: transform 0.2s;
+      }
+      
+      .progress-step.active .progress-circle {
+        transform: scale(1.1);
+      }
+    }
+    
+    /* Landscape orientation handling */
+    @media (max-width: 767px) and (orientation: landscape) {
+      .wizard-header {
+        padding: 20px;
+      }
+      
+      .wizard-header h1 {
+        font-size: 1.4em;
+      }
+      
+      .wizard-content {
+        padding: 20px;
+        min-height: 250px;
+      }
+      
+      .progress-bar {
+        padding: 15px 20px;
+      }
+    }
   </style>
 </head>
 <body>
