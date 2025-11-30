@@ -1,8 +1,161 @@
-# Testing Guide - Admin Panel & Setup Wizard
+# Testing Guide - Template Distribution System
 
-This guide helps you verify that the admin panel with Drive picker and setup wizard are working correctly.
+This guide covers both automated and manual testing for the Template Distribution System.
 
-## Prerequisites
+## Table of Contents
+
+1. [Automated Testing](#automated-testing) ⭐ **NEW**
+2. [Manual Testing](#manual-testing)
+3. [Common Issues & Solutions](#common-issues--solutions)
+
+---
+
+## Automated Testing
+
+### Overview
+
+The system includes a comprehensive automated test suite in `Test.gs` that covers:
+
+- ✅ Configuration loading and caching
+- ✅ Product redirect logic  
+- ✅ Version detection (latest file by date)
+- ✅ File matching (version-specific requests)
+- ✅ Admin CRUD operations validation
+- ✅ Folder validation
+- ✅ Error handling paths
+- ✅ Mode switching (full vs simple)
+- ✅ HTML rendering
+- ✅ Script properties management
+- ✅ **Analytics tracking** ⭐ NEW
+- ✅ **Categories and tags filtering** ⭐ NEW
+
+### Running Automated Tests
+
+#### Method 1: Run Complete Test Suite
+
+1. Open your Apps Script project in the editor
+2. Select the `Test.gs` file from the file list
+3. From the function dropdown, select `runAllTests`
+4. Click the "Run" button (▶️)
+5. Check the "Execution log" for detailed results
+
+**Example output:**
+```
+==========================================================
+TEMPLATE DISTRIBUTION SYSTEM - TEST SUITE
+==========================================================
+Starting automated test run...
+
+--- Testing getMostRecentFile ---
+✓ PASS: Returns most recent file
+✓ PASS: Handles single file list
+✓ PASS: Returns null for empty list
+
+[... more tests ...]
+
+==========================================================
+TEST SUMMARY
+==========================================================
+Total Tests: 45
+Passed: 43
+Failed: 2
+==========================================================
+```
+
+#### Method 2: Run Quick Tests
+
+For faster smoke testing (runs essential tests only):
+
+1. Open Apps Script editor
+2. Select function `runQuickTests`
+3. Click "Run"
+4. Check execution log
+
+#### Method 3: Run Individual Tests
+
+To run specific test functions:
+
+1. Select the specific test function (e.g., `testGetMostRecentFile`)
+2. Click "Run"
+3. View results in execution log
+
+**Available test functions:**
+- `testGetMostRecentFile()` - Version detection logic
+- `testFindFileByVersion()` - Version matching
+- `testListAvailableVersions()` - Version extraction
+- `testCaching()` - Configuration caching
+- `testLoadConfigFromSheet()` - Config loading
+- `testFallbackConfig()` - Fallback configuration
+- `testHandleProductRedirect()` - Product redirects
+- `testAdminCRUD()` - Admin operations
+- `testFolderValidation()` - Folder ID validation
+- `testErrorHandling()` - Error scenarios
+- `testModeSwitching()` - Mode configuration
+- `testHTMLRendering()` - HTML output
+- `testScriptProperties()` - Script properties
+- `testConfigurationIntegration()` - End-to-end config
+- `testAnalyticsTracking()` - Analytics tracking ⭐ NEW
+- `testAnalyticsRetrieval()` - Analytics data retrieval ⭐ NEW
+- `testCategoriesAndTags()` - Categories/tags support ⭐ NEW
+- `testCategoryFiltering()` - Category filtering ⭐ NEW
+- `testTagFiltering()` - Tag filtering ⭐ NEW
+
+### Understanding Test Results
+
+**Test Output Format:**
+- `✓ PASS: [test description]` - Test passed successfully
+- `✗ FAIL: [test description]` - Test failed (see details)
+
+**Test Summary:**
+- **Total Tests** - Number of assertions executed
+- **Passed** - Successfully validated assertions
+- **Failed** - Assertions that didn't meet expectations
+
+### When to Run Tests
+
+- **After code changes** - Run `runAllTests()` before committing
+- **Before deployment** - Validate system integrity
+- **After configuration changes** - Run `testConfigurationIntegration()`
+- **Quick validation** - Use `runQuickTests()` for fast feedback
+- **CI/CD pipeline** - Can be triggered via GitHub Actions (see below)
+
+### CI/CD Integration (Optional)
+
+While Apps Script doesn't natively support automated test execution, you can trigger tests via:
+
+1. **GitHub Actions Workflow:**
+   - Use clasp to push code
+   - Use Apps Script API to execute `runAllTests()`
+   - Parse execution logs for results
+
+2. **Time-Based Triggers:**
+   - Set up daily test runs
+   - Email results to development team
+
+3. **Manual Trigger:**
+   - Keep it simple - run tests manually before deployments
+
+### Test Limitations
+
+**What the tests cover:**
+- Pure business logic (version detection, config parsing)
+- Error handling paths
+- Data validation
+- Mock object behavior
+
+**What the tests don't cover:**
+- Actual Drive API calls (requires real folders/files)
+- Spreadsheet API calls (requires real sheets)
+- UI interactions (requires manual testing)
+- OAuth flows (requires manual testing)
+
+For full coverage, combine automated tests with the manual tests below.
+
+---
+
+## Manual Testing
+
+### Prerequisites
 
 - Apps Script project deployed as web app
 - Web app URL (e.g., `https://script.google.com/.../exec`)
@@ -335,14 +488,58 @@ All tests should pass with these results:
 
 ---
 
-## Automated Testing (Future Enhancement)
+## Automated vs Manual Testing Summary
 
-Currently, testing is manual due to Google Apps Script limitations. Potential improvements:
+### Automated Tests (Test.gs)
+✅ Business logic validation  
+✅ Error handling verification  
+✅ Configuration parsing  
+✅ Version detection algorithms  
+✅ Data validation rules  
+✅ Fast execution (< 1 minute)  
 
-1. **Unit Tests:** Use Apps Script testing frameworks (e.g., GasT)
-2. **Integration Tests:** Automated browser testing (Selenium, Playwright)
-3. **CI/CD Tests:** Run validation checks on deployment
+**Best for:** Quick validation, regression testing, pre-deployment checks
 
+ 
+### Manual Tests (This Guide)
+✅ Drive API integration  
+✅ Spreadsheet API integration  
+✅ UI/UX verification  
+✅ End-to-end workflows  
+✅ OAuth and permissions  
+✅ Real-world scenarios  
+
+**Best for:** Full system validation, user acceptance testing
+
+### Recommended Testing Strategy
+
+**For Development:**
+1. Run automated tests frequently (`runQuickTests()`)
+2. Run full automated suite before commits (`runAllTests()`)
+3. Run manual tests for features you changed
+
+**For Deployment:**
+1. Run complete automated test suite (`runAllTests()`)
+2. Execute critical manual test paths (Tests 1-4)
+3. Verify production configuration (Test 5)
+
+**For Production Monitoring:**
+1. Run `validateConfiguration()` regularly
+2. Set up time-based triggers for `runQuickTests()`
+3. Monitor execution logs for errors
+
+---
+
+## Future Testing Enhancements
+
+Potential improvements:
+
+1. **Apps Script API Integration:** Trigger tests via API for CI/CD
+2. **Test Data Management:** Dedicated test configuration sheets
+3. **Browser Automation:** Playwright/Selenium for UI tests
+4. **Performance Tests:** Load testing for high-traffic scenarios
+5. **Monitoring Integration:** Alert on test failures
+ 
 For now, manual testing via this guide ensures all features work correctly.
 
 ---
@@ -390,3 +587,4 @@ Note: `clasp run` will execute the script as the currently authenticated user; e
 
 Update: `runAllValidationTests()` will optionally invoke `runAdminCrudIntegrationTests()` when available; this means the main validation suite can include the integration flow when executed manually in a suitable environment.
 
+ 

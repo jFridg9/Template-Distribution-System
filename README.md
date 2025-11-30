@@ -67,6 +67,7 @@ This system provides **one permanent URL** that always points to the latest vers
 
 **What you DO:** Visit `?admin=true` → Click buttons → Select folders → Done! (5 minutes)
 
+ 
 **Bulk Operations:**
 - ✅ Export all products to CSV for backup or documentation
 - ✅ Import products from CSV file with validation
@@ -74,6 +75,7 @@ This system provides **one permanent URL** that always points to the latest vers
 - ✅ Bulk delete products with confirmation
 - ✅ Preview import changes before applying
 
+ 
 ### 📊 **Analytics & Usage Tracking** ⭐ NEW
 - **Track Product Access** - See which templates are most popular
 - **Version Analytics** - Understand latest vs. specific version requests
@@ -106,7 +108,8 @@ This system provides **one permanent URL** that always points to the latest vers
 ### 🛡️ **Production-Ready**
 - Comprehensive error handling and logging
 - Performance optimized with caching
-- Validation utilities for testing
+- **Automated test suite** for core functionality ⭐ NEW
+- Manual testing guide for UI/integration validation
 - Clear separation of code and configuration
 
 ---
@@ -329,6 +332,53 @@ To force immediate update (Admin Panel → Clear Cache button, or run in Apps Sc
 ```javascript
 clearConfigCache()
 ```
+
+---
+
+## 🧪 Testing
+
+### Automated Testing ⭐ UPDATED
+
+The system includes a comprehensive automated test suite in `Test.gs`:
+
+**Run complete test suite:**
+```javascript
+runAllTests()
+```
+
+**Quick smoke tests:**
+```javascript
+runQuickTests()
+```
+
+**Test coverage includes:**
+- ✅ Configuration loading and caching
+- ✅ Version detection algorithms
+- ✅ File matching and selection
+- ✅ Product redirect logic
+- ✅ Admin CRUD validation
+- ✅ Folder validation
+- ✅ Error handling
+- ✅ Mode switching
+- ✅ HTML rendering
+- ✅ **Analytics tracking** ⭐ NEW
+- ✅ **Categories/tags filtering** ⭐ NEW
+
+**19 test functions** covering all core functionality including the latest features:
+- Analytics tracking and data retrieval
+- Product categories and tags
+- Filtering by category or tag
+
+**See:** `docs/AUTOMATED_TESTING.md` for complete testing guide
+
+### Manual Testing
+
+For UI and integration testing, see `TESTING_GUIDE.md` which covers:
+- Setup wizard flow
+- Admin panel CRUD operations
+- Drive Picker functionality
+- Landing page integration
+- End-to-end workflows
 
 ---
 

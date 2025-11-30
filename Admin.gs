@@ -1105,6 +1105,19 @@ function pickerKeyDiagnostics() {
  * @returns {Object} Analytics summary
  */
  
+function getAnalyticsForAdmin() {
+  try {
+    return getAnalyticsSummary();
+  } catch (err) {
+    Logger.log('ERROR in getAnalyticsForAdmin: ' + err.message);
+    return {
+      error: err.message,
+      totalAccesses: 0,
+      products: []
+    };
+  }
+}
+ 
 /**
  * Gets filtered access logs for admin panel.
  * 
@@ -1144,6 +1157,10 @@ function adminCreateAnalyticsSheet() {
 
 
 /**
+ 
+ * Exports analytics to CSV for download.
+ * 
+ 
  * ============================================================================
  * BULK OPERATIONS & CSV IMPORT/EXPORT
  * ============================================================================
@@ -1151,6 +1168,7 @@ function adminCreateAnalyticsSheet() {
 /**
  * Exports analytics to CSV for download.
  *
+ 
  * @param {Object} options - Export options
  * @returns {string} CSV data
  */
@@ -1163,6 +1181,11 @@ function adminExportAnalytics(options) {
   }
 }
 
+ 
+
+/**
+ * ============================================================================
+ 
 /**
  * ============================================================================
  * ANALYTICS ADMIN FUNCTIONS
@@ -1702,6 +1725,7 @@ function bulkDeleteProducts(productNames) {
 /**
  * ============================================================================
 // Include HTML helper (unchanged)
+ 
  * INCLUDE HTML HELPER
  * ============================================================================
  */
