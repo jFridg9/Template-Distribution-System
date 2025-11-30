@@ -979,6 +979,9 @@
           <button class="btn btn-secondary" onclick="openAdminInNewTab()">
             🌐 Open Admin (new tab)
           </button>
+          <button id="checkDriveBtn" class="btn btn-secondary" onclick="checkDriveStatus()">
+            🧾 Check Drive API
+          </button>
  
 
           <div class="import-export-section">
@@ -1561,6 +1564,35 @@
         success: function() { showAlert('Cache cleared successfully', 'success'); },
         failure: function(error) { showAlert('Error: ' + (error && error.message ? error.message : error), 'error'); }
       });
+    }
+
+    // Check Drive API status (Advanced service + DriveApp basic availability)
+    function checkDriveStatus() {
+      const btn = document.getElementById('checkDriveBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.dataset.orig = btn.textContent;
+        btn.textContent = 'Checking...';
+      }
+
+      google.script.run.withSuccessHandler(function(res) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = btn.dataset.orig || '🧾 Check Drive API';
+        }
+        if (!res) {
+          showToast('CheckDriveApi returned no data', 'error');
+          return;
+        }
+        if (res.success) {
+          const msg = `Drive Advanced API Available: ${res.advancedDriveAvailable ? 'Yes' : 'No'}; DriveApp accessible: ${res.driveAppWorks ? 'Yes' : 'No'}`;
+          showToast(msg, 'info');
+          console.log('checkDriveApiStatus:', res);
+        } else {
+          showToast('Drive API check failed: ' + (res.error || 'unknown'), 'error');
+          console.warn('checkDriveApiStatus error:', res.error);
+        }
+      }).checkDriveApiStatus();
     }
     
     // Validate folder

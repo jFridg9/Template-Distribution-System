@@ -1,6 +1,13 @@
 {
   "timeZone": "America/New_York",
   "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Drive",
+        "serviceId": "drive",
+        "version": "v3"
+      }
+    ]
   },
   "oauthScopes": [
     "https://www.googleapis.com/auth/script.external_request",

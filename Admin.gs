@@ -694,6 +694,28 @@ function toggleProductEnabled(productName) {
 function getOAuthToken() {
   return ScriptApp.getOAuthToken();
 }
+
+/**
+ * Diagnostic helper: checks whether Drive advanced service and DriveApp function.
+ * Useful to determine if the Drive API / Advanced Drive is enabled and available.
+ * @returns {Object} Diagnostic result
+ */
+function checkDriveApiStatus() {
+  try {
+    const advancedDriveAvailable = (typeof Drive !== 'undefined' && Drive && Drive.Files && typeof Drive.Files.get === 'function');
+    let driveAppWorks = false;
+    try {
+      // Quick test using DriveApp (read-only access of root folder)
+      const root = DriveApp.getRootFolder();
+      driveAppWorks = !!root;
+    } catch (err) {
+      driveAppWorks = false;
+    }
+    return { success: true, advancedDriveAvailable: !!advancedDriveAvailable, driveAppWorks: !!driveAppWorks };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
 /**
  * Normalizes various folder inputs (raw ID or full URL) into a Drive folder ID
  *
