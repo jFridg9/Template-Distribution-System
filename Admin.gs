@@ -142,7 +142,7 @@ function setupCreateConfigSheet() {
     sheet.setName('Products');
     Logger.log('setupCreateConfigSheet: Sheet renamed to "Products"');
 
-    // Set up headers (including category and tags from main branch)
+    // Set up headers (including category and tags)
     const headers = ['name', 'folderId', 'displayName', 'enabled', 'description', 'category', 'tags'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
@@ -415,8 +415,8 @@ function updateProduct(productName, productData) {
       }
     }
     
-    // Update row (including category and tags from main branch)
-    Logger.log('updateProduct: Updating product data');
+  // Update row (including category and tags)
+  Logger.log('updateProduct: Updating product data');
     // Expected columns: name, folderId, displayName, enabled, description, category, tags (7 total)
     const EXPECTED_COLUMN_COUNT = 7;
     const updatedRow = [
@@ -1254,6 +1254,7 @@ function adminExportAnalytics(options) {
 
 /**
  * ============================================================================
+>>>>>>> origin/main
  * INCLUDE HTML HELPER
  * ============================================================================
  */

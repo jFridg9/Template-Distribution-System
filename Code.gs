@@ -613,6 +613,227 @@ function renderLandingPage() {
             padding: 60px 20px;
             color: #999;
           }
+          
+          /* ============================================================================
+           * MOBILE RESPONSIVE STYLES
+           * ============================================================================
+           * Optimizations for mobile devices (phones and tablets)
+           * Breakpoints: 320px (small phones), 480px (phones), 768px (tablets)
+           * ========================================================================== */
+          
+          /* Small phones (iPhone SE, etc) - 320px to 479px */
+          @media (max-width: 479px) {
+            body {
+              padding: 10px;
+            }
+            
+            .container {
+              padding: 20px;
+              border-radius: 8px;
+            }
+            
+            header {
+              padding-bottom: 20px;
+              margin-bottom: 25px;
+              position: relative;
+            }
+            
+            h1 {
+              font-size: 1.6em;
+              margin-bottom: 8px;
+            }
+            
+            .tagline {
+              font-size: 0.95em;
+            }
+            
+            /* Reposition admin link for mobile */
+            header div[style*="position: absolute"] {
+              position: relative !important;
+              right: auto !important;
+              top: auto !important;
+              text-align: center;
+              margin-top: 15px;
+            }
+            
+            header div[style*="position: absolute"] a {
+              display: inline-block;
+              padding: 10px 20px;
+              background: #667eea;
+              color: white !important;
+              border-radius: 6px;
+              min-height: 44px;
+              line-height: 24px;
+            }
+            
+            /* Stack product cards on mobile */
+            .products {
+              grid-template-columns: 1fr;
+              gap: 15px;
+              margin-bottom: 20px;
+            }
+            
+            .product-card {
+              padding: 20px;
+            }
+            
+            .product-card h3 {
+              font-size: 1.2em;
+              margin-bottom: 10px;
+            }
+            
+            .description {
+              font-size: 0.95em;
+              margin-bottom: 15px;
+            }
+            
+            /* Touch-friendly buttons */
+            .btn {
+              display: block;
+              width: 100%;
+              min-height: 44px;
+              padding: 12px 20px;
+              text-align: center;
+            }
+            
+            /* Category and tags adapt */
+            .category-badge {
+              font-size: 0.7em;
+            }
+            
+            .tags {
+              gap: 5px;
+            }
+            
+            .tag-badge {
+              font-size: 0.7em;
+            }
+            
+            footer {
+              font-size: 0.85em;
+              margin-top: 30px;
+              padding-top: 15px;
+            }
+            
+            footer a {
+              display: inline-block;
+              margin-top: 5px;
+            }
+            
+            .empty-state {
+              padding: 40px 15px;
+            }
+            
+            .empty-state h2 {
+              font-size: 1.3em;
+            }
+            
+            .results-info {
+              font-size: 0.9em;
+            }
+          }
+          
+          /* Phones in portrait - 480px to 767px */
+          @media (min-width: 480px) and (max-width: 767px) {
+            body {
+              padding: 15px;
+            }
+            
+            .container {
+              padding: 30px;
+            }
+            
+            h1 {
+              font-size: 2em;
+            }
+            
+            .tagline {
+              font-size: 1em;
+            }
+            
+            /* One column on larger phones */
+            .products {
+              grid-template-columns: 1fr;
+              gap: 18px;
+            }
+            
+            .product-card {
+              padding: 22px;
+            }
+            
+            .btn {
+              min-height: 44px;
+            }
+          }
+          
+          /* Tablets - 768px to 1023px */
+          @media (min-width: 768px) and (max-width: 1023px) {
+            .container {
+              max-width: 100%;
+              padding: 35px;
+            }
+            
+            h1 {
+              font-size: 2.2em;
+            }
+            
+            /* Two columns on tablets */
+            .products {
+              grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+              min-height: 44px;
+            }
+          }
+          
+          /* Touch device optimizations */
+          @media (hover: none) and (pointer: coarse) {
+            /* Increase touch targets */
+            .btn {
+              min-height: 44px;
+              min-width: 44px;
+            }
+            
+            /* Remove hover effects on touch devices */
+            .btn:hover {
+              background: #667eea;
+              transform: none;
+            }
+            
+            .product-card:hover {
+              transform: none;
+              border-color: #e0e0e0;
+              box-shadow: none;
+            }
+            
+            /* Add active state for touch feedback */
+            .btn:active {
+              opacity: 0.8;
+              transform: scale(0.98);
+            }
+            
+            .product-card:active {
+              border-color: #667eea;
+              box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+            }
+          }
+          
+          /* Landscape orientation handling */
+          @media (max-width: 767px) and (orientation: landscape) {
+            h1 {
+              font-size: 1.5em;
+            }
+            
+            .container {
+              padding: 25px;
+            }
+            
+            header {
+              padding-bottom: 15px;
+              margin-bottom: 20px;
+            }
+          }
         </style>
       </head>
       <body>
