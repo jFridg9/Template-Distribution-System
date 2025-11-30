@@ -245,6 +245,12 @@
       margin-bottom: 20px;
       opacity: 0.3;
     }
+
+    /* Visual cue for the picker button when it's not fully ready but still clickable */
+    .btn.picker-loading {
+      opacity: 0.6;
+      filter: grayscale(20%);
+    }
  
 
     /* Toast Notification Styles */
@@ -1095,7 +1101,7 @@
           <label for="folderId">Google Drive Folder*</label>
           <div class="folder-picker">
               <input type="text" id="folderId" required placeholder="Click 'Browse File' to select a template file">
-              <button type="button" class="btn btn-secondary" onclick="openDrivePicker()">
+              <button type="button" class="btn btn-secondary picker-loading" id="openDriveBtn" onclick="openDrivePicker()">
                 � Browse File
               </button>
             </div>
@@ -1171,6 +1177,7 @@
     let oauthToken = null;
     let developerKey = null;
     let pickerAppId = null;
+    let pickerOpenRequested = false; // queued open request flag
     let editingProduct = null;
     let selectedProducts = new Set();
     let pendingImportData = null;
@@ -1580,18 +1587,69 @@
     }
     
     // Google Drive Picker
-    function loadGooglePicker() {
-      if (typeof gapi !== 'undefined' && gapi && typeof gapi.load === 'function') {
-        gapi.load('picker', function() {
-          pickerApiLoaded = true;
+    function ensureGapiScript() {
+      return new Promise(function(resolve, reject) {
+        if (typeof gapi !== 'undefined' && gapi) return resolve();
+        if (document.querySelector('script[src="https://apis.google.com/js/api.js"]')) return resolve();
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.async = true;
+        script.onload = function() { uiLog('gapi script loaded'); resolve(); };
+        script.onerror = function() { uiLog('gapi script load failed'); reject(new Error('Failed to load gapi script')); };
+        document.head.appendChild(script);
+      });
+    }
+
+    function updatePickerButtonState() {
+      try {
+        const btns = document.querySelectorAll('button[onclick="openDrivePicker()"]');
+        btns.forEach(b => {
+          if (pickerApiLoaded && oauthToken && developerKey) {
+            b.classList.remove('picker-loading');
+            b.title = 'Browse Drive';
+          } else {
+            b.classList.add('picker-loading');
+            b.title = 'Drive Picker: Loading or not configured';
+          }
         });
-      } else {
-        console.warn('Google API (gapi) not loaded in this environment; Google Picker will not be available.');
-      }
-      
+      } catch (err) { /* ignore */ }
+    }
+
+    function setOpenDriveBtnOpening(opening) {
+      try {
+        const b = document.getElementById('openDriveBtn');
+        if (!b) return;
+        if (opening) {
+          b.disabled = true;
+          b.dataset.origText = b.textContent || 'Browse File';
+          b.textContent = 'Opening...';
+          b.setAttribute('aria-busy', 'true');
+        } else {
+          b.disabled = !(pickerApiLoaded && oauthToken && developerKey);
+          b.textContent = b.dataset.origText || 'Browse File';
+          b.removeAttribute('aria-busy');
+        }
+      } catch (err) { /* ignore */ }
+    }
+
+    function loadGooglePicker() {
+      // Try to load gapi loader script then initialize the picker library
+      ensureGapiScript().then(function() {
+        try {
+          if (gapi && typeof gapi.load === 'function') {
+            gapi.load('picker', function() {
+              pickerApiLoaded = true;
+              uiLog('pickerApiLoaded set true');
+              updatePickerButtonState();
+            });
+          }
+        } catch (err) { uiLog('gapi load error', err); }
+      }).catch(function(err) { uiLog('ensureGapiScript error', err); });
+
+      // Get OAuth token
       runServerCall('getOAuthToken', [], 'getOAuthToken', {
-        success: function(token) { oauthToken = token; uiLog('oauthToken retrieved', { hasToken: !!token }); },
-        failure: function(error) { uiLog('getOAuthToken failed', error); }
+        success: function(token) { oauthToken = token; uiLog('oauthToken retrieved', { hasToken: !!token }); updatePickerButtonState(); },
+        failure: function(error) { uiLog('getOAuthToken failed', error); updatePickerButtonState(); }
       });
 
       // Fetch the Google Picker API key from Script Properties
@@ -1602,8 +1660,9 @@
             console.warn('Google Picker API key not set. Add PICKER_API_KEY in Script Properties.');
           }
           uiLog('Picker key fetched', { keyPrefix: developerKey ? developerKey.substring(0,6) : null, keyLength: developerKey ? developerKey.length : 0 });
+          updatePickerButtonState();
         },
-        failure: function(error) { uiLog('getPickerApiKey failed', error); }
+        failure: function(error) { uiLog('getPickerApiKey failed', error); updatePickerButtonState(); }
       });
 
       // Fetch optional Picker App ID (numeric GCP project number)
@@ -1619,61 +1678,84 @@
  */
 function openDrivePicker() {
   uiLog('openDrivePicker called', { pickerApiLoaded: pickerApiLoaded, hasToken: !!oauthToken });
-  if (!pickerApiLoaded || !oauthToken) {
-    alert('Drive Picker is loading... please try again in a moment.');
+  // If there's already a queued request, allow the second click to cancel it
+  if (pickerOpenRequested) {
+    pickerOpenRequested = false;
+    setOpenDriveBtnOpening(false);
+    uiLog('openDrivePicker: queued request cancelled via second click');
     return;
   }
-
-  if (!developerKey) {
-    alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
-    return;
+  // Wait a short amount for picker readiness. This allows users who click early
+  // to still be handled once gapi & token are ready without needing to click again.
+  function waitForPickerReady(timeoutMs) {
+    timeoutMs = timeoutMs || 4000;
+    const start = Date.now();
+    return new Promise(function(resolve, reject) {
+      (function check() {
+        if (pickerApiLoaded && oauthToken && developerKey) return resolve();
+        if (Date.now() - start > timeoutMs) return reject(new Error('Picker initialization timed out')); 
+        setTimeout(check, 200);
+      })();
+    });
   }
-  
-  const origin = (google && google.script && google.script.host && google.script.host.origin)
-    ? google.script.host.origin
-    : window.location.origin;
 
-  console.log('Picker diagnostics on open:', {
-    pickerApiLoaded,
-    hasToken: !!oauthToken,
-    origin
-  });
-
-  // Create standard views for file selection (most reliable approach)
-  // No MIME type filter - allow any file type (templates can be Sheets, Docs, Slides, PDFs, etc.)
-  
-  // Recent view
-  const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
-
-  // My Drive with tree navigation (no setIncludeFolders - that makes it flat!)
-  const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS);
-
-  // Shared Drives view
-  const sharedDriveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setEnableDrives(true);
-
-  // Build the Picker
-  const builder = new google.picker.PickerBuilder()
-    .setTitle('Select a Template File')
-    .setOAuthToken(oauthToken)
-    .setDeveloperKey(developerKey)
-    .setOrigin(origin)
-    .setCallback(pickerCallback)
-    .addView(recentView)
-    .addView(driveView)
-    .addView(sharedDriveView)
-    .enableFeature(google.picker.Feature.SUPPORT_DRIVES);
-
-  if (pickerAppId) {
-    try {
-      builder.setAppId(pickerAppId);
-    } catch (err) {
-      console.warn('Failed to set Picker App ID:', err && err.message);
+  // Queue an open request and show 'Opening...' state in the button
+  pickerOpenRequested = true;
+  setOpenDriveBtnOpening(true);
+  showToast('Drive Picker will open once initialization completes', 'info', 3500);
+  waitForPickerReady(5000).then(function() {
+    if (!developerKey) {
+      alert('Google Picker is not configured. Ask the admin to set PICKER_API_KEY in Script Properties (Apps Script → Project Settings).');
+      return;
     }
-  }
 
-  const picker = builder.build();
-  picker.setVisible(true);
+    const origin = (google && google.script && google.script.host && google.script.host.origin)
+      ? google.script.host.origin
+      : window.location.origin;
+
+    console.log('Picker diagnostics on open:', {
+      pickerApiLoaded,
+      hasToken: !!oauthToken,
+      origin
+    });
+
+    // Create standard views for file selection (most reliable approach)
+    // No MIME type filter - allow any file type (templates can be Sheets, Docs, Slides, PDFs, etc.)
+    const recentView = new google.picker.DocsView(google.picker.ViewId.RECENTLY_PICKED);
+    const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+    const sharedDriveView = new google.picker.DocsView(google.picker.ViewId.DOCS).setEnableDrives(true);
+
+    const builder = new google.picker.PickerBuilder()
+      .setTitle('Select a Template File')
+      .setOAuthToken(oauthToken)
+      .setDeveloperKey(developerKey)
+      .setOrigin(origin)
+      .setCallback(pickerCallback)
+      .addView(recentView)
+      .addView(driveView)
+      .addView(sharedDriveView)
+      .enableFeature(google.picker.Feature.SUPPORT_DRIVES);
+
+    if (pickerAppId) {
+      try {
+        builder.setAppId(pickerAppId);
+      } catch (err) {
+        console.warn('Failed to set Picker App ID:', err && err.message);
+      }
+    }
+
+    const picker = builder.build();
+    picker.setVisible(true);
+    // Reset queued/UX state now that picker is visible
+    pickerOpenRequested = false;
+    setOpenDriveBtnOpening(false);
+  }).catch(function(err) {
+    // Ensure the opening state is cleared
+    setOpenDriveBtnOpening(false);
+    uiLog('Picker not ready after waiting', err);
+    alert('Drive Picker could not be initialized yet. Please try again in a few seconds.');
+    return;
+  });
 }
     
     function pickerCallback(data) {
