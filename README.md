@@ -407,7 +407,7 @@ test_LoadConfigurationWithScriptProperties()
 runAllTests()
 ```
 
-See `Tests.gs` for detailed test suite that verifies:
+See `Test.gs` for detailed test suite that verifies:
 - Script Properties priority system
 - Configuration loading with runtime values
 - Setup wizard automation

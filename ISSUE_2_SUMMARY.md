@@ -25,7 +25,7 @@ All requirements from Issue #2 have been verified as **fully implemented** in th
   - ✅ Returns `CONFIG.configSheetId` when Script Properties empty
 
 - [x] **Test setup wizard** end-to-end
-  - ✅ Test infrastructure created: `ValidationTests.gs`
+  - ✅ Test infrastructure created: `Test.gs` (consolidated validation suite)
   - ✅ Manual test plan: `TEST_SCRIPT_PROPERTIES.md`
   - ✅ 5 automated tests + 10 manual test scenarios
 
@@ -60,12 +60,12 @@ All requirements from Issue #2 have been verified as **fully implemented** in th
 ## 🧪 Validation & Testing
 
 ### Automated Tests Created
-**File:** `ValidationTests.gs`  
+**File:** `Test.gs`  
 **Tests:** 5 automated validation functions
 
 Run in Apps Script editor:
 ```javascript
-runAllValidationTests()  // Complete validation suite
+Use `runAllTests()` or `runAllValidationTests()` (alias)  // Complete validation suite
 ```
 
 Expected output:
@@ -143,7 +143,7 @@ System immediately uses new configuration
 ## 📁 Files Delivered
 
 ### Test Files (New)
-- `ValidationTests.gs` - Automated validation functions
+- `Test.gs` - Automated validation functions (consolidated)
 - `TEST_SCRIPT_PROPERTIES.md` - Manual test plan
 
 ### Documentation Files (New)

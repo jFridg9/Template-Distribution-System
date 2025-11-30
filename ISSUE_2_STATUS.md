@@ -39,16 +39,8 @@ function getConfigSheetId() {
   }
   
   Logger.log('Using hardcoded config sheet ID from CONFIG');
-  return CONFIG.configSheetId;
-}
 ```
 
-#### ✅ Task 2: CONFIG Loading Priority
-**Status:** Complete  
-**Location:** `Config.gs` line 52 in `loadConfiguration()`  
-**Priority Order:**
-1. Script Properties (`CONFIG_SHEET_ID`)
-2. Hardcoded `CONFIG.configSheetId`
 3. Fallback `CONFIG.fallbackFolderId`
 
 **Implementation:**
@@ -62,14 +54,10 @@ function loadConfiguration() {
   } else if (CONFIG.fallbackFolderId) {
     config = createFallbackConfig();
   }
-  // ...
 }
 ```
 
-#### ✅ Task 3: Auto-Save in Setup Wizard
-**Status:** Complete  
 **Location:** `Admin.gs` lines 145-151 in `setupCreateConfigSheet()`  
-
 **Implementation:**
 ```javascript
 function setupCreateConfigSheet() {
@@ -94,12 +82,7 @@ function setupCreateConfigSheet() {
 **Status:** Complete  
 **Location:** `Config.gs` lines 258-269  
 **Details:** `getConfigSheetId()` returns `CONFIG.configSheetId` when Script Properties is empty
-
-#### ✅ Task 5: End-to-End Testing
-**Status:** Test infrastructure created  
-**Files:**
 - `TEST_SCRIPT_PROPERTIES.md` - Manual test plan (10 comprehensive tests)
-- `ValidationTests.gs` - Automated validation functions
 
 **Test Functions:**
 - `testScriptPropertiesPriority()` - Verify priority order
@@ -112,7 +95,7 @@ function setupCreateConfigSheet() {
 **To run tests:**
 ```javascript
 // In Apps Script editor:
-runAllValidationTests()  // Run all tests
+runAllTests() or runAllValidationTests()  // Run all tests
 showCurrentScriptProperties()  // Check current state
 showImplementationSummary()  // Show overview
 ```
@@ -125,7 +108,7 @@ showImplementationSummary()  // Show overview
   - Lines 119-133: Automatic configuration
   - Lines 163-178: Manual configuration (marked as optional)
 - `TEST_SCRIPT_PROPERTIES.md` - Comprehensive test documentation
-- `ValidationTests.gs` - Code-level validation
+- `Test.gs` - Code-level validation (consolidated)
 
 ---
 
@@ -135,29 +118,15 @@ showImplementationSummary()  // Show overview
 **Verified:** `setupCreateConfigSheet()` calls `setConfigSheetId()` after creating sheet  
 **Location:** Admin.gs line 147  
 **Result:** Sheet ID saved to Script Properties automatically, no manual copying needed
-
 ### 2. ✅ No manual code editing required after setup
 **Verified:** Setup wizard handles all configuration through UI  
 **Flow:**
 1. Access `?admin=true` → Setup wizard appears
-2. Click "Create Configuration Sheet" → Sheet created, ID saved automatically
-3. Add products via Drive Picker → No ID copying needed
-4. Complete wizard → Admin panel accessible immediately
-
 ### 3. ✅ Existing deployments with hardcoded IDs still work
 **Verified:** `getConfigSheetId()` falls back to `CONFIG.configSheetId`  
-**Test:** `testBackwardCompatibility()` validates this behavior  
-**Result:** System works normally when Script Properties are empty
-
-### 4. ✅ Admin panel uses the runtime configuration
 **Verified:** All admin functions call `getConfigSheetId()` internally  
 **Functions checked:**
-- `addProduct()` - Line 186
-- `updateProduct()` - Line 250
-- `deleteProduct()` - Line 315
-- `toggleProductEnabled()` - Line 363
 
----
 
 ## 🔧 Technical Architecture
 
@@ -168,12 +137,7 @@ Request → loadConfiguration()
        getConfigSheetId()
            ↓
     ┌──────────────────┐
-    │ Script Properties│ (Priority 1)
-    │ CONFIG_SHEET_ID  │
-    └────────┬─────────┘
-             │ if not set
              ↓
-    ┌──────────────────┐
     │ Hardcoded CONFIG │ (Priority 2)
     │ configSheetId    │
     └────────┬─────────┘
@@ -190,15 +154,10 @@ Request → loadConfiguration()
 User visits ?admin=true
     ↓
 checkIfNeedsSetup() → true
-    ↓
 renderSetupWizard()
     ↓
 User clicks "Create Configuration Sheet"
-    ↓
-setupCreateConfigSheet()
-    ↓
 1. Create spreadsheet
-2. Set up headers
 3. Get sheet ID
 4. Call setConfigSheetId(sheetId) ← AUTO-SAVE
 5. Return success
@@ -219,7 +178,7 @@ System immediately uses new configuration
 
 ### Files Created: 2 📝
 1. `TEST_SCRIPT_PROPERTIES.md` - Manual test plan
-2. `ValidationTests.gs` - Automated test functions
+2. `Test.gs` - Automated test functions
 
 ### Code Review Summary
 - **Total lines reviewed:** ~1,000+
@@ -249,12 +208,12 @@ Use `TEST_SCRIPT_PROPERTIES.md` for comprehensive manual testing in live environ
 10. Documentation accuracy
 
 ### Automated Validation (Development)
-Use `ValidationTests.gs` functions in Apps Script editor
+Use `Test.gs` functions in Apps Script editor
 
 **Quick Validation:**
 ```javascript
 // Run this in Apps Script editor to verify implementation
-runAllValidationTests()
+runAllTests()  // (or runAllValidationTests() alias)
 ```
 
 **Expected Output:**
@@ -325,7 +284,7 @@ Failed: 0
 ## 📎 Related Files
 
 - **Implementation:** `Config.gs`, `Admin.gs`, `Code.gs`
-- **Tests:** `ValidationTests.gs`, `TEST_SCRIPT_PROPERTIES.md`
+- **Tests:** `Test.gs`, `TEST_SCRIPT_PROPERTIES.md`
 - **Documentation:** `README.md`, `IMPLEMENTATION_SUMMARY.md`
 
 ---

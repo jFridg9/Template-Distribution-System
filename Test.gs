@@ -667,6 +667,104 @@ function testScriptProperties() {
   Logger.log('testScriptProperties completed');
 }
 
+/**
+ * ============================================================================
+ * TESTS: SCRIPT PROPERTIES (Detailed Validation - merged from Tests.gs)
+ * ============================================================================
+ */
+
+// Test: verify Script Properties priority (Copied/merged from Tests.gs)
+function testScriptPropertiesPriorityDetailed() {
+  Logger.log('\n--- Testing Script Properties Priority (Detailed) ---');
+  try {
+    const scriptProps = PropertiesService.getScriptProperties();
+    const runtimeId = scriptProps.getProperty('CONFIG_SHEET_ID');
+    const hardcodedId = CONFIG.configSheetId;
+    const resolvedId = getConfigSheetId();
+
+    Logger.log(`Runtime ID (Script Properties): ${runtimeId || '(not set)'}`);
+    Logger.log(`Hardcoded ID (CONFIG): ${hardcodedId}`);
+    Logger.log(`Resolved ID (getConfigSheetId): ${resolvedId}`);
+
+    if (runtimeId) {
+      assertEqual(resolvedId, runtimeId, 'Script Properties should take precedence');
+    } else {
+      assertEqual(resolvedId, hardcodedId, 'Fallback to hardcoded CONFIG when no Script Properties');
+    }
+  } catch (err) {
+    assert(false, 'testScriptPropertiesPriorityDetailed threw: ' + err.message);
+  }
+  Logger.log('testScriptPropertiesPriorityDetailed completed');
+}
+
+function testSetConfigSheetIdDetailed() {
+  Logger.log('\n--- Testing setConfigSheetId (Detailed) ---');
+  try {
+    const testSheetId = CONFIG.configSheetId;
+    if (!testSheetId || testSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
+      Logger.log('⚠️ SKIP: No valid test sheet ID available in CONFIG');
+      return;
+    }
+    const result = setConfigSheetId(testSheetId);
+    if (result.success) {
+      assertTruthy(PropertiesService.getScriptProperties().getProperty('CONFIG_SHEET_ID') === testSheetId, 'CONFIG_SHEET_ID saved');
+    } else {
+      assert(false, 'setConfigSheetId failed: ' + (result.error || 'unknown'));
+    }
+  } catch (err) {
+    assert(false, 'testSetConfigSheetIdDetailed threw: ' + err.message);
+  }
+  Logger.log('testSetConfigSheetIdDetailed completed');
+}
+
+function testLoadConfigurationWithScriptPropertiesDetailed() {
+  Logger.log('\n--- Testing loadConfiguration With Script Properties (Detailed) ---');
+  try {
+    const configSheetId = getConfigSheetId();
+    if (!configSheetId || configSheetId === 'YOUR_CONFIG_SHEET_ID_HERE') {
+      Logger.log('⚠️ SKIP: No valid config sheet ID available');
+      return;
+    }
+    const config = loadConfiguration();
+    assertTruthy(Array.isArray(config.products), 'Config products array exists');
+  } catch (err) {
+    assert(false, 'testLoadConfigurationWithScriptPropertiesDetailed threw: ' + err.message);
+  }
+  Logger.log('testLoadConfigurationWithScriptPropertiesDetailed completed');
+}
+
+function testSetupWizardFlowDetailed() {
+  Logger.log('\n--- Testing setup wizard (Detailed) - NOTE: This may create a sheet ---');
+  try {
+    const scriptProps = PropertiesService.getScriptProperties();
+    const originalId = scriptProps.getProperty('CONFIG_SHEET_ID');
+    scriptProps.deleteProperty('CONFIG_SHEET_ID');
+    const result = setupCreateConfigSheet();
+    if (result && result.success) {
+      assertTruthy(!!result.sheetId, 'setupCreateConfigSheet created sheet');
+      assertTruthy(scriptProps.getProperty('CONFIG_SHEET_ID') === result.sheetId, 'Created sheet saved to properties');
+    } else {
+      assert(false, 'setupCreateConfigSheet failed: ' + (result && result.error));
+    }
+    // Restore original
+    if (originalId) scriptProps.setProperty('CONFIG_SHEET_ID', originalId); else scriptProps.deleteProperty('CONFIG_SHEET_ID');
+  } catch (err) {
+    assert(false, 'testSetupWizardFlowDetailed threw: ' + err.message);
+  }
+  Logger.log('testSetupWizardFlowDetailed completed');
+}
+
+function testGetRuntimeConfigDetailed() {
+  Logger.log('\n--- Testing getRuntimeConfig (Detailed) ---');
+  try {
+    const runtimeConfig = getRuntimeConfig();
+    assertTruthy(runtimeConfig && typeof runtimeConfig === 'object', 'getRuntimeConfig returns object');
+  } catch (err) {
+    assert(false, 'testGetRuntimeConfigDetailed threw: ' + err.message);
+  }
+  Logger.log('testGetRuntimeConfigDetailed completed');
+}
+
 
 /**
  * ============================================================================
@@ -1040,6 +1138,11 @@ function runAllTests() {
     
     // Script properties tests
     testScriptProperties();
+    // Detailed validation tests for script properties (merged)
+    testScriptPropertiesPriorityDetailed();
+    testSetConfigSheetIdDetailed();
+    testLoadConfigurationWithScriptPropertiesDetailed();
+    testGetRuntimeConfigDetailed();
     
     // Integration tests
     testConfigurationIntegration();
@@ -1083,5 +1186,18 @@ function runQuickTests() {
   testModeSwitching();
   testFolderValidation();
   
+  return printTestSummary();
+}
+
+/**
+ * Backwards-compatible alias for validation-focused tests
+ */
+function runAllValidationTests() {
+  Logger.log('Running validation-focused test subset...');
+  resetTestResults();
+  testScriptPropertiesPriorityDetailed();
+  testSetConfigSheetIdDetailed();
+  testLoadConfigurationWithScriptPropertiesDetailed();
+  testGetRuntimeConfigDetailed();
   return printTestSummary();
 }
